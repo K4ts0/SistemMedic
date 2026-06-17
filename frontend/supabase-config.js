@@ -54,10 +54,19 @@ export async function getNote(id) {
 }
 
 export async function createNote(title, content) {
+  // Obtém o usuário atual
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
   const { data, error } = await supabase
     .from('notes')
-    .insert([{ title, content }])
+    .insert([{ 
+      title, 
+      content, 
+      user_id: user.id  // 👈 Adiciona o user_id manualmente
+    }])
     .select();
+
   if (error) throw error;
   return data[0];
 }
