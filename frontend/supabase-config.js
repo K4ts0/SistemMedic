@@ -132,4 +132,41 @@ export async function ensureValidSession() {
     return false;
   }
   return true;
+
+  // Gera um identificador de sessão único
+function generateSessionId() {
+  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// Salva o session_id no metadata do usuário
+export async function registerSession() {
+  const sessionId = generateSessionId();
+  const { data, error } = await supabase.auth.updateUser({
+    data: { session_id: sessionId }
+  });
+  if (error) throw error;
+  localStorage.setItem('session_id', sessionId);
+  return sessionId;
+}
+
+// Verifica se a sessão atual é válida
+export async function validateSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const storedSession = localStorage.getItem('session_id');
+  const currentSession = user.user_metadata?.session_id;
+  return storedSession && currentSession && storedSession === currentSession;
+}
+
+// Força logout se a sessão for inválida
+export async function ensureValidSession() {
+  const isValid = await validateSession();
+  if (!isValid) {
+    await signOut();
+    localStorage.removeItem('session_id');
+    window.location.href = 'index.html';
+    return false;
+  }
+  return true;
+}
 }
