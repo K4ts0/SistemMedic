@@ -45,7 +45,11 @@
         container.innerHTML = notas.map(note => `
           <div class="note-item" data-id="${note.id}">
             <div class="info">
-              <h3>${note.title}</h3>
+              <h3>
+                <a href="view.html?id=${note.id}" style="color: #1a3b5d; text-decoration: none;">
+                  ${note.title}
+                </a>
+              </h3>
               <p>${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</p>
               <small style="color: #999;">Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
             </div>
