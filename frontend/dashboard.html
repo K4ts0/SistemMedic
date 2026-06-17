@@ -32,10 +32,11 @@
       getNotes, 
       deleteNote,
       toggleFavorite,
-      ensureValidSession
+      ensureValidSession,
+      validateSession
     } from './supabase-config.js';
 
-    // Verifica sessão única
+    // Verifica sessão única no carregamento
     if (!await ensureValidSession()) {
       // já redirecionado
     }
@@ -117,10 +118,12 @@
       window.location.href = 'index.html';
     });
 
-    // Verifica sessão a cada 30s
+    // Verificação periódica a cada 30 segundos (opcional, mas mantido)
     setInterval(async () => {
-      if (!await ensureValidSession()) {
-        // já redirecionado
+      if (!await validateSession()) {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
       }
     }, 30000);
 
