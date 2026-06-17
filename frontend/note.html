@@ -25,6 +25,11 @@
   <script type="module">
     import { getCurrentUser, getNote, createNote, updateNote } from './supabase-config.js';
 
+    import { ensureValidSession, getCurrentUser } from './supabase-config.js';
+
+    if (!await ensureValidSession()) {
+      // já redirecionado
+    }
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
 
