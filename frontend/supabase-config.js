@@ -1,6 +1,5 @@
 // supabase-config.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite } from './supabase-config.js';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpxd3V6eXR6ZXl0cHlwYnBpYWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDYxNTAsImV4cCI6MjA5NzIyMjE1MH0.51RDmGcO2b_Dvq-iW98OX3GKv6xeO9vlgwQHuRW3omA';
@@ -112,6 +111,8 @@ export async function registerSession() {
   });
   if (error) throw error;
   localStorage.setItem('session_id', sessionId);
+  // Força atualização do token (opcional, mas ajuda)
+  await supabase.auth.refreshSession();
   return sessionId;
 }
 
@@ -132,41 +133,4 @@ export async function ensureValidSession() {
     return false;
   }
   return true;
-
-  // Gera um identificador de sessão único
-function generateSessionId() {
-  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
-// Salva o session_id no metadata do usuário
-export async function registerSession() {
-  const sessionId = generateSessionId();
-  const { data, error } = await supabase.auth.updateUser({
-    data: { session_id: sessionId }
-  });
-  if (error) throw error;
-  localStorage.setItem('session_id', sessionId);
-  return sessionId;
-}
-
-// Verifica se a sessão atual é válida
-export async function validateSession() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const storedSession = localStorage.getItem('session_id');
-  const currentSession = user.user_metadata?.session_id;
-  return storedSession && currentSession && storedSession === currentSession;
-}
-
-// Força logout se a sessão for inválida
-export async function ensureValidSession() {
-  const isValid = await validateSession();
-  if (!isValid) {
-    await signOut();
-    localStorage.removeItem('session_id');
-    window.location.href = 'index.html';
-    return false;
-  }
-  return true;
-}
 }
