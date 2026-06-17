@@ -19,7 +19,7 @@
   </div>
 
   <script type="module">
-    import { getNote, getCurrentUser, ensureValidSession } from './supabase-config.js';
+    import { getNote, getCurrentUser, ensureValidSession, validateSession, signOut } from './supabase-config.js';
 
     if (!await ensureValidSession()) {
       // já redirecionado
@@ -47,10 +47,12 @@
       window.location.href = 'dashboard.html';
     }
 
-    // Verifica sessão a cada 30s
+    // Verificação periódica
     setInterval(async () => {
-      if (!await ensureValidSession()) {
-        // já redirecionado
+      if (!await validateSession()) {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
       }
     }, 30000);
   </script>
