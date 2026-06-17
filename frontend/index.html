@@ -22,7 +22,6 @@
   </div>
 
   <script type="module">
-    // 👇 IMPORTE registerSession
     import { signIn, getCurrentUser, registerSession } from './supabase-config.js';
 
     try {
@@ -37,7 +36,6 @@
 
       try {
         await signIn(email, password);
-        // 👇 REGISTRA A SESSÃO ÚNICA
         await registerSession();
         window.location.href = 'dashboard.html';
       } catch (error) {
