@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Anotação</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <a href="dashboard.html" class="voltar">← Voltar</a>
+    <h1 id="noteTitle"></h1>
+    <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;"></div>
+    <div style="margin-top: 20px;">
+      <button onclick="window.location.href='note.html?id=' + getNoteId()">Editar</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getNote, getCurrentUser } from './supabase-config.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const noteId = urlParams.get('id');
+
+    if (!noteId) {
+      window.location.href = 'dashboard.html';
+    }
+
+    const user = await getCurrentUser();
+    if (!user) window.location.href = 'index.html';
+
+    try {
+      const note = await getNote(noteId);
+      document.getElementById('noteTitle').textContent = note.title;
+      document.getElementById('noteContent').textContent = note.content;
+      window.getNoteId = () => noteId;
+    } catch (error) {
+      alert('Erro ao carregar nota.');
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>
