@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Funções de autenticação
+// ===== AUTENTICAÇÃO =====
 export async function signUp(email, password, name) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -33,7 +33,7 @@ export async function getCurrentUser() {
   return user;
 }
 
-// Funções CRUD para notas
+// ===== CRUD NOTAS =====
 export async function getNotes() {
   const { data, error } = await supabase
     .from('notes')
@@ -54,7 +54,6 @@ export async function getNote(id) {
 }
 
 export async function createNote(title, content) {
-  // Obtém o usuário atual
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
@@ -63,7 +62,7 @@ export async function createNote(title, content) {
     .insert([{ 
       title, 
       content, 
-      user_id: user.id  // 👈 Adiciona o user_id manualmente
+      user_id: user.id
     }])
     .select();
 
@@ -87,4 +86,49 @@ export async function deleteNote(id) {
     .delete()
     .eq('id', id);
   if (error) throw error;
+}
+
+// ===== FAVORITOS =====
+export async function toggleFavorite(id, currentState) {
+  const { data, error } = await supabase
+    .from('notes')
+    .update({ is_favorite: !currentState })
+    .eq('id', id)
+    .select();
+  if (error) throw error;
+  return data[0];
+}
+
+// ===== SESSÃO ÚNICA =====
+function generateSessionId() {
+  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+export async function registerSession() {
+  const sessionId = generateSessionId();
+  const { data, error } = await supabase.auth.updateUser({
+    data: { session_id: sessionId }
+  });
+  if (error) throw error;
+  localStorage.setItem('session_id', sessionId);
+  return sessionId;
+}
+
+export async function validateSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const storedSession = localStorage.getItem('session_id');
+  const currentSession = user.user_metadata?.session_id;
+  return storedSession && currentSession && storedSession === currentSession;
+}
+
+export async function ensureValidSession() {
+  const isValid = await validateSession();
+  if (!isValid) {
+    await signOut();
+    localStorage.removeItem('session_id');
+    window.location.href = 'index.html';
+    return false;
+  }
+  return true;
 }
