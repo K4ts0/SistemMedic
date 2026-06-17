@@ -12,13 +12,21 @@
     <a href="dashboard.html" class="voltar">← Voltar</a>
     <h1 id="noteTitle"></h1>
     <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;"></div>
-    <div style="margin-top: 20px;">
-      <button onclick="window.location.href='note.html?id=' + getNoteId()">Editar</button>
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <button onclick="editar()">Editar</button>
+      <button onclick="window.location.href='dashboard.html'">Voltar</button>
     </div>
   </div>
 
   <script type="module">
-    import { getNote, getCurrentUser } from './supabase-config.js';
+    import { getNote, getCurrentUser, ensureValidSession } from './supabase-config.js';
+
+    if (!await ensureValidSession()) {
+      // já redirecionado
+    }
+
+    const user = await getCurrentUser();
+    if (!user) window.location.href = 'index.html';
 
     const urlParams = new URLSearchParams(window.location.search);
     const noteId = urlParams.get('id');
@@ -27,18 +35,24 @@
       window.location.href = 'dashboard.html';
     }
 
-    const user = await getCurrentUser();
-    if (!user) window.location.href = 'index.html';
-
     try {
       const note = await getNote(noteId);
       document.getElementById('noteTitle').textContent = note.title;
       document.getElementById('noteContent').textContent = note.content;
-      window.getNoteId = () => noteId;
+      window.editar = () => {
+        window.location.href = `note.html?id=${noteId}`;
+      };
     } catch (error) {
       alert('Erro ao carregar nota.');
       window.location.href = 'dashboard.html';
     }
+
+    // Verifica sessão a cada 30s
+    setInterval(async () => {
+      if (!await ensureValidSession()) {
+        // já redirecionado
+      }
+    }, 30000);
   </script>
 </body>
 </html>
