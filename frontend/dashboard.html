@@ -19,27 +19,65 @@
 
     <div id="mensagem" class="mensagem"></div>
     <button id="novaNotaBtn" style="margin-bottom: 20px;">+ Nova Anotação</button>
+
     <div id="listaNotas" class="note-list">
       <p style="color: #888;">Carregando...</p>
     </div>
   </div>
 
   <script type="module">
-    import { getCurrentUser, signOut, getNotes, deleteNote } from './supabase-config.js';
+    import { 
+      getCurrentUser, 
+      signOut, 
+      getNotes, 
+      deleteNote,
+      toggleFavorite,
+      ensureValidSession
+    } from './supabase-config.js';
 
-    // Verifica login
-    const user = await getCurrentUser();
-    if (!user) {
-      window.location.href = 'index.html';
+    // Verifica sessão única
+    if (!await ensureValidSession()) {
+      // já redirecionado
     }
+
+    const user = await getCurrentUser();
+    if (!user) window.location.href = 'index.html';
     document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
+
+    window.toggleFavorito = async (id, currentState) => {
+      try {
+        await toggleFavorite(id, currentState);
+        carregarNotas();
+      } catch (error) {
+        alert('Erro ao alterar favorito.');
+      }
+    };
+
+    window.visualizarNota = (id) => {
+      window.location.href = `view.html?id=${id}`;
+    };
+
+    window.editarNota = (id) => {
+      window.location.href = `note.html?id=${id}`;
+    };
+
+    window.excluirNota = async (id) => {
+      if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+      try {
+        await deleteNote(id);
+        showMessage('Nota excluída com sucesso!', 'sucesso');
+        carregarNotas();
+      } catch (error) {
+        showMessage('Erro ao excluir nota.', 'erro');
+      }
+    };
 
     async function carregarNotas() {
       try {
         const notas = await getNotes();
         const container = document.getElementById('listaNotas');
         if (notas.length === 0) {
-          container.innerHTML = '<p style="color: #888;">Nenhuma anotação ainda.</p>';
+          container.innerHTML = '<p style="color: #888;">Nenhuma anotação ainda. Clique em "Nova Anotação" para começar.</p>';
           return;
         }
         container.innerHTML = notas.map(note => `
@@ -54,30 +92,20 @@
               <small style="color: #999;">Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
             </div>
             <div class="actions">
+              <button onclick="toggleFavorito('${note.id}', ${note.is_favorite})" 
+                      style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+                ${note.is_favorite ? '⭐' : '☆'}
+              </button>
+              <button onclick="visualizarNota('${note.id}')">Visualizar</button>
               <button onclick="editarNota('${note.id}')">Editar</button>
               <button class="danger" onclick="excluirNota('${note.id}')">Excluir</button>
             </div>
           </div>
         `).join('');
       } catch (error) {
-        showMessage('mensagem', 'Erro ao carregar notas.', 'erro');
+        showMessage('Erro ao carregar notas.', 'erro');
       }
     }
-
-    window.editarNota = (id) => {
-      window.location.href = `note.html?id=${id}`;
-    };
-
-    window.excluirNota = async (id) => {
-      if (!confirm('Tem certeza?')) return;
-      try {
-        await deleteNote(id);
-        showMessage('mensagem', 'Nota excluída com sucesso!', 'sucesso');
-        carregarNotas();
-      } catch (error) {
-        showMessage('mensagem', 'Erro ao excluir nota.', 'erro');
-      }
-    };
 
     document.getElementById('novaNotaBtn').addEventListener('click', () => {
       window.location.href = 'note.html';
@@ -85,11 +113,19 @@
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await signOut();
+      localStorage.removeItem('session_id');
       window.location.href = 'index.html';
     });
 
-    window.showMessage = (id, msg, type) => {
-      const el = document.getElementById(id);
+    // Verifica sessão a cada 30s
+    setInterval(async () => {
+      if (!await ensureValidSession()) {
+        // já redirecionado
+      }
+    }, 30000);
+
+    window.showMessage = (msg, type = 'erro') => {
+      const el = document.getElementById('mensagem');
       el.textContent = msg;
       el.className = `mensagem ${type}`;
       el.style.display = 'block';
