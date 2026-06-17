@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minhas Anotações</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Minhas Anotações</h1>
+        <span class="user">👤 <span id="userName"></span></span>
+      </div>
+      <button class="logout" id="logoutBtn">Sair</button>
+    </div>
+
+    <div id="mensagem" class="mensagem"></div>
+    <button id="novaNotaBtn" style="margin-bottom: 20px;">+ Nova Anotação</button>
+    <div id="listaNotas" class="note-list">
+      <p style="color: #888;">Carregando...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getCurrentUser, signOut, getNotes, deleteNote } from './supabase-config.js';
+
+    // Verifica login
+    const user = await getCurrentUser();
+    if (!user) {
+      window.location.href = 'index.html';
+    }
+    document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
+
+    async function carregarNotas() {
+      try {
+        const notas = await getNotes();
+        const container = document.getElementById('listaNotas');
+        if (notas.length === 0) {
+          container.innerHTML = '<p style="color: #888;">Nenhuma anotação ainda.</p>';
+          return;
+        }
+        container.innerHTML = notas.map(note => `
+          <div class="note-item" data-id="${note.id}">
+            <div class="info">
+              <h3>${note.title}</h3>
+              <p>${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</p>
+              <small style="color: #999;">Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
+            </div>
+            <div class="actions">
+              <button onclick="editarNota('${note.id}')">Editar</button>
+              <button class="danger" onclick="excluirNota('${note.id}')">Excluir</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        showMessage('mensagem', 'Erro ao carregar notas.', 'erro');
+      }
+    }
+
+    window.editarNota = (id) => {
+      window.location.href = `note.html?id=${id}`;
+    };
+
+    window.excluirNota = async (id) => {
+      if (!confirm('Tem certeza?')) return;
+      try {
+        await deleteNote(id);
+        showMessage('mensagem', 'Nota excluída com sucesso!', 'sucesso');
+        carregarNotas();
+      } catch (error) {
+        showMessage('mensagem', 'Erro ao excluir nota.', 'erro');
+      }
+    };
+
+    document.getElementById('novaNotaBtn').addEventListener('click', () => {
+      window.location.href = 'note.html';
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut();
+      window.location.href = 'index.html';
+    });
+
+    window.showMessage = (id, msg, type) => {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = `mensagem ${type}`;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    };
+
+    carregarNotas();
+  </script>
+</body>
+</html>

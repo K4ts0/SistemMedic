@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anotação</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <a href="dashboard.html" class="voltar">← Voltar</a>
+    <h1 id="formTitle">Nova Anotação</h1>
+    <div id="mensagem" class="mensagem"></div>
+    <form id="noteForm">
+      <input type="text" id="noteTitle" placeholder="Título" required />
+      <textarea id="noteContent" placeholder="Digite sua anotação..." required></textarea>
+      <div class="buttons-row">
+        <button type="submit" id="saveBtn">Salvar</button>
+        <button type="button" id="cancelBtn" class="danger" style="background: #ccc; color: #333;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { getCurrentUser, getNote, createNote, updateNote } from './supabase-config.js';
+
+    const user = await getCurrentUser();
+    if (!user) window.location.href = 'index.html';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const noteId = urlParams.get('id');
+    const isEditing = !!noteId;
+
+    if (isEditing) {
+      document.getElementById('formTitle').textContent = 'Editar Anotação';
+      try {
+        const note = await getNote(noteId);
+        document.getElementById('noteTitle').value = note.title;
+        document.getElementById('noteContent').value = note.content;
+      } catch (error) {
+        showMessage('mensagem', 'Erro ao carregar nota.', 'erro');
+      }
+    }
+
+    document.getElementById('noteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('noteTitle').value;
+      const content = document.getElementById('noteContent').value;
+
+      try {
+        if (isEditing) {
+          await updateNote(noteId, title, content);
+        } else {
+          await createNote(title, content);
+        }
+        showMessage('mensagem', `Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } catch (error) {
+        showMessage('mensagem', error.message || 'Erro ao salvar.', 'erro');
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      window.location.href = 'dashboard.html';
+    });
+
+    function showMessage(id, msg, type) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = `mensagem ${type}`;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+  </script>
+</body>
+</html>
