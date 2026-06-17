@@ -3,44 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - Anotações Médicas</title>
+  <title>Cadastro - Anotações Médicas</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Login</h1>
+    <h1>Cadastro</h1>
     <div id="mensagem" class="mensagem"></div>
-    <form id="loginForm">
+    <form id="registerForm">
+      <input type="text" id="name" placeholder="Nome completo" required />
       <input type="email" id="email" placeholder="E-mail" required />
       <input type="password" id="password" placeholder="Senha" required />
-      <button type="submit">Entrar</button>
+      <button type="submit">Cadastrar</button>
     </form>
     <p style="margin-top: 15px; text-align: center;">
-      Não tem conta? <a href="register.html">Cadastre-se</a>
+      Já tem conta? <a href="index.html">Faça login</a>
     </p>
   </div>
 
   <script type="module">
-    import { signIn, getCurrentUser, registerSession } from './supabase-config.js';
+    import { signUp } from './supabase-config.js';
 
-    try {
-      const user = await getCurrentUser();
-      if (user) window.location.href = 'dashboard.html';
-    } catch {}
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const name = document.getElementById('name').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
       try {
-        await signIn(email, password);
-        await registerSession();
-        window.location.href = 'dashboard.html';
+        await signUp(email, password, name);
+        alert('Cadastro realizado com sucesso! Faça login.');
+        window.location.href = 'index.html';
       } catch (error) {
         const msg = document.getElementById('mensagem');
-        msg.textContent = error.message || 'Erro no login';
+        msg.textContent = error.message || 'Erro no cadastro';
         msg.className = 'mensagem erro';
         msg.style.display = 'block';
       }
