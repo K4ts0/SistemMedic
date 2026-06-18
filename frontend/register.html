@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Visualizar Anotação — NoteMed for Unisystem</title>
+  <title>Cadastro — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,82 +14,59 @@
 <base target="_blank">
 </head>
 <body>
-  <div class="container">
-    <a href="#" class="back-link" id="backLink">
-      <span>←</span> Voltar
-    </a>
-
-    <div class="note-view">
-      <h1 id="noteTitle">Carregando...</h1>
-      <div class="note-meta-bar">
-        <span class="badge badge-primary" id="noteBadge">📄 Anotação</span>
-        <span class="note-date" id="noteDate">🕐 Carregando...</span>
+  <div class="auth-container">
+    <div class="auth-card card-elevated">
+      <div class="auth-header">
+        <div class="logo">📝</div>
+        <h1>NoteMed for Unisystem</h1>
+        <p>Crie sua conta para começar</p>
       </div>
-      <div class="note-body" id="noteContent"></div>
-      <div class="buttons-row" style="margin-top:32px; padding-top:24px; border-top:1px solid var(--gray-100);">
-        <button class="btn btn-primary" id="btnEditar">
-          <span>✏️</span> Editar
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label" for="name">Nome completo</label>
+          <input type="text" id="name" placeholder="Dr. João Silva" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Senha</label>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" style="margin-top:8px;">
+          <span>✨</span> Cadastrar
         </button>
-        <button class="btn btn-secondary" id="btnVoltar">
-          <span>←</span> Voltar
-        </button>
+      </form>
+
+      <div class="auth-footer">
+        Já tem conta? <a href="index.html">Faça login</a>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { getNote, getCurrentUser, ensureValidSession, checkSingleSession } from './supabase-config.js';
+    import { signUp } from './supabase-config.js';
 
-    (async function init() {
-      document.getElementById('backLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = 'dashboard.html';
-      });
-      document.getElementById('btnVoltar').addEventListener('click', () => {
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = 'dashboard.html';
-      });
-
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
-
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const noteId = urlParams.get('id');
-
-      if (!noteId) { window.location.href = 'dashboard.html'; }
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
       try {
-        const note = await getNote(noteId);
-        document.getElementById('noteTitle').textContent = note.title;
-        document.getElementById('noteContent').innerHTML = note.content || '';
-
-        const badge = document.getElementById('noteBadge');
-        if (note.is_favorite) {
-          badge.textContent = '⭐ Favorita';
-          badge.className = 'badge badge-success';
-        }
-
-        document.getElementById('noteDate').innerHTML = `
-          <span>🕐</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', {
-            day: '2-digit', month: 'long', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          })}
-        `;
-
-        document.getElementById('btnEditar').addEventListener('click', () => {
-          window.location.href = `note.html?id=${noteId}`;
-        });
+        await signUp(email, password, name);
+        alert('Cadastro realizado com sucesso! Faça login.');
+        window.location.href = 'index.html';
       } catch (error) {
-        alert('Erro ao carregar nota.');
-        window.location.href = 'dashboard.html';
+        const msg = document.getElementById('mensagem');
+        msg.textContent = error.message || 'Erro no cadastro';
+        msg.className = 'mensagem erro';
       }
-
-      setInterval(async () => { await checkSingleSession(); }, 10000);
-    })();
+    });
   </script>
 </body>
 </html>
