@@ -23,16 +23,15 @@
   </div>
 
   <script type="module">
-    // ✅ CORREÇÃO 1: Importação única e completa
     import { 
       getCurrentUser, 
       getNote, 
       createNote, 
       updateNote,
-      ensureValidSession 
+      ensureValidSession,
+      checkSingleSession  // ✅ NOVO
     } from './supabase-config.js';
 
-    // ✅ CORREÇÃO 2: Verificação de sessão correta
     if (!await ensureValidSession()) {
       // já redirecionado
     }
@@ -84,6 +83,11 @@
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     }
+
+    // ✅ NOVO: Verificação periódica de sessão única
+    setInterval(async () => {
+      await checkSingleSession();
+    }, 10000);
   </script>
 </body>
 </html>
