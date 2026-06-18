@@ -1,4 +1,4 @@
-// supabase-config.js
+// supabase-config.js — NoteMed for Unisystem
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -24,6 +24,10 @@ export async function signIn(email, password) {
 }
 
 export async function signOut() {
+  // Limpa o session_id ao fazer logout
+  try {
+    await supabase.auth.updateUser({ data: { session_id: null } });
+  } catch (e) {}
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
@@ -33,7 +37,7 @@ export async function getCurrentUser() {
   return user;
 }
 
-// ===== CRUD NOTAS =====
+// ===== CRUD NOTAS (com filtro por usuário) =====
 export async function getNotes() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
@@ -67,11 +71,7 @@ export async function createNote(title, content) {
 
   const { data, error } = await supabase
     .from('notes')
-    .insert([{ 
-      title, 
-      content, 
-      user_id: user.id
-    }])
+    .insert([{ title, content, user_id: user.id }])
     .select();
 
   if (error) throw error;
@@ -119,7 +119,7 @@ export async function toggleFavorite(id, currentState) {
   return data[0];
 }
 
-// ===== SESSÃO ÚNICA - 1 LOGIN POR USUÁRIO =====
+// ===== SESSÃO ÚNICA — 1 LOGIN POR USUÁRIO =====
 
 function generateSessionId() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -127,44 +127,37 @@ function generateSessionId() {
 
 /**
  * Registra uma nova sessão para o usuário.
- * Se houver outra sessão ativa em outro dispositivo, ela será invalidada.
+ * Ao fazer login, gera um novo session_id e salva nos metadados.
+ * Isso invalida qualquer sessão anterior em outros dispositivos.
  */
 export async function registerSession() {
   const sessionId = generateSessionId();
-  
-  // Atualiza os metadados do usuário com o novo session_id
+
   const { data, error } = await supabase.auth.updateUser({
     data: { session_id: sessionId }
   });
-  
+
   if (error) throw error;
-  
-  // Salva o session_id localmente
+
   localStorage.setItem('session_id', sessionId);
-  
-  // Força atualização do token
   await supabase.auth.refreshSession();
-  
+
   return sessionId;
 }
 
 /**
  * Valida se a sessão atual ainda é válida.
- * Retorna false se:
- * - Não houver sessão local
- * - O session_id local for diferente do session_id nos metadados do usuário (outro dispositivo fez login)
+ * Compara o session_id local com o session_id nos metadados do usuário no Supabase.
  */
 export async function validateSession() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  
+
   const storedSession = localStorage.getItem('session_id');
   const currentSession = user.user_metadata?.session_id;
-  
-  // Se não há sessão local ou não há sessão no servidor = inválido
+
   if (!storedSession || !currentSession) return false;
-  
-  // Se as sessões não batem = outro dispositivo fez login
+
   return storedSession === currentSession;
 }
 
@@ -184,27 +177,27 @@ export async function ensureValidSession() {
 }
 
 /**
- * Verifica se há uma sessão ativa em outro dispositivo
- * e força o logout se detectar conflito.
- * Usado nas páginas protegidas para detectar login em outro dispositivo.
+ * Verifica se há uma sessão ativa em outro dispositivo.
+ * Se detectar que outro dispositivo fez login (session_id diferente),
+ * força o logout com alerta informando o usuário.
  */
 export async function checkSingleSession() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  
+
   const storedSession = localStorage.getItem('session_id');
   const serverSession = user.user_metadata?.session_id;
-  
+
   // Se o servidor tem um session_id diferente do local,
   // significa que outro dispositivo fez login
   if (serverSession && storedSession && serverSession !== storedSession) {
     // Sessão foi sobrescrita por outro dispositivo
     await signOut();
     localStorage.removeItem('session_id');
-    alert('Sua sessão foi encerrada porque você fez login em outro dispositivo.');
+    alert('⚠️ Sua sessão foi encerrada porque você fez login em outro dispositivo.');
     window.location.href = 'index.html';
     return false;
   }
-  
+
   return true;
 }
