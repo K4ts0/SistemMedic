@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#3B82F6" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Minhas Anotações — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
@@ -33,10 +33,10 @@
 
     <!-- Navigation -->
     <div class="nav-menu">
-      <a href="dashboard.html" class="nav-item active"><span>📋</span> Anotações</a>
-      <a href="profile.html" class="nav-item"><span>👤</span> Perfil</a>
-      <a href="chat.html" class="nav-item"><span>💬</span> Chat</a>
-      <a href="cid.html" class="nav-item"><span>🔍</span> CID</a>
+      <button class="nav-item active" data-page="dashboard"><span>📋</span> Anotações</button>
+      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
+      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
+      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -67,149 +67,161 @@
       ensureValidSession, checkSingleSession, getUserProfile
     } from './supabase-config.js';
 
-    if (!await ensureValidSession()) return;
+    // ✅ CORREÇÃO: Função async auto-executável para evitar "Illegal return statement"
+    (async function init() {
+      const isValid = await ensureValidSession();
+      if (!isValid) return;
 
-    const user = await getCurrentUser();
-    if (!user) window.location.href = 'index.html';
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = 'index.html'; return; }
 
-    // Carrega dados do perfil
-    try {
-      const profile = await getUserProfile();
-      document.getElementById('userName').textContent = profile.name || profile.email;
-      const avatarEl = document.getElementById('userAvatar');
-      if (profile.avatar_url) {
-        avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-      } else {
-        const initials = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-        avatarEl.textContent = initials;
-      }
-    } catch (e) {
-      document.getElementById('userName').textContent = user.email;
-    }
-
-    // Clique no perfil vai para página de perfil
-    document.getElementById('userInfo').addEventListener('click', () => {
-      window.location.href = 'profile.html';
-    });
-
-    window.toggleFavorito = async (id, currentState, event) => {
-      event.stopPropagation();
+      // Carrega dados do perfil
       try {
-        await toggleFavorite(id, currentState);
-        showMessage(currentState ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'sucesso');
-        await carregarNotas();
-      } catch (error) {
-        showMessage('Erro ao alterar favorito.', 'erro');
-      }
-    };
-
-    window.visualizarNota = (id) => {
-      window.location.href = `view.html?id=${id}`;
-    };
-
-    window.editarNota = (id) => {
-      window.location.href = `note.html?id=${id}`;
-    };
-
-    window.excluirNota = async (id) => {
-      if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
-      try {
-        await deleteNote(id);
-        showMessage('Nota excluída com sucesso!', 'sucesso');
-        await carregarNotas();
-      } catch (error) {
-        showMessage('Erro ao excluir nota.', 'erro');
-      }
-    };
-
-    async function carregarNotas() {
-      try {
-        const notas = await getNotes();
-        const container = document.getElementById('listaNotas');
-
-        if (notas.length === 0) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">📭</div>
-              <h3>Nenhuma anotação ainda</h3>
-              <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
-            </div>
-          `;
-          return;
+        const profile = await getUserProfile();
+        document.getElementById('userName').textContent = profile.name || profile.email;
+        const avatarEl = document.getElementById('userAvatar');
+        if (profile.avatar_url) {
+          avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        } else {
+          const initials = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+          avatarEl.textContent = initials;
         }
-
-        container.innerHTML = notas.map(note => `
-          <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
-            <div class="note-header">
-              <a href="view.html?id=${note.id}" class="note-title">
-                ${note.title}
-                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
-              </a>
-              <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
-                ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
-              </span>
-            </div>
-            <div class="note-content">${stripHtml(note.content || '')}</div>
-            <div class="note-meta">
-              <div class="note-date">
-                <span>🕐</span>
-                ${new Date(note.updated_at).toLocaleString('pt-BR', { 
-                  day: '2-digit', month: 'short', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit'
-                })}
-              </div>
-              <div class="note-actions">
-                <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
-                        onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
-                        title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
-                  ${note.is_favorite ? '⭐' : '☆'}
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
-                  <span>👁️</span> Visualizar
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
-                  <span>✏️</span> Editar
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
-                  <span>🗑️</span> Excluir
-                </button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-      } catch (error) {
-        showMessage('Erro ao carregar notas.', 'erro');
+      } catch (e) {
+        document.getElementById('userName').textContent = user.email;
       }
-    }
 
-    function stripHtml(html) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || '';
-    }
+      // Clique no perfil vai para página de perfil
+      document.getElementById('userInfo').addEventListener('click', () => {
+        window.location.href = 'profile.html';
+      });
 
-    document.getElementById('novaNotaBtn').addEventListener('click', () => {
-      window.location.href = 'note.html';
-    });
-    document.getElementById('fabNovaNota').addEventListener('click', () => {
-      window.location.href = 'note.html';
-    });
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await signOut();
-      localStorage.removeItem('session_id');
-      window.location.href = 'index.html';
-    });
+      // ✅ CORREÇÃO: Navegação por botões (não links) para evitar recarregar
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const page = btn.dataset.page;
+          if (page) window.location.href = page + '.html';
+        });
+      });
 
-    setInterval(async () => { await checkSingleSession(); }, 10000);
+      window.toggleFavorito = async (id, currentState, event) => {
+        event.stopPropagation();
+        try {
+          await toggleFavorite(id, currentState);
+          showMessage(currentState ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'sucesso');
+          await carregarNotas();
+        } catch (error) {
+          showMessage('Erro ao alterar favorito.', 'erro');
+        }
+      };
 
-    window.showMessage = (msg, type = 'erro') => {
-      const el = document.getElementById('mensagem');
-      el.textContent = msg;
-      el.className = `mensagem ${type}`;
-      setTimeout(() => el.style.display = 'none', 5000);
-    };
+      window.visualizarNota = (id) => {
+        window.location.href = `view.html?id=${id}`;
+      };
 
-    carregarNotas();
+      window.editarNota = (id) => {
+        window.location.href = `note.html?id=${id}`;
+      };
+
+      window.excluirNota = async (id) => {
+        if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+        try {
+          await deleteNote(id);
+          showMessage('Nota excluída com sucesso!', 'sucesso');
+          await carregarNotas();
+        } catch (error) {
+          showMessage('Erro ao excluir nota.', 'erro');
+        }
+      };
+
+      async function carregarNotas() {
+        try {
+          const notas = await getNotes();
+          const container = document.getElementById('listaNotas');
+
+          if (notas.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>Nenhuma anotação ainda</h3>
+                <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = notas.map(note => `
+            <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
+              <div class="note-header">
+                <a href="view.html?id=${note.id}" class="note-title">
+                  ${note.title}
+                  ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
+                </a>
+                <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
+                  ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
+                </span>
+              </div>
+              <div class="note-content">${stripHtml(note.content || '')}</div>
+              <div class="note-meta">
+                <div class="note-date">
+                  <span>🕐</span>
+                  ${new Date(note.updated_at).toLocaleString('pt-BR', { 
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                  })}
+                </div>
+                <div class="note-actions">
+                  <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
+                          onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
+                          title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                    ${note.is_favorite ? '⭐' : '☆'}
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
+                    <span>👁️</span> Visualizar
+                  </button>
+                  <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
+                    <span>✏️</span> Editar
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
+                    <span>🗑️</span> Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } catch (error) {
+          showMessage('Erro ao carregar notas.', 'erro');
+        }
+      }
+
+      function stripHtml(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+      }
+
+      document.getElementById('novaNotaBtn').addEventListener('click', () => {
+        window.location.href = 'note.html';
+      });
+      document.getElementById('fabNovaNota').addEventListener('click', () => {
+        window.location.href = 'note.html';
+      });
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
+      });
+
+      setInterval(async () => { await checkSingleSession(); }, 10000);
+
+      window.showMessage = (msg, type = 'erro') => {
+        const el = document.getElementById('mensagem');
+        el.textContent = msg;
+        el.className = `mensagem ${type}`;
+        setTimeout(() => el.style.display = 'none', 5000);
+      };
+
+      carregarNotas();
+    })();
   </script>
 </body>
 </html>
