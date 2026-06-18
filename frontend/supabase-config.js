@@ -372,7 +372,15 @@ export async function getUnreadCount() {
 
 // ===== BUSCAR USUÁRIO POR ID =====
 export async function findUserById(userId) {
-  // Busca nos metadados dos usuários (usando a função RPC ou buscando na tabela profiles)
+  // 1️⃣ VERIFICAR SESSÃO ATIVA ANTES DE BUSCAR
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    console.error('❌ Usuário não autenticado - não pode buscar profiles');
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  // 2️⃣ FAZER A REQUISIÇÃO COM AUTENTICAÇÃO
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, avatar_url, specialty')
@@ -380,21 +388,34 @@ export async function findUserById(userId) {
     .single();
 
   if (error) {
-    // Se não encontrar na tabela profiles, tenta buscar nos metadados do auth
-    // Como não temos acesso direto a outros usuários no auth, retorna null
+    console.error('Erro ao buscar usuário:', error.message, error.details, error.hint);
+    // Se não encontrar na tabela profiles, retorna null
     return null;
   }
+  
   return data;
 }
 
 export async function searchUserByPartialId(partialId) {
+  // 1️⃣ VERIFICAR SESSÃO ATIVA
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    console.error('❌ Usuário não autenticado');
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, avatar_url, specialty')
     .ilike('id', `%${partialId}%`)
     .limit(10);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Erro na busca parcial:', error.message);
+    throw error;
+  }
+  
   return data || [];
 }
 
