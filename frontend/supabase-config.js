@@ -35,19 +35,29 @@ export async function getCurrentUser() {
 
 // ===== CRUD NOTAS =====
 export async function getNotes() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // ✅ CORREÇÃO: Filtra notas apenas do usuário logado
   const { data, error } = await supabase
     .from('notes')
     .select('*')
+    .eq('user_id', user.id)  // Só mostra notas do usuário atual
     .order('updated_at', { ascending: false });
   if (error) throw error;
   return data;
 }
 
 export async function getNote(id) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // ✅ CORREÇÃO: Verifica se a nota pertence ao usuário
   const { data, error } = await supabase
     .from('notes')
     .select('*')
     .eq('id', id)
+    .eq('user_id', user.id)  // Só permite acessar notas do próprio usuário
     .single();
   if (error) throw error;
   return data;
@@ -71,29 +81,44 @@ export async function createNote(title, content) {
 }
 
 export async function updateNote(id, title, content) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // ✅ CORREÇÃO: Só atualiza se a nota pertencer ao usuário
   const { data, error } = await supabase
     .from('notes')
     .update({ title, content })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select();
   if (error) throw error;
   return data[0];
 }
 
 export async function deleteNote(id) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // ✅ CORREÇÃO: Só deleta se a nota pertencer ao usuário
   const { error } = await supabase
     .from('notes')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
   if (error) throw error;
 }
 
 // ===== FAVORITOS =====
 export async function toggleFavorite(id, currentState) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // ✅ CORREÇÃO: Só altera favorito se a nota pertencer ao usuário
   const { data, error } = await supabase
     .from('notes')
     .update({ is_favorite: !currentState })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select();
   if (error) throw error;
   return data[0];
@@ -111,7 +136,6 @@ export async function registerSession() {
   });
   if (error) throw error;
   localStorage.setItem('session_id', sessionId);
-  // Força atualização do token (opcional, mas ajuda)
   await supabase.auth.refreshSession();
   return sessionId;
 }
