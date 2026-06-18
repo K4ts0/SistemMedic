@@ -432,4 +432,49 @@ export async function checkSingleSession() {
     return false;
   }
   return true;
+
+  // ===== BUSCAR USUÁRIO POR NOME/EMAIL/ID =====
+export async function findUserById(userId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  // Se parece UUID completo, busca exato
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  
+  if (uuidRegex.test(userId)) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url, specialty')
+      .eq('id', userId)
+      .single();
+    
+    if (error) return null;
+    return data;
+  }
+  
+  // Se não for UUID, busca por nome ou email
+  return null; // delega para searchUserByPartialId
+}
+
+export async function searchUserByPartialId(partialId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty')
+    .or(`name.ilike.%${partialId}%,email.ilike.%${partialId}%`)
+    .limit(10);
+
+  if (error) {
+    console.error('Erro na busca:', error.message);
+    throw error;
+  }
+  
+  return data || [];
+}
 }
