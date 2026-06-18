@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#3B82F6" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Visualizar Anotação — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
@@ -40,53 +40,56 @@
   <script type="module">
     import { getNote, getCurrentUser, ensureValidSession, checkSingleSession } from './supabase-config.js';
 
-    document.getElementById('backLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      if (window.history.length > 1) window.history.back();
-      else window.location.href = 'dashboard.html';
-    });
-    document.getElementById('btnVoltar').addEventListener('click', () => {
-      if (window.history.length > 1) window.history.back();
-      else window.location.href = 'dashboard.html';
-    });
+    (async function init() {
+      document.getElementById('backLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'dashboard.html';
+      });
+      document.getElementById('btnVoltar').addEventListener('click', () => {
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'dashboard.html';
+      });
 
-    if (!await ensureValidSession()) return;
+      const isValid = await ensureValidSession();
+      if (!isValid) return;
 
-    const user = await getCurrentUser();
-    if (!user) window.location.href = 'index.html';
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = 'index.html'; return; }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const noteId = urlParams.get('id');
+      const urlParams = new URLSearchParams(window.location.search);
+      const noteId = urlParams.get('id');
 
-    if (!noteId) { window.location.href = 'dashboard.html'; }
+      if (!noteId) { window.location.href = 'dashboard.html'; }
 
-    try {
-      const note = await getNote(noteId);
-      document.getElementById('noteTitle').textContent = note.title;
-      document.getElementById('noteContent').innerHTML = note.content || '';
+      try {
+        const note = await getNote(noteId);
+        document.getElementById('noteTitle').textContent = note.title;
+        document.getElementById('noteContent').innerHTML = note.content || '';
 
-      const badge = document.getElementById('noteBadge');
-      if (note.is_favorite) {
-        badge.textContent = '⭐ Favorita';
-        badge.className = 'badge badge-success';
+        const badge = document.getElementById('noteBadge');
+        if (note.is_favorite) {
+          badge.textContent = '⭐ Favorita';
+          badge.className = 'badge badge-success';
+        }
+
+        document.getElementById('noteDate').innerHTML = `
+          <span>🕐</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', {
+            day: '2-digit', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          })}
+        `;
+
+        document.getElementById('btnEditar').addEventListener('click', () => {
+          window.location.href = `note.html?id=${noteId}`;
+        });
+      } catch (error) {
+        alert('Erro ao carregar nota.');
+        window.location.href = 'dashboard.html';
       }
 
-      document.getElementById('noteDate').innerHTML = `
-        <span>🕐</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', {
-          day: '2-digit', month: 'long', year: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        })}
-      `;
-
-      document.getElementById('btnEditar').addEventListener('click', () => {
-        window.location.href = `note.html?id=${noteId}`;
-      });
-    } catch (error) {
-      alert('Erro ao carregar nota.');
-      window.location.href = 'dashboard.html';
-    }
-
-    setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkSingleSession(); }, 10000);
+    })();
   </script>
 </body>
 </html>
