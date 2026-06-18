@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Chat — NoteMed for Unisystem</title>
+  <title>Meu Perfil — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,81 +14,166 @@
 <base target="_blank">
 </head>
 <body>
-  <div class="container container-chat">
+  <div class="container">
     <!-- Header -->
     <div class="header">
       <div class="header-brand">
         <div class="logo-icon">📝</div>
         <div>
           <h1>NoteMed for Unisystem</h1>
-          <div class="subtitle">Chat Médico</div>
+          <div class="subtitle">Meu Perfil</div>
         </div>
       </div>
-      <div class="user-info" id="userInfo">
-        <div class="avatar" id="headerAvatar">👤</div>
-        <span class="user-name" id="headerName">...</span>
-        <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Sino de Notificações -->
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <span class="bell-icon">🔔</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>🔔 Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty">
+                <div class="empty-icon">📭</div>
+                <p>Sem notificações</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="user-info" id="userInfo">
+          <div class="avatar" id="headerAvatar">👤</div>
+          <span class="user-name" id="headerName">...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+        </div>
       </div>
     </div>
 
     <!-- Navigation -->
     <div class="nav-menu">
       <button class="nav-item" data-page="dashboard"><span>📋</span> Anotações</button>
-      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item active" data-page="chat"><span>💬</span> Chat</button>
+      <button class="nav-item active" data-page="profile"><span>👤</span> Perfil</button>
+      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
       <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
 
-    <!-- User List -->
-    <div class="toolbar" style="margin-bottom:12px;">
-      <div class="toolbar-title">👥 Profissionais</div>
-    </div>
-    <div class="chat-user-list" id="userList">
-      <div class="loading" style="padding:20px;">
-        <div class="loading-spinner"></div>
-        Carregando usuários...
-      </div>
-    </div>
-
-    <!-- Chat Area -->
-    <div class="chat-container" id="chatContainer" style="display:none;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--gray-100);">
-        <div class="avatar" id="chatAvatar" style="width:40px;height:40px;font-size:1rem;">👤</div>
-        <div>
-          <div style="font-weight:600; color:var(--gray-800);" id="chatUserName">...</div>
-          <div style="font-size:0.75rem; color:var(--gray-400); font-family:var(--font-mono);" id="chatUserId">...</div>
+    <div class="card">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar" id="profileAvatar">
+          👤
+          <div class="avatar-upload" id="avatarUpload">📷 Alterar</div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+        <div class="profile-info">
+          <h2 id="profileName">Carregando...</h2>
+          <div class="profile-email" id="profileEmail"></div>
+          <div class="profile-specialty" id="profileSpecialty" style="display:none;">
+            <span>🩺</span> <span id="specialtyText"></span>
+          </div>
         </div>
       </div>
 
-      <div class="chat-messages" id="chatMessages">
-        <div class="empty-state" style="padding:30px 0;">
-          <div class="empty-icon">💬</div>
-          <p>Envie uma mensagem para iniciar a conversa</p>
+      <!-- Stats -->
+      <div class="profile-stats" id="profileStats">
+        <div class="stat-card">
+          <div class="stat-value" id="statNotes">0</div>
+          <div class="stat-label">Anotações</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statFavorites">0</div>
+          <div class="stat-label">Favoritas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statUserId">—</div>
+          <div class="stat-label">ID do Usuário</div>
         </div>
       </div>
 
-      <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" />
-        <button class="btn btn-primary" id="sendBtn" style="border-radius:50%; width:50px; height:50px; padding:0; font-size:1.3rem;">
-          📤
+      <div class="divider">Editar Informações</div>
+
+      <!-- Edit Form -->
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="editName">Nome completo</label>
+          <input type="text" id="editName" placeholder="Dr. João Silva" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editSpecialty">Especialidade</label>
+          <select id="editSpecialty">
+            <option value="">Selecione...</option>
+            <option value="Cardiologia">❤️ Cardiologia</option>
+            <option value="Dermatologia">🔬 Dermatologia</option>
+            <option value="Endocrinologia">🩸 Endocrinologia</option>
+            <option value="Gastroenterologia">🫁 Gastroenterologia</option>
+            <option value="Ginecologia">👩 Ginecologia</option>
+            <option value="Neurologia">🧠 Neurologia</option>
+            <option value="Oftalmologia">👁️ Oftalmologia</option>
+            <option value="Ortopedia">🦴 Ortopedia</option>
+            <option value="Pediatria">👶 Pediatria</option>
+            <option value="Psiquiatria">💭 Psiquiatria</option>
+            <option value="Urologia">🚹 Urologia</option>
+            <option value="Clínica Geral">🩺 Clínica Geral</option>
+            <option value="Outra">📋 Outra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editCrm">CRM / Registro Profissional</label>
+          <input type="text" id="editCrm" placeholder="CRM-SP 123456" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editPhone">Telefone</label>
+          <input type="tel" id="editPhone" placeholder="(11) 99999-9999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editBio">Biografia / Observações</label>
+          <textarea id="editBio" placeholder="Breve descrição sobre você..." style="min-height:100px;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="saveProfileBtn">
+          <span>💾</span> Salvar Alterações
         </button>
-      </div>
+      </form>
     </div>
+  </div>
 
-    <div class="empty-state" id="noChatSelected" style="padding:60px 0;">
-      <div class="empty-icon">👥</div>
-      <h3>Selecione um profissional</h3>
-      <p>Clique em um usuário acima para iniciar uma conversa.</p>
+  <!-- Modal de Mensagem -->
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><span>💬</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message-text" id="modalMessageText"></div>
+        <div class="modal-message-meta">
+          <div class="sender-info">
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+            <span id="modalSenderName">...</span>
+          </div>
+          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
+        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, getChatUsers, sendMessage, getMessages
+      getUserProfile, updateUserProfile, getNotes,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
+
+    let currentUserId = null;
+    let lastMessageId = null;
 
     (async function init() {
       const isValid = await ensureValidSession();
@@ -96,11 +181,9 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
+      currentUserId = user.id;
 
-      let currentChatUser = null;
-      let pollInterval = null;
-
-      // ✅ CORREÇÃO: Navegação por botões
+      // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const page = btn.dataset.page;
@@ -108,117 +191,97 @@
         });
       });
 
-      // Load header
-      try {
-        const profile = await getUserProfile();
-        document.getElementById('headerName').textContent = profile.name || profile.email;
-        const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) {
-          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        } else {
-          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-        }
-      } catch (e) {}
+      // ===== NOTIFICAÇÕES =====
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const badge = document.getElementById('notificationBadge');
 
-      // Load users
-      async function loadUsers() {
+      bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) loadNotifications();
+      });
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+      });
+      document.getElementById('markAllRead').addEventListener('click', async () => {
+        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
+      });
+
+      async function loadNotifications() {
         try {
-          const users = await getChatUsers();
-          const container = document.getElementById('userList');
-
-          if (users.length === 0) {
-            container.innerHTML = '<p style="color:var(--gray-400); font-size:0.9rem; padding:10px;">Nenhum outro usuário encontrado.</p>';
+          const messages = await getUnreadMessages();
+          const list = document.getElementById('notificationList');
+          if (messages.length === 0) {
+            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
             return;
           }
-
-          container.innerHTML = users.map(u => `
-            <div class="chat-user-item" data-id="${u.id}" data-name="${u.name || u.email}" data-avatar="${u.avatar_url || ''}" data-specialty="${u.specialty || ''}">
-              <div class="user-avatar">
-                ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : (u.name || u.email || 'U').charAt(0).toUpperCase()}
+          list.innerHTML = messages.map(msg => {
+            const sender = msg.sender || {};
+            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+            return `
+              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
+                <div class="notif-avatar">${avatar}</div>
+                <div class="notif-content">
+                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
+                  <div class="notif-text">${escapeHtml(msg.content)}</div>
+                  <div class="notif-time">${time}</div>
+                </div>
               </div>
-              <div>
-                <div style="font-weight:600; font-size:0.9rem; color:var(--gray-700);">${u.name || u.email}</div>
-                <div class="user-id">#${u.id.substring(0, 8)}</div>
-                ${u.specialty ? `<div style="font-size:0.75rem; color:var(--gray-400);">🩺 ${u.specialty}</div>` : ''}
-              </div>
-            </div>
-          `).join('');
-
-          document.querySelectorAll('.chat-user-item').forEach(item => {
-            item.addEventListener('click', () => openChat(item.dataset));
+            `;
+          }).join('');
+          document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              const msgId = item.dataset.msgId;
+              const msg = messages.find(m => m.id === msgId);
+              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+            });
           });
-        } catch (error) {
-          document.getElementById('userList').innerHTML = '<p style="color:var(--gray-400);">Erro ao carregar usuários.</p>';
-        }
+        } catch(e) { console.error(e); }
       }
 
-      async function openChat(userData) {
-        currentChatUser = userData;
-
-        document.querySelectorAll('.chat-user-item').forEach(i => i.classList.remove('active'));
-        document.querySelector(`.chat-user-item[data-id="${userData.id}"]`).classList.add('active');
-
-        document.getElementById('noChatSelected').style.display = 'none';
-        document.getElementById('chatContainer').style.display = 'flex';
-
-        document.getElementById('chatUserName').textContent = userData.name;
-        document.getElementById('chatUserId').textContent = '#' + userData.id.substring(0, 8);
-
-        const avatar = document.getElementById('chatAvatar');
-        if (userData.avatar) {
-          avatar.innerHTML = `<img src="${userData.avatar}" alt="">`;
-        } else {
-          avatar.textContent = (userData.name || 'U').charAt(0).toUpperCase();
-        }
-
-        await loadMessages();
-
-        if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(() => {
-          if (currentChatUser && currentChatUser.id === userData.id) {
-            loadMessages();
-          }
-        }, 3000);
-      }
-
-      async function loadMessages() {
-        if (!currentChatUser) return;
+      async function checkNewMessages() {
         try {
-          const messages = await getMessages(currentChatUser.id);
-          renderMessages(messages);
-        } catch (error) {
-          console.error('Erro ao carregar mensagens:', error);
-        }
+          const count = await getUnreadCount();
+          updateBellState(count);
+          if (count > 0) {
+            const messages = await getUnreadMessages();
+            if (messages.length > 0 && messages[0].id !== lastMessageId) {
+              lastMessageId = messages[0].id;
+              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+            }
+          }
+        } catch(e) {}
       }
 
-      function renderMessages(messages) {
-        const container = document.getElementById('chatMessages');
-        if (messages.length === 0) {
-          container.innerHTML = `
-            <div class="empty-state" style="padding:30px 0;">
-              <div class="empty-icon">💬</div>
-              <p>Envie uma mensagem para iniciar a conversa</p>
-            </div>
-          `;
-          return;
-        }
-
-        container.innerHTML = messages.map(msg => {
-          const isSent = msg.sender_id === user.id;
-          const time = new Date(msg.created_at).toLocaleString('pt-BR', {
-            hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
-          });
-          return `
-            <div class="chat-message ${isSent ? 'sent' : 'received'}">
-              ${!isSent ? `<div class="msg-sender">${currentChatUser.name}</div>` : ''}
-              <div>${escapeHtml(msg.content)}</div>
-              <div class="msg-time">${time}</div>
-            </div>
-          `;
-        }).join('');
-
-        container.scrollTop = container.scrollHeight;
+      function updateBellState(count) {
+        badge.textContent = count;
+        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
+        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
       }
+
+      // ===== MODAL =====
+      const modal = document.getElementById('messageModal');
+      function showMessageModal(msg) {
+        const sender = msg.sender || {};
+        document.getElementById('modalMessageText').textContent = msg.content;
+        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+        const avatar = document.getElementById('modalSenderAvatar');
+        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+        modal.dataset.senderId = msg.sender_id;
+        modal.classList.add('show');
+      }
+      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalGoToChat').addEventListener('click', () => {
+        const senderId = modal.dataset.senderId;
+        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
+        window.location.href = 'chat.html';
+      });
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
 
       function escapeHtml(text) {
         const div = document.createElement('div');
@@ -226,23 +289,83 @@
         return div.innerHTML;
       }
 
-      async function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        const content = input.value.trim();
-        if (!content || !currentChatUser) return;
+      // ===== PERFIL =====
+      let currentProfile = null;
 
-        input.value = '';
+      async function loadProfile() {
         try {
-          await sendMessage(currentChatUser.id, content);
-          await loadMessages();
+          currentProfile = await getUserProfile();
+          const notes = await getNotes();
+          const favorites = notes.filter(n => n.is_favorite);
+
+          document.getElementById('headerName').textContent = currentProfile.name || currentProfile.email;
+          const headerAvatar = document.getElementById('headerAvatar');
+          if (currentProfile.avatar_url) headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
+          else headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
+
+          document.getElementById('profileName').textContent = currentProfile.name || 'Sem nome';
+          document.getElementById('profileEmail').textContent = currentProfile.email;
+
+          const profileAvatar = document.getElementById('profileAvatar');
+          if (currentProfile.avatar_url) profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
+          else profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
+          document.getElementById('avatarUpload').addEventListener('click', () => {
+            document.getElementById('avatarInput').click();
+          });
+
+          if (currentProfile.specialty) {
+            document.getElementById('profileSpecialty').style.display = 'inline-flex';
+            document.getElementById('specialtyText').textContent = currentProfile.specialty;
+          }
+
+          document.getElementById('statNotes').textContent = notes.length;
+          document.getElementById('statFavorites').textContent = favorites.length;
+          document.getElementById('statUserId').textContent = currentProfile.id.substring(0, 8);
+
+          document.getElementById('editName').value = currentProfile.name || '';
+          document.getElementById('editSpecialty').value = currentProfile.specialty || '';
+          document.getElementById('editCrm').value = currentProfile.crm || '';
+          document.getElementById('editPhone').value = currentProfile.phone || '';
+          document.getElementById('editBio').value = currentProfile.bio || '';
+
         } catch (error) {
-          showMessage('Erro ao enviar mensagem.', 'erro');
+          showMessage('Erro ao carregar perfil.', 'erro');
         }
       }
 
-      document.getElementById('sendBtn').addEventListener('click', sendChatMessage);
-      document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
+      document.getElementById('avatarInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { showMessage('Imagem muito grande. Máximo 2MB.', 'erro'); return; }
+        try {
+          showMessage('Enviando foto...', 'info');
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            await updateUserProfile({ avatar_url: event.target.result });
+            showMessage('Foto atualizada!', 'sucesso');
+            await loadProfile();
+          };
+          reader.readAsDataURL(file);
+        } catch (error) { showMessage('Erro ao enviar foto.', 'erro'); }
+      });
+
+      document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('saveProfileBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Salvando...';
+        try {
+          await updateUserProfile({
+            name: document.getElementById('editName').value,
+            specialty: document.getElementById('editSpecialty').value,
+            crm: document.getElementById('editCrm').value,
+            phone: document.getElementById('editPhone').value,
+            bio: document.getElementById('editBio').value
+          });
+          showMessage('Perfil atualizado com sucesso!', 'sucesso');
+          await loadProfile();
+        } catch (error) { showMessage('Erro ao salvar perfil.', 'erro'); }
+        finally { btn.disabled = false; btn.innerHTML = '<span>💾</span> Salvar Alterações'; }
       });
 
       document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -252,6 +375,7 @@
       });
 
       setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkNewMessages(); }, 8000);
 
       window.showMessage = (msg, type = 'erro') => {
         const el = document.getElementById('mensagem');
@@ -260,7 +384,8 @@
         setTimeout(() => el.style.display = 'none', 5000);
       };
 
-      loadUsers();
+      await checkNewMessages();
+      loadProfile();
     })();
   </script>
 </body>
