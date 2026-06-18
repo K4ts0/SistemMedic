@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title id="pageTitle">Nova Anotação — NoteMed for Unisystem</title>
+  <title>Minhas Anotações — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,226 +15,431 @@
 </head>
 <body>
   <div class="container">
-    <a href="#" class="back-link" id="backLink">
-      <span>←</span> Voltar
-    </a>
-
-    <div class="card">
-      <h1 id="formTitle" style="margin-bottom:8px;">📝 Nova Anotação</h1>
-      <p id="formDesc" style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
-        Use o editor abaixo para formatar sua anotação médica.
-      </p>
-
-      <div id="mensagem" class="mensagem"></div>
-
-      <form id="noteForm">
-        <div class="form-group">
-          <label class="form-label" for="noteTitle">Título da anotação</label>
-          <input type="text" id="noteTitle" placeholder="Ex: Consulta Cardiologia - Paciente João" required />
+    <!-- Header -->
+    <div class="header">
+      <div class="header-brand">
+        <div class="logo-icon">📝</div>
+        <div>
+          <h1>NoteMed for Unisystem</h1>
+          <div class="subtitle">Minhas Anotações</div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Conteúdo</label>
-          <!-- Rich Text Editor -->
-          <div class="rich-editor-container">
-            <div class="rich-toolbar" id="richToolbar">
-              <select id="fontFamily" title="Fonte">
-                <option value="">Padrão</option>
-                <option value="Arial">Arial</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Times New Roman">Times</option>
-                <option value="Courier New">Monospace</option>
-                <option value="Verdana">Verdana</option>
-              </select>
-              <div class="toolbar-separator"></div>
-              <select id="fontSize" title="Tamanho">
-                <option value="1">Pequeno</option>
-                <option value="3" selected>Normal</option>
-                <option value="5">Grande</option>
-                <option value="7">Extra</option>
-              </select>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
-              <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
-              <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
-              <button type="button" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda">⬅️</button>
-              <button type="button" data-cmd="justifyCenter" title="Centralizar">⬆️</button>
-              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">➡️</button>
-              <button type="button" data-cmd="justifyFull" title="Justificar">📄</button>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores">• Lista</button>
-              <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="foreColor" data-value="#EF4444" title="Cor do texto vermelho" style="color:#EF4444">A</button>
-              <button type="button" data-cmd="foreColor" data-value="#3B82F6" title="Cor do texto azul" style="color:#3B82F6">A</button>
-              <button type="button" data-cmd="foreColor" data-value="#10B981" title="Cor do texto verde" style="color:#10B981">A</button>
-              <button type="button" data-cmd="foreColor" data-value="#F59E0B" title="Cor do texto amarelo" style="color:#F59E0B">A</button>
-              <button type="button" data-cmd="foreColor" data-value="#1E293B" title="Cor do texto preto" style="color:#1E293B">A</button>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="formatBlock" data-value="H1" title="Título 1">H1</button>
-              <button type="button" data-cmd="formatBlock" data-value="H2" title="Título 2">H2</button>
-              <button type="button" data-cmd="formatBlock" data-value="P" title="Parágrafo">P</button>
-              <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="removeFormat" title="Remover formatação">🧹</button>
-              <button type="button" data-cmd="undo" title="Desfazer">↩️</button>
-              <button type="button" data-cmd="redo" title="Refazer">↪️</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Sino de Notificações -->
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <span class="bell-icon">🔔</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <!-- Dropdown de Notificações -->
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>🔔 Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
             </div>
-            <div class="rich-editor" id="richEditor" contenteditable="true" data-placeholder="Digite sua anotação aqui... Use o toolbar acima para formatar o texto."></div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty">
+                <div class="empty-icon">📭</div>
+                <p>Sem notificações</p>
+              </div>
+            </div>
           </div>
-          <textarea id="noteContent" style="display:none;"></textarea>
         </div>
-        <div class="buttons-row" style="margin-top:8px;">
-          <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
-            <span>💾</span> Salvar
-          </button>
-          <button type="button" class="btn btn-secondary" id="cancelBtn">
-            <span>❌</span> Cancelar
-          </button>
+        <div class="user-info" id="userInfo" title="Ver perfil">
+          <div class="avatar" id="userAvatar">👤</div>
+          <span class="user-name" id="userName">Carregando...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
         </div>
-      </form>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-menu">
+      <button class="nav-item active" data-page="dashboard"><span>📋</span> Anotações</button>
+      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
+      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
+      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
+    </div>
+
+    <div id="mensagem" class="mensagem"></div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-title">📋 Suas anotações</div>
+      <button id="novaNotaBtn" class="btn btn-primary desktop-only">
+        <span>➕</span> Nova Anotação
+      </button>
+    </div>
+
+    <!-- Lista de Notas -->
+    <div id="listaNotas" class="note-list">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        Carregando suas anotações...
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB Mobile -->
+  <button class="fab" id="fabNovaNota" title="Nova Anotação">➕</button>
+
+  <!-- Modal de Mensagem -->
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><span>💬</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message-text" id="modalMessageText"></div>
+        <div class="modal-message-meta">
+          <div class="sender-info">
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+            <span id="modalSenderName">...</span>
+          </div>
+          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
+        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { 
-      getCurrentUser, getNote, createNote, updateNote,
-      ensureValidSession, checkSingleSession
+      getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite,
+      ensureValidSession, checkSingleSession, getUserProfile,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
 
-    (async function init() {
-      // Botão Voltar
-      document.getElementById('backLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = 'dashboard.html';
-      });
+    let currentUserId = null;
+    let lastMessageId = null;
 
+    (async function init() {
       const isValid = await ensureValidSession();
       if (!isValid) return;
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
+      currentUserId = user.id;
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const noteId = urlParams.get('id');
-      const isEditing = !!noteId;
-      const fromCid = urlParams.get('fromCid') === '1';
+      // Carrega dados do perfil
+      try {
+        const profile = await getUserProfile();
+        document.getElementById('userName').textContent = profile.name || profile.email;
+        const avatarEl = document.getElementById('userAvatar');
+        if (profile.avatar_url) {
+          avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        } else {
+          const initials = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+          avatarEl.textContent = initials;
+        }
+      } catch (e) {
+        document.getElementById('userName').textContent = user.email;
+      }
 
-      // Rich Text Editor Setup
-      const editor = document.getElementById('richEditor');
-      const hiddenContent = document.getElementById('noteContent');
+      // Clique no perfil vai para página de perfil
+      document.getElementById('userInfo').addEventListener('click', () => {
+        window.location.href = 'profile.html';
+      });
 
-      // Toolbar buttons
-      document.querySelectorAll('.rich-toolbar button[data-cmd]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const cmd = btn.dataset.cmd;
-          const value = btn.dataset.value || null;
-          document.execCommand(cmd, false, value);
-          editor.focus();
-          updateToolbarState();
+      // Navegação
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const page = btn.dataset.page;
+          if (page) window.location.href = page + '.html';
         });
       });
 
-      document.getElementById('fontFamily').addEventListener('change', (e) => {
-        document.execCommand('fontName', false, e.target.value || 'Inter');
-        editor.focus();
+      // ===== NOTIFICAÇÕES =====
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const badge = document.getElementById('notificationBadge');
+
+      bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) {
+          loadNotifications();
+        }
       });
 
-      document.getElementById('fontSize').addEventListener('change', (e) => {
-        document.execCommand('fontSize', false, e.target.value);
-        editor.focus();
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== bell) {
+          dropdown.classList.remove('show');
+        }
       });
 
-      function updateToolbarState() {
-        document.querySelectorAll('.rich-toolbar button[data-cmd]').forEach(btn => {
-          const cmd = btn.dataset.cmd;
-          if (['bold','italic','underline','strikeThrough'].includes(cmd)) {
-            btn.classList.toggle('active', document.queryCommandState(cmd));
+      document.getElementById('markAllRead').addEventListener('click', async () => {
+        try {
+          await markAllMessagesAsRead();
+          updateBellState(0);
+          loadNotifications();
+        } catch (e) {}
+      });
+
+      async function loadNotifications() {
+        try {
+          const messages = await getUnreadMessages();
+          const list = document.getElementById('notificationList');
+
+          if (messages.length === 0) {
+            list.innerHTML = `
+              <div class="notification-empty">
+                <div class="empty-icon">📭</div>
+                <p>Sem notificações</p>
+              </div>
+            `;
+            return;
           }
-        });
+
+          list.innerHTML = messages.map(msg => {
+            const sender = msg.sender || {};
+            const time = new Date(msg.created_at).toLocaleString('pt-BR', {
+              hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
+            });
+            const avatar = sender.avatar_url 
+              ? `<img src="${sender.avatar_url}" alt="">` 
+              : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+            return `
+              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
+                <div class="notif-avatar">${avatar}</div>
+                <div class="notif-content">
+                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
+                  <div class="notif-text">${escapeHtml(msg.content)}</div>
+                  <div class="notif-time">${time}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Clique na notificação abre modal
+          document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              const msgId = item.dataset.msgId;
+              const senderId = item.dataset.senderId;
+              const msg = messages.find(m => m.id === msgId);
+              if (msg) {
+                showMessageModal(msg);
+                try { await markMessageAsRead(msgId); } catch(e){}
+                updateBellState(Math.max(0, parseInt(badge.textContent) - 1));
+              }
+            });
+          });
+        } catch (error) {
+          console.error('Erro ao carregar notificações:', error);
+        }
       }
 
-      editor.addEventListener('keyup', updateToolbarState);
-      editor.addEventListener('mouseup', updateToolbarState);
-      editor.addEventListener('click', updateToolbarState);
-      editor.addEventListener('input', () => {
-        hiddenContent.value = editor.innerHTML;
-      });
-
-      if (isEditing) {
-        document.getElementById('formTitle').textContent = '✏️ Editar Anotação';
-        document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
-        document.getElementById('formDesc').textContent = 'Atualize sua anotação usando o editor abaixo.';
-
+      async function checkNewMessages() {
         try {
-          const note = await getNote(noteId);
-          document.getElementById('noteTitle').value = note.title;
-          editor.innerHTML = note.content || '';
-          hiddenContent.value = note.content || '';
-        } catch (error) {
-          showMessage('Erro ao carregar nota para edição.', 'erro');
-        }
-      } else if (fromCid) {
-        // ✅ CID: preenche com dados do sessionStorage
-        const cidTitle = sessionStorage.getItem('cidNoteTitle');
-        const cidContent = sessionStorage.getItem('cidNoteContent');
-        if (cidTitle) document.getElementById('noteTitle').value = cidTitle;
-        if (cidContent) {
-          editor.innerHTML = cidContent;
-          hiddenContent.value = cidContent;
-        }
-        sessionStorage.removeItem('cidNoteTitle');
-        sessionStorage.removeItem('cidNoteContent');
+          const count = await getUnreadCount();
+          updateBellState(count);
+
+          // Se há novas mensagens e é uma mensagem nova (não vista), mostra modal
+          if (count > 0) {
+            const messages = await getUnreadMessages();
+            if (messages.length > 0) {
+              const latest = messages[0];
+              if (latest.id !== lastMessageId) {
+                lastMessageId = latest.id;
+                // Só mostra modal se não estiver no chat
+                if (!window.location.href.includes('chat.html')) {
+                  showMessageModal(latest);
+                }
+              }
+            }
+          }
+        } catch (e) {}
       }
 
-      document.getElementById('noteForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('noteTitle').value.trim();
-        const content = editor.innerHTML.trim();
-
-        if (!title) {
-          showMessage('Informe o título da anotação.', 'erro');
-          return;
+      function updateBellState(count) {
+        badge.textContent = count;
+        if (count > 0) {
+          badge.classList.remove('hidden');
+          bell.classList.add('has-unread');
+        } else {
+          badge.classList.add('hidden');
+          bell.classList.remove('has-unread');
         }
-        if (!content || content === '<br>') {
-          showMessage('Digite o conteúdo da anotação.', 'erro');
-          return;
+      }
+
+      // ===== MODAL DE MENSAGEM =====
+      const modal = document.getElementById('messageModal');
+
+      function showMessageModal(msg) {
+        const sender = msg.sender || {};
+        document.getElementById('modalMessageText').textContent = msg.content;
+        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+
+        const avatar = document.getElementById('modalSenderAvatar');
+        if (sender.avatar_url) {
+          avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+        } else {
+          avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
         }
 
-        const saveBtn = document.getElementById('saveBtn');
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span>⏳</span> Salvando...';
+        modal.classList.add('show');
 
+        // Guarda sender ID para ir ao chat
+        modal.dataset.senderId = msg.sender_id;
+      }
+
+      document.getElementById('modalClose').addEventListener('click', () => {
+        modal.classList.remove('show');
+      });
+      document.getElementById('modalDismiss').addEventListener('click', () => {
+        modal.classList.remove('show');
+      });
+      document.getElementById('modalGoToChat').addEventListener('click', () => {
+        const senderId = modal.dataset.senderId;
+        if (senderId) {
+          sessionStorage.setItem('chatTargetUserId', senderId);
+        }
+        window.location.href = 'chat.html';
+      });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+      });
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // ===== FUNÇÕES DAS NOTAS =====
+      window.toggleFavorito = async (id, currentState, event) => {
+        event.stopPropagation();
         try {
-          if (isEditing) {
-            await updateNote(noteId, title, content);
-          } else {
-            await createNote(title, content);
-          }
-          showMessage(`Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
-          setTimeout(() => window.location.href = 'dashboard.html', 1200);
+          await toggleFavorite(id, currentState);
+          showMessage(currentState ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'sucesso');
+          await carregarNotas();
         } catch (error) {
-          showMessage(error.message || 'Erro ao salvar.', 'erro');
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = '<span>💾</span> Salvar';
+          showMessage('Erro ao alterar favorito.', 'erro');
         }
+      };
+
+      window.visualizarNota = (id) => {
+        window.location.href = `view.html?id=${id}`;
+      };
+
+      window.editarNota = (id) => {
+        window.location.href = `note.html?id=${id}`;
+      };
+
+      window.excluirNota = async (id) => {
+        if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+        try {
+          await deleteNote(id);
+          showMessage('Nota excluída com sucesso!', 'sucesso');
+          await carregarNotas();
+        } catch (error) {
+          showMessage('Erro ao excluir nota.', 'erro');
+        }
+      };
+
+      async function carregarNotas() {
+        try {
+          const notas = await getNotes();
+          const container = document.getElementById('listaNotas');
+
+          if (notas.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>Nenhuma anotação ainda</h3>
+                <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = notas.map(note => `
+            <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
+              <div class="note-header">
+                <a href="view.html?id=${note.id}" class="note-title">
+                  ${note.title}
+                  ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
+                </a>
+                <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
+                  ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
+                </span>
+              </div>
+              <div class="note-content">${stripHtml(note.content || '')}</div>
+              <div class="note-meta">
+                <div class="note-date">
+                  <span>🕐</span>
+                  ${new Date(note.updated_at).toLocaleString('pt-BR', { 
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                  })}
+                </div>
+                <div class="note-actions">
+                  <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
+                          onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
+                          title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                    ${note.is_favorite ? '⭐' : '☆'}
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
+                    <span>👁️</span> Visualizar
+                  </button>
+                  <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
+                    <span>✏️</span> Editar
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
+                    <span>🗑️</span> Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } catch (error) {
+          showMessage('Erro ao carregar notas.', 'erro');
+        }
+      }
+
+      function stripHtml(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+      }
+
+      document.getElementById('novaNotaBtn').addEventListener('click', () => {
+        window.location.href = 'note.html';
+      });
+      document.getElementById('fabNovaNota').addEventListener('click', () => {
+        window.location.href = 'note.html';
+      });
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
       });
 
-      document.getElementById('cancelBtn').addEventListener('click', () => {
-        if (window.history.length > 1) window.history.back();
-        else window.location.href = 'dashboard.html';
-      });
+      // Verificação periódica
+      setInterval(async () => { 
+        await checkSingleSession(); 
+      }, 10000);
 
-      function showMessage(msg, type) {
+      // Verificação de novas mensagens a cada 8 segundos
+      setInterval(async () => { 
+        await checkNewMessages(); 
+      }, 8000);
+
+      window.showMessage = (msg, type = 'erro') => {
         const el = document.getElementById('mensagem');
         el.textContent = msg;
         el.className = `mensagem ${type}`;
         setTimeout(() => el.style.display = 'none', 5000);
-      }
+      };
 
-      setInterval(async () => { await checkSingleSession(); }, 10000);
+      // Primeira verificação
+      await checkNewMessages();
+      carregarNotas();
     })();
   </script>
 </body>
