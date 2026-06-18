@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Busca CID — NoteMed for Unisystem</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-brand">
+        <div class="logo-icon">📝</div>
+        <div>
+          <h1>NoteMed for Unisystem</h1>
+          <div class="subtitle">Busca CID & Prescrição</div>
+        </div>
+      </div>
+      <div class="user-info" id="userInfo">
+        <div class="avatar" id="headerAvatar">👤</div>
+        <span class="user-name" id="headerName">...</span>
+        <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-menu">
+      <a href="dashboard.html" class="nav-item"><span>📋</span> Anotações</a>
+      <a href="profile.html" class="nav-item"><span>👤</span> Perfil</a>
+      <a href="chat.html" class="nav-item"><span>💬</span> Chat</a>
+      <a href="cid.html" class="nav-item active"><span>🔍</span> CID</a>
+    </div>
+
+    <div id="mensagem" class="mensagem"></div>
+
+    <div class="card">
+      <h1 style="margin-bottom:8px;">🔍 Busca CID-10</h1>
+      <p style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
+        Pesquise por código CID ou nome da doença para ver a prescrição sugerida.
+      </p>
+
+      <div class="cid-search">
+        <input type="text" id="cidInput" placeholder="Ex: A00, Diabetes, Hipertensão..." />
+        <button class="btn btn-primary" id="searchBtn">
+          <span>🔍</span> Buscar
+        </button>
+      </div>
+
+      <div id="cidResults"></div>
+    </div>
+
+    <!-- CIDs Populares -->
+    <div class="card" style="margin-top:24px;">
+      <h2 style="font-size:1.1rem; color:var(--gray-700); margin-bottom:16px;">📋 CIDs Mais Consultados</h2>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="A09">A09 - Gastroenterite</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="E11">E11 - Diabetes T2</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="I10">I10 - Hipertensão</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="J06">J06 - Resfriado</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="J18">J18 - Pneumonia</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="F32">F32 - Depressão</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="K29">K29 - Gastrite</button>
+        <button class="btn btn-secondary btn-sm cid-tag" data-code="M79">M79 - Dores musculares</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      getCurrentUser, signOut, ensureValidSession, checkSingleSession,
+      getUserProfile, searchCID
+    } from './supabase-config.js';
+
+    if (!await ensureValidSession()) return;
+
+    const user = await getCurrentUser();
+    if (!user) window.location.href = 'index.html';
+
+    // Load header
+    try {
+      const profile = await getUserProfile();
+      document.getElementById('headerName').textContent = profile.name || profile.email;
+      const avatar = document.getElementById('headerAvatar');
+      if (profile.avatar_url) {
+        avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+      } else {
+        avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+      }
+    } catch (e) {}
+
+    function renderResults(results) {
+      const container = document.getElementById('cidResults');
+
+      if (results.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding:40px 0;">
+            <div class="empty-icon">🔍</div>
+            <h3>Nenhum resultado encontrado</h3>
+            <p>Tente buscar por outro código ou nome de doença.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = results.map(r => `
+        <div class="cid-result">
+          <div class="cid-code">${r.code}</div>
+          <div class="cid-name">${r.name}</div>
+          <div class="cid-desc">${r.desc}</div>
+          <div class="prescription-box">
+            <h4>💊 Prescrição Sugerida</h4>
+            <ul>
+              ${r.prescriptions.map(p => `<li>${p}</li>`).join('')}
+            </ul>
+            <p style="margin-top:12px; font-size:0.8rem; color:var(--gray-400); font-style:italic;">
+              ⚠️ Esta é uma sugestão automatizada. Sempre valide a prescrição antes de aplicar.
+            </p>
+          </div>
+          <div style="margin-top:16px; display:flex; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+              <span>📝</span> Copiar para anotação
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.copyToNote = (code, name) => {
+      const prescriptions = searchCID(code)[0]?.prescriptions || [];
+      const content = `<h3>CID: ${code} - ${name}</h3><p><strong>Prescrição:</strong></p><ul>${prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>`;
+      sessionStorage.setItem('cidNoteContent', content);
+      sessionStorage.setItem('cidNoteTitle', `CID ${code} - ${name}`);
+      window.location.href = 'note.html?fromCid=1';
+    };
+
+    function doSearch() {
+      const query = document.getElementById('cidInput').value;
+      if (!query.trim()) {
+        document.getElementById('cidResults').innerHTML = '';
+        return;
+      }
+      const results = searchCID(query);
+      renderResults(results);
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', doSearch);
+    document.getElementById('cidInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    // Popular tags
+    document.querySelectorAll('.cid-tag').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('cidInput').value = btn.dataset.code;
+        doSearch();
+      });
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut();
+      localStorage.removeItem('session_id');
+      window.location.href = 'index.html';
+    });
+
+    setInterval(async () => { await checkSingleSession(); }, 10000);
+  </script>
+</body>
+</html>
