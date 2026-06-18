@@ -2,27 +2,50 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NoteMed - Anotação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title id="pageTitle">Nova Anotação — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html" class="voltar">← Voltar</a>
-    <h1 id="formTitle">Nova Anotação</h1>
-    <div id="mensagem" class="mensagem"></div>
-    <form id="noteForm">
-      <input type="text" id="noteTitle" placeholder="Título" required />
-      <textarea id="noteContent" placeholder="Digite sua anotação..." required></textarea>
-      <div class="buttons-row">
-        <button type="submit" id="saveBtn">Salvar</button>
-        <button type="button" id="cancelBtn" class="btn-secondary">Cancelar</button>
-      </div>
-    </form>
+    <a href="dashboard.html" class="back-link">
+      <span>←</span> Voltar para anotações
+    </a>
+
+    <div class="card">
+      <h1 id="formTitle" style="margin-bottom:8px;">📝 Nova Anotação</h1>
+      <p style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
+        Preencha os campos abaixo para ${isEditing ? 'atualizar' : 'criar'} sua anotação médica.
+      </p>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <form id="noteForm">
+        <div class="form-group">
+          <label class="form-label" for="noteTitle">Título da anotação</label>
+          <input type="text" id="noteTitle" placeholder="Ex: Consulta Cardiologia - Paciente João" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="noteContent">Conteúdo</label>
+          <textarea id="noteContent" placeholder="Descreva os detalhes da anotação..." required></textarea>
+        </div>
+        <div class="buttons-row" style="margin-top:8px;">
+          <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+            <span>💾</span> Salvar
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancelBtn">
+            <span>❌</span> Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script type="module">
@@ -47,20 +70,32 @@
     const isEditing = !!noteId;
 
     if (isEditing) {
-      document.getElementById('formTitle').textContent = 'Editar Anotação';
+      document.getElementById('formTitle').textContent = '✏️ Editar Anotação';
+      document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
+      document.querySelector('p').textContent = 'Atualize os campos abaixo para editar sua anotação médica.';
+
       try {
         const note = await getNote(noteId);
         document.getElementById('noteTitle').value = note.title;
         document.getElementById('noteContent').value = note.content;
       } catch (error) {
-        showMessage('Erro ao carregar nota.', 'erro');
+        showMessage('Erro ao carregar nota para edição.', 'erro');
       }
     }
 
     document.getElementById('noteForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('noteTitle').value;
-      const content = document.getElementById('noteContent').value;
+      const title = document.getElementById('noteTitle').value.trim();
+      const content = document.getElementById('noteContent').value.trim();
+
+      if (!title || !content) {
+        showMessage('Preencha todos os campos.', 'erro');
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>⏳</span> Salvando...';
 
       try {
         if (isEditing) {
@@ -69,9 +104,11 @@
           await createNote(title, content);
         }
         showMessage(`Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
-        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        setTimeout(() => window.location.href = 'dashboard.html', 1200);
       } catch (error) {
         showMessage(error.message || 'Erro ao salvar.', 'erro');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span> Salvar';
       }
     });
 
@@ -83,10 +120,10 @@
       const el = document.getElementById('mensagem');
       el.textContent = msg;
       el.className = `mensagem ${type}`;
-      el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     }
 
+    // Verificação periódica de sessão única
     setInterval(async () => {
       await checkSingleSession();
     }, 10000);
