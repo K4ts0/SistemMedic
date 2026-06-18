@@ -24,10 +24,31 @@
           <div class="subtitle">Busca CID & Prescrição</div>
         </div>
       </div>
-      <div class="user-info" id="userInfo">
-        <div class="avatar" id="headerAvatar">👤</div>
-        <span class="user-name" id="headerName">...</span>
-        <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Sino de Notificações -->
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <span class="bell-icon">🔔</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>🔔 Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty">
+                <div class="empty-icon">📭</div>
+                <p>Sem notificações</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="user-info" id="userInfo">
+          <div class="avatar" id="headerAvatar">👤</div>
+          <span class="user-name" id="headerName">...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+        </div>
       </div>
     </div>
 
@@ -73,11 +94,39 @@
     </div>
   </div>
 
+  <!-- Modal de Mensagem -->
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><span>💬</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message-text" id="modalMessageText"></div>
+        <div class="modal-message-meta">
+          <div class="sender-info">
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+            <span id="modalSenderName">...</span>
+          </div>
+          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
+        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, searchCID
+      getUserProfile, searchCID,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
+
+    let currentUserId = null;
+    let lastMessageId = null;
 
     (async function init() {
       const isValid = await ensureValidSession();
@@ -85,8 +134,9 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
+      currentUserId = user.id;
 
-      // ✅ CORREÇÃO: Navegação por botões
+      // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const page = btn.dataset.page;
@@ -99,27 +149,115 @@
         const profile = await getUserProfile();
         document.getElementById('headerName').textContent = profile.name || profile.email;
         const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) {
-          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        } else {
-          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-        }
+        if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        else avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
       } catch (e) {}
 
+      // ===== NOTIFICAÇÕES =====
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const badge = document.getElementById('notificationBadge');
+
+      bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) loadNotifications();
+      });
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+      });
+      document.getElementById('markAllRead').addEventListener('click', async () => {
+        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
+      });
+
+      async function loadNotifications() {
+        try {
+          const messages = await getUnreadMessages();
+          const list = document.getElementById('notificationList');
+          if (messages.length === 0) {
+            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
+            return;
+          }
+          list.innerHTML = messages.map(msg => {
+            const sender = msg.sender || {};
+            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+            return `
+              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
+                <div class="notif-avatar">${avatar}</div>
+                <div class="notif-content">
+                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
+                  <div class="notif-text">${escapeHtml(msg.content)}</div>
+                  <div class="notif-time">${time}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              const msgId = item.dataset.msgId;
+              const msg = messages.find(m => m.id === msgId);
+              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+            });
+          });
+        } catch(e) { console.error(e); }
+      }
+
+      async function checkNewMessages() {
+        try {
+          const count = await getUnreadCount();
+          updateBellState(count);
+          if (count > 0) {
+            const messages = await getUnreadMessages();
+            if (messages.length > 0 && messages[0].id !== lastMessageId) {
+              lastMessageId = messages[0].id;
+              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+            }
+          }
+        } catch(e) {}
+      }
+
+      function updateBellState(count) {
+        badge.textContent = count;
+        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
+        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
+      }
+
+      // ===== MODAL =====
+      const modal = document.getElementById('messageModal');
+      function showMessageModal(msg) {
+        const sender = msg.sender || {};
+        document.getElementById('modalMessageText').textContent = msg.content;
+        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+        const avatar = document.getElementById('modalSenderAvatar');
+        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+        modal.dataset.senderId = msg.sender_id;
+        modal.classList.add('show');
+      }
+      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalGoToChat').addEventListener('click', () => {
+        const senderId = modal.dataset.senderId;
+        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
+        window.location.href = 'chat.html';
+      });
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // ===== CID =====
       function renderResults(results) {
         const container = document.getElementById('cidResults');
-
         if (results.length === 0) {
-          container.innerHTML = `
-            <div class="empty-state" style="padding:40px 0;">
-              <div class="empty-icon">🔍</div>
-              <h3>Nenhum resultado encontrado</h3>
-              <p>Tente buscar por outro código ou nome de doença.</p>
-            </div>
-          `;
+          container.innerHTML = `<div class="empty-state" style="padding:40px 0;"><div class="empty-icon">🔍</div><h3>Nenhum resultado encontrado</h3><p>Tente buscar por outro código ou nome de doença.</p></div>`;
           return;
         }
-
         container.innerHTML = results.map(r => `
           <div class="cid-result">
             <div class="cid-code">${r.code}</div>
@@ -127,12 +265,8 @@
             <div class="cid-desc">${r.desc}</div>
             <div class="prescription-box">
               <h4>💊 Prescrição Sugerida</h4>
-              <ul>
-                ${r.prescriptions.map(p => `<li>${p}</li>`).join('')}
-              </ul>
-              <p style="margin-top:12px; font-size:0.8rem; color:var(--gray-400); font-style:italic;">
-                ⚠️ Esta é uma sugestão automatizada. Sempre valide a prescrição antes de aplicar.
-              </p>
+              <ul>${r.prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>
+              <p style="margin-top:12px; font-size:0.8rem; color:var(--gray-400); font-style:italic;">⚠️ Esta é uma sugestão automatizada. Sempre valide a prescrição antes de aplicar.</p>
             </div>
             <div style="margin-top:16px; display:flex; gap:8px;">
               <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
@@ -153,10 +287,7 @@
 
       function doSearch() {
         const query = document.getElementById('cidInput').value;
-        if (!query.trim()) {
-          document.getElementById('cidResults').innerHTML = '';
-          return;
-        }
+        if (!query.trim()) { document.getElementById('cidResults').innerHTML = ''; return; }
         const results = searchCID(query);
         renderResults(results);
       }
@@ -165,7 +296,6 @@
       document.getElementById('cidInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') doSearch();
       });
-
       document.querySelectorAll('.cid-tag').forEach(btn => {
         btn.addEventListener('click', () => {
           document.getElementById('cidInput').value = btn.dataset.code;
@@ -180,6 +310,9 @@
       });
 
       setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkNewMessages(); }, 8000);
+
+      await checkNewMessages();
     })();
   </script>
 </body>
