@@ -45,12 +45,14 @@
     if (!user) window.location.href = 'index.html';
     document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
 
+    // ✅ CORREÇÃO: Função toggleFavorito melhorada com feedback visual
     window.toggleFavorito = async (id, currentState) => {
       try {
         await toggleFavorite(id, currentState);
-        carregarNotas();
+        showMessage('Favorito atualizado!', 'sucesso');
+        await carregarNotas(); // Recarrega a lista para mostrar o novo estado
       } catch (error) {
-        alert('Erro ao alterar favorito.');
+        showMessage('Erro ao alterar favorito.', 'erro');
       }
     };
 
@@ -67,7 +69,7 @@
       try {
         await deleteNote(id);
         showMessage('Nota excluída com sucesso!', 'sucesso');
-        carregarNotas();
+        await carregarNotas();
       } catch (error) {
         showMessage('Erro ao excluir nota.', 'erro');
       }
@@ -89,12 +91,13 @@
                   ${note.title}
                 </a>
               </h3>
-              <p>${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}</p>
+              <p>${note.content ? note.content.substring(0, 100) : ''}${note.content && note.content.length > 100 ? '...' : ''}</p>
               <small style="color: #999;">Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
             </div>
             <div class="actions">
               <button onclick="toggleFavorito('${note.id}', ${note.is_favorite})" 
-                      style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+                      style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"
+                      title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
                 ${note.is_favorite ? '⭐' : '☆'}
               </button>
               <button onclick="visualizarNota('${note.id}')">Visualizar</button>
@@ -118,7 +121,7 @@
       window.location.href = 'index.html';
     });
 
-    // Verificação periódica a cada 30 segundos (opcional, mas mantido)
+    // Verificação periódica a cada 30 segundos
     setInterval(async () => {
       if (!await validateSession()) {
         await signOut();
