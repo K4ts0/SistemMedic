@@ -38,34 +38,19 @@
   </div>
 
   <script type="module">
-    import { 
-      getNote, 
-      getCurrentUser, 
-      ensureValidSession, 
-      checkSingleSession 
-    } from './supabase-config.js';
+    import { getNote, getCurrentUser, ensureValidSession, checkSingleSession } from './supabase-config.js';
 
-    // ✅ CORREÇÃO: Botão Voltar usa history.back() ao invés de href
     document.getElementById('backLink').addEventListener('click', (e) => {
       e.preventDefault();
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'dashboard.html';
     });
-
     document.getElementById('btnVoltar').addEventListener('click', () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'dashboard.html';
     });
 
-    if (!await ensureValidSession()) {
-      // já redirecionado
-    }
+    if (!await ensureValidSession()) return;
 
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
@@ -73,14 +58,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     const noteId = urlParams.get('id');
 
-    if (!noteId) {
-      window.location.href = 'dashboard.html';
-    }
+    if (!noteId) { window.location.href = 'dashboard.html'; }
 
     try {
       const note = await getNote(noteId);
       document.getElementById('noteTitle').textContent = note.title;
-      document.getElementById('noteContent').textContent = note.content;
+      document.getElementById('noteContent').innerHTML = note.content || '';
 
       const badge = document.getElementById('noteBadge');
       if (note.is_favorite) {
@@ -95,7 +78,6 @@
         })}
       `;
 
-      // ✅ CORREÇÃO: Botão Editar com event listener ao invés de onclick inline
       document.getElementById('btnEditar').addEventListener('click', () => {
         window.location.href = `note.html?id=${noteId}`;
       });
@@ -104,10 +86,7 @@
       window.location.href = 'dashboard.html';
     }
 
-    // Verificação periódica de sessão única
-    setInterval(async () => {
-      await checkSingleSession();
-    }, 10000);
+    setInterval(async () => { await checkSingleSession(); }, 10000);
   </script>
 </body>
 </html>
