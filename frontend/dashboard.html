@@ -3,25 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minhas Anotações</title>
+  <title>NoteMed - Minhas Anotações</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div>
-        <h1>Minhas Anotações</h1>
-        <span class="user">👤 <span id="userName"></span></span>
+      <div class="header-left">
+        <div class="logo-icon">📝</div>
+        <div class="app-title">NoteMed <span>for Unisystem</span></div>
       </div>
-      <button class="logout" id="logoutBtn">Sair</button>
+      <div class="user-area">
+        <span class="user-name" id="userName"></span>
+        <button class="btn-logout" id="logoutBtn">Sair</button>
+      </div>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
-    <button id="novaNotaBtn" style="margin-bottom: 20px;">+ Nova Anotação</button>
+
+    <button class="btn-new-note" id="novaNotaBtn">+ Nova Anotação</button>
 
     <div id="listaNotas" class="note-list">
-      <p style="color: #888;">Carregando...</p>
+      <p style="color: #8a9aa8; text-align: center; padding: 30px 0;">Carregando anotações...</p>
     </div>
   </div>
 
@@ -33,11 +40,9 @@
       deleteNote,
       toggleFavorite,
       ensureValidSession,
-      validateSession,
-      checkSingleSession  // ✅ NOVO: Importa a verificação de sessão única
+      checkSingleSession
     } from './supabase-config.js';
 
-    // Verifica sessão única no carregamento
     if (!await ensureValidSession()) {
       // já redirecionado
     }
@@ -80,29 +85,27 @@
         const notas = await getNotes();
         const container = document.getElementById('listaNotas');
         if (notas.length === 0) {
-          container.innerHTML = '<p style="color: #888;">Nenhuma anotação ainda. Clique em "Nova Anotação" para começar.</p>';
+          container.innerHTML = '<p style="color: #8a9aa8; text-align: center; padding: 30px 0;">Nenhuma anotação ainda. Crie sua primeira!</p>';
           return;
         }
         container.innerHTML = notas.map(note => `
           <div class="note-item" data-id="${note.id}">
             <div class="info">
               <h3>
-                <a href="view.html?id=${note.id}" style="color: #1a3b5d; text-decoration: none;">
+                <a href="view.html?id=${note.id}">
                   ${note.title}
                 </a>
               </h3>
               <p>${note.content ? note.content.substring(0, 100) : ''}${note.content && note.content.length > 100 ? '...' : ''}</p>
-              <small style="color: #999;">Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
+              <small>Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
             </div>
             <div class="actions">
-              <button onclick="toggleFavorito('${note.id}', ${note.is_favorite})" 
-                      style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"
-                      title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+              <button class="btn-fav" onclick="toggleFavorito('${note.id}', ${note.is_favorite})" title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
                 ${note.is_favorite ? '⭐' : '☆'}
               </button>
               <button onclick="visualizarNota('${note.id}')">Visualizar</button>
               <button onclick="editarNota('${note.id}')">Editar</button>
-              <button class="danger" onclick="excluirNota('${note.id}')">Excluir</button>
+              <button class="btn-danger" onclick="excluirNota('${note.id}')">Excluir</button>
             </div>
           </div>
         `).join('');
@@ -121,11 +124,9 @@
       window.location.href = 'index.html';
     });
 
-    // ✅ CORREÇÃO: Verificação periódica usando checkSingleSession
-    // Isso detecta se outro dispositivo fez login e força logout
     setInterval(async () => {
       await checkSingleSession();
-    }, 10000); // Verifica a cada 10 segundos (mais rápido para detectar login em outro dispositivo)
+    }, 10000);
 
     window.showMessage = (msg, type = 'erro') => {
       const el = document.getElementById('mensagem');
