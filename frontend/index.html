@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#3B82F6" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Login — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
@@ -47,26 +47,28 @@
   <script type="module">
     import { signIn, getCurrentUser, registerSession } from './supabase-config.js';
 
-    try {
-      const user = await getCurrentUser();
-      if (user) window.location.href = 'dashboard.html';
-    } catch {}
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
+    (async function init() {
       try {
-        await signIn(email, password);
-        await registerSession();
-        window.location.href = 'dashboard.html';
-      } catch (error) {
-        const msg = document.getElementById('mensagem');
-        msg.textContent = error.message || 'Erro no login';
-        msg.className = 'mensagem erro';
-      }
-    });
+        const user = await getCurrentUser();
+        if (user) window.location.href = 'dashboard.html';
+      } catch {}
+
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+          await signIn(email, password);
+          await registerSession();
+          window.location.href = 'dashboard.html';
+        } catch (error) {
+          const msg = document.getElementById('mensagem');
+          msg.textContent = error.message || 'Erro no login';
+          msg.className = 'mensagem erro';
+        }
+      });
+    })();
   </script>
 </body>
 </html>
