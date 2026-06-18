@@ -15,8 +15,8 @@
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html" class="back-link">
-      <span>←</span> Voltar para anotações
+    <a href="#" class="back-link" id="backLink">
+      <span>←</span> Voltar
     </a>
 
     <div class="note-view">
@@ -27,10 +27,10 @@
       </div>
       <div class="note-body" id="noteContent"></div>
       <div class="buttons-row" style="margin-top:32px; padding-top:24px; border-top:1px solid var(--gray-100);">
-        <button class="btn btn-primary" onclick="editar()">
+        <button class="btn btn-primary" id="btnEditar">
           <span>✏️</span> Editar
         </button>
-        <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
+        <button class="btn btn-secondary" id="btnVoltar">
           <span>←</span> Voltar
         </button>
       </div>
@@ -44,6 +44,24 @@
       ensureValidSession, 
       checkSingleSession 
     } from './supabase-config.js';
+
+    // ✅ CORREÇÃO: Botão Voltar usa history.back() ao invés de href
+    document.getElementById('backLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    });
+
+    document.getElementById('btnVoltar').addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    });
 
     if (!await ensureValidSession()) {
       // já redirecionado
@@ -64,14 +82,12 @@
       document.getElementById('noteTitle').textContent = note.title;
       document.getElementById('noteContent').textContent = note.content;
 
-      // Badge favorito
       const badge = document.getElementById('noteBadge');
       if (note.is_favorite) {
         badge.textContent = '⭐ Favorita';
         badge.className = 'badge badge-success';
       }
 
-      // Data formatada
       document.getElementById('noteDate').innerHTML = `
         <span>🕐</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', {
           day: '2-digit', month: 'long', year: 'numeric',
@@ -79,9 +95,10 @@
         })}
       `;
 
-      window.editar = () => {
+      // ✅ CORREÇÃO: Botão Editar com event listener ao invés de onclick inline
+      document.getElementById('btnEditar').addEventListener('click', () => {
         window.location.href = `note.html?id=${noteId}`;
-      };
+      });
     } catch (error) {
       alert('Erro ao carregar nota.');
       window.location.href = 'dashboard.html';
