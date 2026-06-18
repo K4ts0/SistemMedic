@@ -38,11 +38,10 @@ export async function getNotes() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // ✅ CORREÇÃO: Filtra notas apenas do usuário logado
   const { data, error } = await supabase
     .from('notes')
     .select('*')
-    .eq('user_id', user.id)  // Só mostra notas do usuário atual
+    .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
   if (error) throw error;
   return data;
@@ -52,12 +51,11 @@ export async function getNote(id) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // ✅ CORREÇÃO: Verifica se a nota pertence ao usuário
   const { data, error } = await supabase
     .from('notes')
     .select('*')
     .eq('id', id)
-    .eq('user_id', user.id)  // Só permite acessar notas do próprio usuário
+    .eq('user_id', user.id)
     .single();
   if (error) throw error;
   return data;
@@ -84,7 +82,6 @@ export async function updateNote(id, title, content) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // ✅ CORREÇÃO: Só atualiza se a nota pertencer ao usuário
   const { data, error } = await supabase
     .from('notes')
     .update({ title, content })
@@ -99,7 +96,6 @@ export async function deleteNote(id) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // ✅ CORREÇÃO: Só deleta se a nota pertencer ao usuário
   const { error } = await supabase
     .from('notes')
     .delete()
@@ -113,7 +109,6 @@ export async function toggleFavorite(id, currentState) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // ✅ CORREÇÃO: Só altera favorito se a nota pertencer ao usuário
   const { data, error } = await supabase
     .from('notes')
     .update({ is_favorite: !currentState })
@@ -124,30 +119,59 @@ export async function toggleFavorite(id, currentState) {
   return data[0];
 }
 
-// ===== SESSÃO ÚNICA =====
+// ===== SESSÃO ÚNICA - 1 LOGIN POR USUÁRIO =====
+
 function generateSessionId() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+/**
+ * Registra uma nova sessão para o usuário.
+ * Se houver outra sessão ativa em outro dispositivo, ela será invalidada.
+ */
 export async function registerSession() {
   const sessionId = generateSessionId();
+  
+  // Atualiza os metadados do usuário com o novo session_id
   const { data, error } = await supabase.auth.updateUser({
     data: { session_id: sessionId }
   });
+  
   if (error) throw error;
+  
+  // Salva o session_id localmente
   localStorage.setItem('session_id', sessionId);
+  
+  // Força atualização do token
   await supabase.auth.refreshSession();
+  
   return sessionId;
 }
 
+/**
+ * Valida se a sessão atual ainda é válida.
+ * Retorna false se:
+ * - Não houver sessão local
+ * - O session_id local for diferente do session_id nos metadados do usuário (outro dispositivo fez login)
+ */
 export async function validateSession() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
+  
   const storedSession = localStorage.getItem('session_id');
   const currentSession = user.user_metadata?.session_id;
-  return storedSession && currentSession && storedSession === currentSession;
+  
+  // Se não há sessão local ou não há sessão no servidor = inválido
+  if (!storedSession || !currentSession) return false;
+  
+  // Se as sessões não batem = outro dispositivo fez login
+  return storedSession === currentSession;
 }
 
+/**
+ * Garante que a sessão é válida.
+ * Se inválida, desloga o usuário e redireciona para login.
+ */
 export async function ensureValidSession() {
   const isValid = await validateSession();
   if (!isValid) {
@@ -156,5 +180,31 @@ export async function ensureValidSession() {
     window.location.href = 'index.html';
     return false;
   }
+  return true;
+}
+
+/**
+ * Verifica se há uma sessão ativa em outro dispositivo
+ * e força o logout se detectar conflito.
+ * Usado nas páginas protegidas para detectar login em outro dispositivo.
+ */
+export async function checkSingleSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  
+  const storedSession = localStorage.getItem('session_id');
+  const serverSession = user.user_metadata?.session_id;
+  
+  // Se o servidor tem um session_id diferente do local,
+  // significa que outro dispositivo fez login
+  if (serverSession && storedSession && serverSession !== storedSession) {
+    // Sessão foi sobrescrita por outro dispositivo
+    await signOut();
+    localStorage.removeItem('session_id');
+    alert('Sua sessão foi encerrada porque você fez login em outro dispositivo.');
+    window.location.href = 'index.html';
+    return false;
+  }
+  
   return true;
 }
