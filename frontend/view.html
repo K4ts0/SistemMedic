@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualizar Anotação</title>
+  <title>NoteMed - Visualizar</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
     <a href="dashboard.html" class="voltar">← Voltar</a>
     <h1 id="noteTitle"></h1>
-    <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;"></div>
-    <div style="margin-top: 20px; display: flex; gap: 10px;">
+    <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 12px; white-space: pre-wrap; min-height: 120px;"></div>
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
       <button onclick="editar()">Editar</button>
-      <button onclick="window.location.href='dashboard.html'">Voltar</button>
+      <button onclick="window.location.href='dashboard.html'" class="btn-secondary">Voltar</button>
     </div>
   </div>
 
@@ -23,7 +26,7 @@
       getNote, 
       getCurrentUser, 
       ensureValidSession, 
-      checkSingleSession  // ✅ NOVO
+      checkSingleSession
     } from './supabase-config.js';
 
     if (!await ensureValidSession()) {
@@ -52,7 +55,6 @@
       window.location.href = 'dashboard.html';
     }
 
-    // ✅ CORREÇÃO: Usa checkSingleSession em vez de validateSession
     setInterval(async () => {
       await checkSingleSession();
     }, 10000);
