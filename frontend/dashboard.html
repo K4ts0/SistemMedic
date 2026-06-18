@@ -24,11 +24,19 @@
           <div class="subtitle">Minhas Anotações</div>
         </div>
       </div>
-      <div class="user-info">
+      <div class="user-info" id="userInfo" title="Ver perfil">
         <div class="avatar" id="userAvatar">👤</div>
         <span class="user-name" id="userName">Carregando...</span>
         <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
       </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-menu">
+      <a href="dashboard.html" class="nav-item active"><span>📋</span> Anotações</a>
+      <a href="profile.html" class="nav-item"><span>👤</span> Perfil</a>
+      <a href="chat.html" class="nav-item"><span>💬</span> Chat</a>
+      <a href="cid.html" class="nav-item"><span>🔍</span> CID</a>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -50,33 +58,40 @@
     </div>
   </div>
 
-  <!-- Botão flutuante para mobile -->
+  <!-- FAB Mobile -->
   <button class="fab" id="fabNovaNota" title="Nova Anotação">➕</button>
 
   <script type="module">
     import { 
-      getCurrentUser, 
-      signOut, 
-      getNotes, 
-      deleteNote,
-      toggleFavorite,
-      ensureValidSession,
-      checkSingleSession
+      getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite,
+      ensureValidSession, checkSingleSession, getUserProfile
     } from './supabase-config.js';
 
-    // Verifica sessão única no carregamento
-    if (!await ensureValidSession()) {
-      // já redirecionado
-    }
+    if (!await ensureValidSession()) return;
 
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
 
-    document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
-    const initials = (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase();
-    document.getElementById('userAvatar').textContent = initials;
+    // Carrega dados do perfil
+    try {
+      const profile = await getUserProfile();
+      document.getElementById('userName').textContent = profile.name || profile.email;
+      const avatarEl = document.getElementById('userAvatar');
+      if (profile.avatar_url) {
+        avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+      } else {
+        const initials = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+        avatarEl.textContent = initials;
+      }
+    } catch (e) {
+      document.getElementById('userName').textContent = user.email;
+    }
 
-    // Toggle favorito
+    // Clique no perfil vai para página de perfil
+    document.getElementById('userInfo').addEventListener('click', () => {
+      window.location.href = 'profile.html';
+    });
+
     window.toggleFavorito = async (id, currentState, event) => {
       event.stopPropagation();
       try {
@@ -134,7 +149,7 @@
                 ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
               </span>
             </div>
-            <div class="note-content">${note.content || ''}</div>
+            <div class="note-content">${stripHtml(note.content || '')}</div>
             <div class="note-meta">
               <div class="note-date">
                 <span>🕐</span>
@@ -167,27 +182,25 @@
       }
     }
 
-    // Nova nota (desktop)
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    }
+
     document.getElementById('novaNotaBtn').addEventListener('click', () => {
       window.location.href = 'note.html';
     });
-
-    // Nova nota (mobile FAB)
     document.getElementById('fabNovaNota').addEventListener('click', () => {
       window.location.href = 'note.html';
     });
-
-    // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await signOut();
       localStorage.removeItem('session_id');
       window.location.href = 'index.html';
     });
 
-    // Verificação periódica de sessão única
-    setInterval(async () => {
-      await checkSingleSession();
-    }, 10000);
+    setInterval(async () => { await checkSingleSession(); }, 10000);
 
     window.showMessage = (msg, type = 'erro') => {
       const el = document.getElementById('mensagem');
