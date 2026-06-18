@@ -33,7 +33,8 @@
       deleteNote,
       toggleFavorite,
       ensureValidSession,
-      validateSession
+      validateSession,
+      checkSingleSession  // ✅ NOVO: Importa a verificação de sessão única
     } from './supabase-config.js';
 
     // Verifica sessão única no carregamento
@@ -45,12 +46,11 @@
     if (!user) window.location.href = 'index.html';
     document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
 
-    // ✅ CORREÇÃO: Função toggleFavorito melhorada com feedback visual
     window.toggleFavorito = async (id, currentState) => {
       try {
         await toggleFavorite(id, currentState);
         showMessage('Favorito atualizado!', 'sucesso');
-        await carregarNotas(); // Recarrega a lista para mostrar o novo estado
+        await carregarNotas();
       } catch (error) {
         showMessage('Erro ao alterar favorito.', 'erro');
       }
@@ -121,14 +121,11 @@
       window.location.href = 'index.html';
     });
 
-    // Verificação periódica a cada 30 segundos
+    // ✅ CORREÇÃO: Verificação periódica usando checkSingleSession
+    // Isso detecta se outro dispositivo fez login e força logout
     setInterval(async () => {
-      if (!await validateSession()) {
-        await signOut();
-        localStorage.removeItem('session_id');
-        window.location.href = 'index.html';
-      }
-    }, 30000);
+      await checkSingleSession();
+    }, 10000); // Verifica a cada 10 segundos (mais rápido para detectar login em outro dispositivo)
 
     window.showMessage = (msg, type = 'erro') => {
       const el = document.getElementById('mensagem');
