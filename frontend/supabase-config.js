@@ -319,6 +319,85 @@ export async function ensureValidSession() {
   return true;
 }
 
+
+// ===== NOTIFICAÇÕES =====
+export async function getUnreadMessages() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, sender:sender_id(name, email, avatar_url)')
+    .eq('receiver_id', user.id)
+    .eq('read', false)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function markMessageAsRead(messageId) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ read: true })
+    .eq('id', messageId);
+  if (error) throw error;
+}
+
+export async function markAllMessagesAsRead() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from('messages')
+    .update({ read: true })
+    .eq('receiver_id', user.id)
+    .eq('read', false);
+  if (error) throw error;
+}
+
+export async function getUnreadCount() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { count, error } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('receiver_id', user.id)
+    .eq('read', false);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// ===== BUSCAR USUÁRIO POR ID =====
+export async function findUserById(userId) {
+  // Busca nos metadados dos usuários (usando a função RPC ou buscando na tabela profiles)
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    // Se não encontrar na tabela profiles, tenta buscar nos metadados do auth
+    // Como não temos acesso direto a outros usuários no auth, retorna null
+    return null;
+  }
+  return data;
+}
+
+export async function searchUserByPartialId(partialId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty')
+    .ilike('id', `%${partialId}%`)
+    .limit(10);
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function checkSingleSession() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
