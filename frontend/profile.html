@@ -24,10 +24,31 @@
           <div class="subtitle">Meu Perfil</div>
         </div>
       </div>
-      <div class="user-info" id="userInfo">
-        <div class="avatar" id="headerAvatar">👤</div>
-        <span class="user-name" id="headerName">...</span>
-        <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Sino de Notificações -->
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <span class="bell-icon">🔔</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>🔔 Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty">
+                <div class="empty-icon">📭</div>
+                <p>Sem notificações</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="user-info" id="userInfo">
+          <div class="avatar" id="headerAvatar">👤</div>
+          <span class="user-name" id="headerName">...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+        </div>
       </div>
     </div>
 
@@ -120,11 +141,39 @@
     </div>
   </div>
 
+  <!-- Modal de Mensagem -->
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><span>💬</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message-text" id="modalMessageText"></div>
+        <div class="modal-message-meta">
+          <div class="sender-info">
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+            <span id="modalSenderName">...</span>
+          </div>
+          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
+        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, updateUserProfile, getNotes
+      getUserProfile, updateUserProfile, getNotes,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
+
+    let currentUserId = null;
+    let lastMessageId = null;
 
     (async function init() {
       const isValid = await ensureValidSession();
@@ -132,10 +181,9 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
+      currentUserId = user.id;
 
-      let currentProfile = null;
-
-      // ✅ CORREÇÃO: Navegação por botões
+      // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const page = btn.dataset.page;
@@ -143,47 +191,137 @@
         });
       });
 
+      // ===== NOTIFICAÇÕES =====
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const badge = document.getElementById('notificationBadge');
+
+      bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) loadNotifications();
+      });
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+      });
+      document.getElementById('markAllRead').addEventListener('click', async () => {
+        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
+      });
+
+      async function loadNotifications() {
+        try {
+          const messages = await getUnreadMessages();
+          const list = document.getElementById('notificationList');
+          if (messages.length === 0) {
+            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
+            return;
+          }
+          list.innerHTML = messages.map(msg => {
+            const sender = msg.sender || {};
+            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+            return `
+              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
+                <div class="notif-avatar">${avatar}</div>
+                <div class="notif-content">
+                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
+                  <div class="notif-text">${escapeHtml(msg.content)}</div>
+                  <div class="notif-time">${time}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              const msgId = item.dataset.msgId;
+              const msg = messages.find(m => m.id === msgId);
+              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+            });
+          });
+        } catch(e) { console.error(e); }
+      }
+
+      async function checkNewMessages() {
+        try {
+          const count = await getUnreadCount();
+          updateBellState(count);
+          if (count > 0) {
+            const messages = await getUnreadMessages();
+            if (messages.length > 0 && messages[0].id !== lastMessageId) {
+              lastMessageId = messages[0].id;
+              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+            }
+          }
+        } catch(e) {}
+      }
+
+      function updateBellState(count) {
+        badge.textContent = count;
+        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
+        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
+      }
+
+      // ===== MODAL =====
+      const modal = document.getElementById('messageModal');
+      function showMessageModal(msg) {
+        const sender = msg.sender || {};
+        document.getElementById('modalMessageText').textContent = msg.content;
+        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+        const avatar = document.getElementById('modalSenderAvatar');
+        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+        modal.dataset.senderId = msg.sender_id;
+        modal.classList.add('show');
+      }
+      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalGoToChat').addEventListener('click', () => {
+        const senderId = modal.dataset.senderId;
+        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
+        window.location.href = 'chat.html';
+      });
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // ===== PERFIL =====
+      let currentProfile = null;
+
       async function loadProfile() {
         try {
           currentProfile = await getUserProfile();
           const notes = await getNotes();
           const favorites = notes.filter(n => n.is_favorite);
 
-          // Header
           document.getElementById('headerName').textContent = currentProfile.name || currentProfile.email;
           const headerAvatar = document.getElementById('headerAvatar');
-          if (currentProfile.avatar_url) {
-            headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
-          } else {
-            headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
-          }
+          if (currentProfile.avatar_url) headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
+          else headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
 
-          // Profile header
           document.getElementById('profileName').textContent = currentProfile.name || 'Sem nome';
           document.getElementById('profileEmail').textContent = currentProfile.email;
 
           const profileAvatar = document.getElementById('profileAvatar');
-          if (currentProfile.avatar_url) {
-            profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-          } else {
-            profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-          }
+          if (currentProfile.avatar_url) profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
+          else profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
           document.getElementById('avatarUpload').addEventListener('click', () => {
             document.getElementById('avatarInput').click();
           });
 
-          // Specialty
           if (currentProfile.specialty) {
             document.getElementById('profileSpecialty').style.display = 'inline-flex';
             document.getElementById('specialtyText').textContent = currentProfile.specialty;
           }
 
-          // Stats
           document.getElementById('statNotes').textContent = notes.length;
           document.getElementById('statFavorites').textContent = favorites.length;
           document.getElementById('statUserId').textContent = currentProfile.id.substring(0, 8);
 
-          // Form fields
           document.getElementById('editName').value = currentProfile.name || '';
           document.getElementById('editSpecialty').value = currentProfile.specialty || '';
           document.getElementById('editCrm').value = currentProfile.crm || '';
@@ -195,38 +333,27 @@
         }
       }
 
-      // Avatar upload
       document.getElementById('avatarInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-          showMessage('Imagem muito grande. Máximo 2MB.', 'erro');
-          return;
-        }
-
+        if (file.size > 2 * 1024 * 1024) { showMessage('Imagem muito grande. Máximo 2MB.', 'erro'); return; }
         try {
           showMessage('Enviando foto...', 'info');
           const reader = new FileReader();
           reader.onload = async (event) => {
-            const base64 = event.target.result;
-            await updateUserProfile({ avatar_url: base64 });
+            await updateUserProfile({ avatar_url: event.target.result });
             showMessage('Foto atualizada!', 'sucesso');
             await loadProfile();
           };
           reader.readAsDataURL(file);
-        } catch (error) {
-          showMessage('Erro ao enviar foto.', 'erro');
-        }
+        } catch (error) { showMessage('Erro ao enviar foto.', 'erro'); }
       });
 
-      // Save profile
       document.getElementById('profileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('saveProfileBtn');
         btn.disabled = true;
         btn.innerHTML = '<span>⏳</span> Salvando...';
-
         try {
           await updateUserProfile({
             name: document.getElementById('editName').value,
@@ -237,12 +364,8 @@
           });
           showMessage('Perfil atualizado com sucesso!', 'sucesso');
           await loadProfile();
-        } catch (error) {
-          showMessage('Erro ao salvar perfil.', 'erro');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = '<span>💾</span> Salvar Alterações';
-        }
+        } catch (error) { showMessage('Erro ao salvar perfil.', 'erro'); }
+        finally { btn.disabled = false; btn.innerHTML = '<span>💾</span> Salvar Alterações'; }
       });
 
       document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -252,6 +375,7 @@
       });
 
       setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkNewMessages(); }, 8000);
 
       window.showMessage = (msg, type = 'erro') => {
         const el = document.getElementById('mensagem');
@@ -260,6 +384,7 @@
         setTimeout(() => el.style.display = 'none', 5000);
       };
 
+      await checkNewMessages();
       loadProfile();
     })();
   </script>
