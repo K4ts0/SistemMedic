@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#3B82F6" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Meu Perfil — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
@@ -33,10 +33,10 @@
 
     <!-- Navigation -->
     <div class="nav-menu">
-      <a href="dashboard.html" class="nav-item"><span>📋</span> Anotações</a>
-      <a href="profile.html" class="nav-item active"><span>👤</span> Perfil</a>
-      <a href="chat.html" class="nav-item"><span>💬</span> Chat</a>
-      <a href="cid.html" class="nav-item"><span>🔍</span> CID</a>
+      <button class="nav-item" data-page="dashboard"><span>📋</span> Anotações</button>
+      <button class="nav-item active" data-page="profile"><span>👤</span> Perfil</button>
+      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
+      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -126,133 +126,142 @@
       getUserProfile, updateUserProfile, getNotes
     } from './supabase-config.js';
 
-    if (!await ensureValidSession()) return;
+    (async function init() {
+      const isValid = await ensureValidSession();
+      if (!isValid) return;
 
-    const user = await getCurrentUser();
-    if (!user) window.location.href = 'index.html';
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = 'index.html'; return; }
 
-    let currentProfile = null;
+      let currentProfile = null;
 
-    async function loadProfile() {
-      try {
-        currentProfile = await getUserProfile();
-        const notes = await getNotes();
-        const favorites = notes.filter(n => n.is_favorite);
-
-        // Header
-        document.getElementById('headerName').textContent = currentProfile.name || currentProfile.email;
-        const headerAvatar = document.getElementById('headerAvatar');
-        if (currentProfile.avatar_url) {
-          headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
-        } else {
-          headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
-        }
-
-        // Profile header
-        document.getElementById('profileName').textContent = currentProfile.name || 'Sem nome';
-        document.getElementById('profileEmail').textContent = currentProfile.email;
-
-        const profileAvatar = document.getElementById('profileAvatar');
-        if (currentProfile.avatar_url) {
-          profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-        } else {
-          profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-        }
-        // Re-attach click listener
-        document.getElementById('avatarUpload').addEventListener('click', () => {
-          document.getElementById('avatarInput').click();
+      // ✅ CORREÇÃO: Navegação por botões
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const page = btn.dataset.page;
+          if (page) window.location.href = page + '.html';
         });
+      });
 
-        // Specialty
-        if (currentProfile.specialty) {
-          document.getElementById('profileSpecialty').style.display = 'inline-flex';
-          document.getElementById('specialtyText').textContent = currentProfile.specialty;
+      async function loadProfile() {
+        try {
+          currentProfile = await getUserProfile();
+          const notes = await getNotes();
+          const favorites = notes.filter(n => n.is_favorite);
+
+          // Header
+          document.getElementById('headerName').textContent = currentProfile.name || currentProfile.email;
+          const headerAvatar = document.getElementById('headerAvatar');
+          if (currentProfile.avatar_url) {
+            headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
+          } else {
+            headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
+          }
+
+          // Profile header
+          document.getElementById('profileName').textContent = currentProfile.name || 'Sem nome';
+          document.getElementById('profileEmail').textContent = currentProfile.email;
+
+          const profileAvatar = document.getElementById('profileAvatar');
+          if (currentProfile.avatar_url) {
+            profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
+          } else {
+            profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
+          }
+          document.getElementById('avatarUpload').addEventListener('click', () => {
+            document.getElementById('avatarInput').click();
+          });
+
+          // Specialty
+          if (currentProfile.specialty) {
+            document.getElementById('profileSpecialty').style.display = 'inline-flex';
+            document.getElementById('specialtyText').textContent = currentProfile.specialty;
+          }
+
+          // Stats
+          document.getElementById('statNotes').textContent = notes.length;
+          document.getElementById('statFavorites').textContent = favorites.length;
+          document.getElementById('statUserId').textContent = currentProfile.id.substring(0, 8);
+
+          // Form fields
+          document.getElementById('editName').value = currentProfile.name || '';
+          document.getElementById('editSpecialty').value = currentProfile.specialty || '';
+          document.getElementById('editCrm').value = currentProfile.crm || '';
+          document.getElementById('editPhone').value = currentProfile.phone || '';
+          document.getElementById('editBio').value = currentProfile.bio || '';
+
+        } catch (error) {
+          showMessage('Erro ao carregar perfil.', 'erro');
+        }
+      }
+
+      // Avatar upload
+      document.getElementById('avatarInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+          showMessage('Imagem muito grande. Máximo 2MB.', 'erro');
+          return;
         }
 
-        // Stats
-        document.getElementById('statNotes').textContent = notes.length;
-        document.getElementById('statFavorites').textContent = favorites.length;
-        document.getElementById('statUserId').textContent = currentProfile.id.substring(0, 8);
+        try {
+          showMessage('Enviando foto...', 'info');
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            const base64 = event.target.result;
+            await updateUserProfile({ avatar_url: base64 });
+            showMessage('Foto atualizada!', 'sucesso');
+            await loadProfile();
+          };
+          reader.readAsDataURL(file);
+        } catch (error) {
+          showMessage('Erro ao enviar foto.', 'erro');
+        }
+      });
 
-        // Form fields
-        document.getElementById('editName').value = currentProfile.name || '';
-        document.getElementById('editSpecialty').value = currentProfile.specialty || '';
-        document.getElementById('editCrm').value = currentProfile.crm || '';
-        document.getElementById('editPhone').value = currentProfile.phone || '';
-        document.getElementById('editBio').value = currentProfile.bio || '';
+      // Save profile
+      document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('saveProfileBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Salvando...';
 
-      } catch (error) {
-        showMessage('Erro ao carregar perfil.', 'erro');
-      }
-    }
-
-    // Avatar upload
-    document.getElementById('avatarInput').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (file.size > 2 * 1024 * 1024) {
-        showMessage('Imagem muito grande. Máximo 2MB.', 'erro');
-        return;
-      }
-
-      try {
-        showMessage('Enviando foto...', 'info');
-        // Como não temos storage configurado, vamos usar base64
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const base64 = event.target.result;
-          await updateUserProfile({ avatar_url: base64 });
-          showMessage('Foto atualizada!', 'sucesso');
+        try {
+          await updateUserProfile({
+            name: document.getElementById('editName').value,
+            specialty: document.getElementById('editSpecialty').value,
+            crm: document.getElementById('editCrm').value,
+            phone: document.getElementById('editPhone').value,
+            bio: document.getElementById('editBio').value
+          });
+          showMessage('Perfil atualizado com sucesso!', 'sucesso');
           await loadProfile();
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        showMessage('Erro ao enviar foto.', 'erro');
-      }
-    });
+        } catch (error) {
+          showMessage('Erro ao salvar perfil.', 'erro');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<span>💾</span> Salvar Alterações';
+        }
+      });
 
-    // Save profile
-    document.getElementById('profileForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('saveProfileBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Salvando...';
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
+      });
 
-      try {
-        await updateUserProfile({
-          name: document.getElementById('editName').value,
-          specialty: document.getElementById('editSpecialty').value,
-          crm: document.getElementById('editCrm').value,
-          phone: document.getElementById('editPhone').value,
-          bio: document.getElementById('editBio').value
-        });
-        showMessage('Perfil atualizado com sucesso!', 'sucesso');
-        await loadProfile();
-      } catch (error) {
-        showMessage('Erro ao salvar perfil.', 'erro');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>💾</span> Salvar Alterações';
-      }
-    });
+      setInterval(async () => { await checkSingleSession(); }, 10000);
 
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await signOut();
-      localStorage.removeItem('session_id');
-      window.location.href = 'index.html';
-    });
+      window.showMessage = (msg, type = 'erro') => {
+        const el = document.getElementById('mensagem');
+        el.textContent = msg;
+        el.className = `mensagem ${type}`;
+        setTimeout(() => el.style.display = 'none', 5000);
+      };
 
-    setInterval(async () => { await checkSingleSession(); }, 10000);
-
-    window.showMessage = (msg, type = 'erro') => {
-      const el = document.getElementById('mensagem');
-      el.textContent = msg;
-      el.className = `mensagem ${type}`;
-      setTimeout(() => el.style.display = 'none', 5000);
-    };
-
-    loadProfile();
+      loadProfile();
+    })();
   </script>
 </body>
 </html>
