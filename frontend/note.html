@@ -22,7 +22,7 @@
     <div class="card">
       <h1 id="formTitle" style="margin-bottom:8px;">📝 Nova Anotação</h1>
       <p id="formDesc" style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
-        Preencha os campos abaixo para criar sua anotação médica.
+        Use o editor abaixo para formatar sua anotação médica.
       </p>
 
       <div id="mensagem" class="mensagem"></div>
@@ -33,8 +33,65 @@
           <input type="text" id="noteTitle" placeholder="Ex: Consulta Cardiologia - Paciente João" required />
         </div>
         <div class="form-group">
-          <label class="form-label" for="noteContent">Conteúdo</label>
-          <textarea id="noteContent" placeholder="Descreva os detalhes da anotação..." required></textarea>
+          <label class="form-label">Conteúdo</label>
+          <!-- Rich Text Editor -->
+          <div class="rich-editor-container">
+            <div class="rich-toolbar" id="richToolbar">
+              <!-- Fonte -->
+              <select id="fontFamily" title="Fonte">
+                <option value="">Padrão</option>
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times</option>
+                <option value="Courier New">Monospace</option>
+                <option value="Verdana">Verdana</option>
+              </select>
+              <div class="toolbar-separator"></div>
+              <!-- Tamanho -->
+              <select id="fontSize" title="Tamanho">
+                <option value="1">Pequeno</option>
+                <option value="3" selected>Normal</option>
+                <option value="5">Grande</option>
+                <option value="7">Extra</option>
+              </select>
+              <div class="toolbar-separator"></div>
+              <!-- Estilos -->
+              <button type="button" data-cmd="bold" title="Negrito (Ctrl+B)"><b>B</b></button>
+              <button type="button" data-cmd="italic" title="Itálico (Ctrl+I)"><i>I</i></button>
+              <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+              <button type="button" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
+              <div class="toolbar-separator"></div>
+              <!-- Alinhamento -->
+              <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda">⬅️</button>
+              <button type="button" data-cmd="justifyCenter" title="Centralizar">⬆️</button>
+              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">➡️</button>
+              <button type="button" data-cmd="justifyFull" title="Justificar">📄</button>
+              <div class="toolbar-separator"></div>
+              <!-- Listas -->
+              <button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores">• Lista</button>
+              <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+              <div class="toolbar-separator"></div>
+              <!-- Cores -->
+              <button type="button" data-cmd="foreColor" data-value="#EF4444" title="Cor do texto vermelho" style="color:#EF4444">A</button>
+              <button type="button" data-cmd="foreColor" data-value="#3B82F6" title="Cor do texto azul" style="color:#3B82F6">A</button>
+              <button type="button" data-cmd="foreColor" data-value="#10B981" title="Cor do texto verde" style="color:#10B981">A</button>
+              <button type="button" data-cmd="foreColor" data-value="#F59E0B" title="Cor do texto amarelo" style="color:#F59E0B">A</button>
+              <button type="button" data-cmd="foreColor" data-value="#1E293B" title="Cor do texto preto" style="color:#1E293B">A</button>
+              <div class="toolbar-separator"></div>
+              <!-- Cabeçalhos -->
+              <button type="button" data-cmd="formatBlock" data-value="H1" title="Título 1">H1</button>
+              <button type="button" data-cmd="formatBlock" data-value="H2" title="Título 2">H2</button>
+              <button type="button" data-cmd="formatBlock" data-value="P" title="Parágrafo">P</button>
+              <div class="toolbar-separator"></div>
+              <!-- Outros -->
+              <button type="button" data-cmd="removeFormat" title="Remover formatação">🧹</button>
+              <button type="button" data-cmd="undo" title="Desfazer">↩️</button>
+              <button type="button" data-cmd="redo" title="Refazer">↪️</button>
+            </div>
+            <div class="rich-editor" id="richEditor" contenteditable="true" data-placeholder="Digite sua anotação aqui... Use o toolbar acima para formatar o texto."></div>
+          </div>
+          <!-- Campo hidden para enviar o HTML -->
+          <textarea id="noteContent" style="display:none;"></textarea>
         </div>
         <div class="buttons-row" style="margin-top:8px;">
           <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
@@ -50,27 +107,18 @@
 
   <script type="module">
     import { 
-      getCurrentUser, 
-      getNote, 
-      createNote, 
-      updateNote,
-      ensureValidSession,
-      checkSingleSession
+      getCurrentUser, getNote, createNote, updateNote,
+      ensureValidSession, checkSingleSession
     } from './supabase-config.js';
 
-    // ✅ CORREÇÃO: Botão Voltar usa history.back() ao invés de href
+    // Botão Voltar
     document.getElementById('backLink').addEventListener('click', (e) => {
       e.preventDefault();
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'dashboard.html';
     });
 
-    if (!await ensureValidSession()) {
-      // já redirecionado
-    }
+    if (!await ensureValidSession()) return;
 
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
@@ -79,15 +127,63 @@
     const noteId = urlParams.get('id');
     const isEditing = !!noteId;
 
+    // Rich Text Editor Setup
+    const editor = document.getElementById('richEditor');
+    const hiddenContent = document.getElementById('noteContent');
+
+    // Toolbar buttons
+    document.querySelectorAll('.rich-toolbar button[data-cmd]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const cmd = btn.dataset.cmd;
+        const value = btn.dataset.value || null;
+        document.execCommand(cmd, false, value);
+        editor.focus();
+        updateToolbarState();
+      });
+    });
+
+    // Font family
+    document.getElementById('fontFamily').addEventListener('change', (e) => {
+      document.execCommand('fontName', false, e.target.value || 'Inter');
+      editor.focus();
+    });
+
+    // Font size
+    document.getElementById('fontSize').addEventListener('change', (e) => {
+      document.execCommand('fontSize', false, e.target.value);
+      editor.focus();
+    });
+
+    // Update toolbar state on selection change
+    function updateToolbarState() {
+      document.querySelectorAll('.rich-toolbar button[data-cmd]').forEach(btn => {
+        const cmd = btn.dataset.cmd;
+        if (['bold','italic','underline','strikeThrough'].includes(cmd)) {
+          btn.classList.toggle('active', document.queryCommandState(cmd));
+        }
+      });
+    }
+
+    editor.addEventListener('keyup', updateToolbarState);
+    editor.addEventListener('mouseup', updateToolbarState);
+    editor.addEventListener('click', updateToolbarState);
+
+    // Sync editor content to hidden textarea
+    editor.addEventListener('input', () => {
+      hiddenContent.value = editor.innerHTML;
+    });
+
     if (isEditing) {
       document.getElementById('formTitle').textContent = '✏️ Editar Anotação';
       document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
-      document.getElementById('formDesc').textContent = 'Atualize os campos abaixo para editar sua anotação médica.';
+      document.getElementById('formDesc').textContent = 'Atualize sua anotação usando o editor abaixo.';
 
       try {
         const note = await getNote(noteId);
         document.getElementById('noteTitle').value = note.title;
-        document.getElementById('noteContent').value = note.content;
+        editor.innerHTML = note.content || '';
+        hiddenContent.value = note.content || '';
       } catch (error) {
         showMessage('Erro ao carregar nota para edição.', 'erro');
       }
@@ -96,10 +192,14 @@
     document.getElementById('noteForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('noteTitle').value.trim();
-      const content = document.getElementById('noteContent').value.trim();
+      const content = editor.innerHTML.trim();
 
-      if (!title || !content) {
-        showMessage('Preencha todos os campos.', 'erro');
+      if (!title) {
+        showMessage('Informe o título da anotação.', 'erro');
+        return;
+      }
+      if (!content || content === '<br>') {
+        showMessage('Digite o conteúdo da anotação.', 'erro');
         return;
       }
 
@@ -122,13 +222,9 @@
       }
     });
 
-    // ✅ CORREÇÃO: Botão Cancelar usa history.back() ao invés de href
     document.getElementById('cancelBtn').addEventListener('click', () => {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = 'dashboard.html';
-      }
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'dashboard.html';
     });
 
     function showMessage(msg, type) {
@@ -138,10 +234,7 @@
       setTimeout(() => el.style.display = 'none', 5000);
     }
 
-    // Verificação periódica de sessão única
-    setInterval(async () => {
-      await checkSingleSession();
-    }, 10000);
+    setInterval(async () => { await checkSingleSession(); }, 10000);
   </script>
 </body>
 </html>
