@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anotação</title>
+  <title>NoteMed - Anotação</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -17,7 +20,7 @@
       <textarea id="noteContent" placeholder="Digite sua anotação..." required></textarea>
       <div class="buttons-row">
         <button type="submit" id="saveBtn">Salvar</button>
-        <button type="button" id="cancelBtn" class="danger" style="background: #ccc; color: #333;">Cancelar</button>
+        <button type="button" id="cancelBtn" class="btn-secondary">Cancelar</button>
       </div>
     </form>
   </div>
@@ -29,7 +32,7 @@
       createNote, 
       updateNote,
       ensureValidSession,
-      checkSingleSession  // ✅ NOVO
+      checkSingleSession
     } from './supabase-config.js';
 
     if (!await ensureValidSession()) {
@@ -50,7 +53,7 @@
         document.getElementById('noteTitle').value = note.title;
         document.getElementById('noteContent').value = note.content;
       } catch (error) {
-        showMessage('mensagem', 'Erro ao carregar nota.', 'erro');
+        showMessage('Erro ao carregar nota.', 'erro');
       }
     }
 
@@ -65,10 +68,10 @@
         } else {
           await createNote(title, content);
         }
-        showMessage('mensagem', `Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
+        showMessage(`Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
         setTimeout(() => window.location.href = 'dashboard.html', 1000);
       } catch (error) {
-        showMessage('mensagem', error.message || 'Erro ao salvar.', 'erro');
+        showMessage(error.message || 'Erro ao salvar.', 'erro');
       }
     });
 
@@ -76,15 +79,14 @@
       window.location.href = 'dashboard.html';
     });
 
-    function showMessage(id, msg, type) {
-      const el = document.getElementById(id);
+    function showMessage(msg, type) {
+      const el = document.getElementById('mensagem');
       el.textContent = msg;
       el.className = `mensagem ${type}`;
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     }
 
-    // ✅ NOVO: Verificação periódica de sessão única
     setInterval(async () => {
       await checkSingleSession();
     }, 10000);
