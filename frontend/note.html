@@ -23,13 +23,22 @@
   </div>
 
   <script type="module">
-    import { getCurrentUser, getNote, createNote, updateNote } from './supabase-config.js';
+    // IMPORTAÇÃO ÚNICA (sem duplicidade)
+    import { 
+      getCurrentUser, 
+      getNote, 
+      createNote, 
+      updateNote,
+      ensureValidSession,
+      validateSession,
+      signOut
+    } from './supabase-config.js';
 
-    import { ensureValidSession, getCurrentUser } from './supabase-config.js';
-
+    // Verifica sessão única
     if (!await ensureValidSession()) {
       // já redirecionado
     }
+
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
 
@@ -44,7 +53,7 @@
         document.getElementById('noteTitle').value = note.title;
         document.getElementById('noteContent').value = note.content;
       } catch (error) {
-        showMessage('mensagem', 'Erro ao carregar nota.', 'erro');
+        showMessage('Erro ao carregar nota.', 'erro');
       }
     }
 
@@ -59,10 +68,10 @@
         } else {
           await createNote(title, content);
         }
-        showMessage('mensagem', `Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
+        showMessage(`Nota ${isEditing ? 'atualizada' : 'criada'} com sucesso!`, 'sucesso');
         setTimeout(() => window.location.href = 'dashboard.html', 1000);
       } catch (error) {
-        showMessage('mensagem', error.message || 'Erro ao salvar.', 'erro');
+        showMessage(error.message || 'Erro ao salvar.', 'erro');
       }
     });
 
@@ -70,13 +79,33 @@
       window.location.href = 'dashboard.html';
     });
 
-    function showMessage(id, msg, type) {
-      const el = document.getElementById(id);
+    function showMessage(msg, type) {
+      const el = document.getElementById('mensagem');
       el.textContent = msg;
       el.className = `mensagem ${type}`;
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     }
+
+    // Verificação de sessão a cada 3 segundos (mais rápido)
+    setInterval(async () => {
+      if (!await validateSession()) {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
+      }
+    }, 3000);
+
+    // Verifica ao focar a página
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden) {
+        if (!await validateSession()) {
+          await signOut();
+          localStorage.removeItem('session_id');
+          window.location.href = 'index.html';
+        }
+      }
+    });
   </script>
 </body>
 </html>
