@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Meu Perfil — NoteMed for Unisystem</title>
+  <title>Chat — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,14 +14,14 @@
 <base target="_blank">
 </head>
 <body>
-  <div class="container">
+  <div class="container container-chat">
     <!-- Header -->
     <div class="header">
       <div class="header-brand">
         <div class="logo-icon">📝</div>
         <div>
           <h1>NoteMed for Unisystem</h1>
-          <div class="subtitle">Meu Perfil</div>
+          <div class="subtitle">Chat Médico</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
@@ -55,89 +55,81 @@
     <!-- Navigation -->
     <div class="nav-menu">
       <button class="nav-item" data-page="dashboard"><span>📋</span> Anotações</button>
-      <button class="nav-item active" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
+      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
+      <button class="nav-item active" data-page="chat"><span>💬</span> Chat</button>
       <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
 
-    <div class="card">
-      <!-- Profile Header -->
-      <div class="profile-header">
-        <div class="profile-avatar" id="profileAvatar">
-          👤
-          <div class="avatar-upload" id="avatarUpload">📷 Alterar</div>
-        </div>
-        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
-        <div class="profile-info">
-          <h2 id="profileName">Carregando...</h2>
-          <div class="profile-email" id="profileEmail"></div>
-          <div class="profile-specialty" id="profileSpecialty" style="display:none;">
-            <span>🩺</span> <span id="specialtyText"></span>
-          </div>
+    <!-- Busca por ID -->
+    <div class="chat-search-box">
+      <input type="text" id="searchUserId" placeholder="Digite o ID do usuário (ex: A1B2C3D4)" maxlength="36" />
+      <button class="btn btn-primary" id="searchIdBtn">
+        <span>🔍</span> Buscar
+      </button>
+    </div>
+
+    <!-- Resultado da Busca -->
+    <div class="chat-search-result" id="searchResult">
+      <div class="result-header">
+        <div class="result-avatar" id="resultAvatar">👤</div>
+        <div class="result-info">
+          <h4 id="resultName">...</h4>
+          <div class="result-id" id="resultId">...</div>
+          <div class="result-specialty" id="resultSpecialty"></div>
         </div>
       </div>
-
-      <!-- Stats -->
-      <div class="profile-stats" id="profileStats">
-        <div class="stat-card">
-          <div class="stat-value" id="statNotes">0</div>
-          <div class="stat-label">Anotações</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="statFavorites">0</div>
-          <div class="stat-label">Favoritas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="statUserId">—</div>
-          <div class="stat-label">ID do Usuário</div>
-        </div>
-      </div>
-
-      <div class="divider">Editar Informações</div>
-
-      <!-- Edit Form -->
-      <form id="profileForm">
-        <div class="form-group">
-          <label class="form-label" for="editName">Nome completo</label>
-          <input type="text" id="editName" placeholder="Dr. João Silva" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="editSpecialty">Especialidade</label>
-          <select id="editSpecialty">
-            <option value="">Selecione...</option>
-            <option value="Cardiologia">❤️ Cardiologia</option>
-            <option value="Dermatologia">🔬 Dermatologia</option>
-            <option value="Endocrinologia">🩸 Endocrinologia</option>
-            <option value="Gastroenterologia">🫁 Gastroenterologia</option>
-            <option value="Ginecologia">👩 Ginecologia</option>
-            <option value="Neurologia">🧠 Neurologia</option>
-            <option value="Oftalmologia">👁️ Oftalmologia</option>
-            <option value="Ortopedia">🦴 Ortopedia</option>
-            <option value="Pediatria">👶 Pediatria</option>
-            <option value="Psiquiatria">💭 Psiquiatria</option>
-            <option value="Urologia">🚹 Urologia</option>
-            <option value="Clínica Geral">🩺 Clínica Geral</option>
-            <option value="Outra">📋 Outra</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="editCrm">CRM / Registro Profissional</label>
-          <input type="text" id="editCrm" placeholder="CRM-SP 123456" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="editPhone">Telefone</label>
-          <input type="tel" id="editPhone" placeholder="(11) 99999-9999" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="editBio">Biografia / Observações</label>
-          <textarea id="editBio" placeholder="Breve descrição sobre você..." style="min-height:100px;"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg w-full" id="saveProfileBtn">
-          <span>💾</span> Salvar Alterações
+      <div class="result-actions">
+        <button class="btn btn-primary" id="startChatBtn">
+          <span>💬</span> Iniciar Conversa
         </button>
-      </form>
+        <button class="btn btn-secondary" id="clearSearchBtn">
+          <span>❌</span> Limpar
+        </button>
+      </div>
+    </div>
+
+    <!-- User List -->
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div class="toolbar-title">👥 Profissionais Online</div>
+    </div>
+    <div class="chat-user-list" id="userList">
+      <div class="loading" style="padding:20px;">
+        <div class="loading-spinner"></div>
+        Carregando usuários...
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="chat-container" id="chatContainer" style="display:none;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--gray-100);">
+        <div class="avatar" id="chatAvatar" style="width:40px;height:40px;font-size:1rem;">👤</div>
+        <div>
+          <div style="font-weight:600; color:var(--gray-800);" id="chatUserName">...</div>
+          <div style="font-size:0.75rem; color:var(--gray-400); font-family:var(--font-mono);" id="chatUserId">...</div>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="empty-state" style="padding:30px 0;">
+          <div class="empty-icon">💬</div>
+          <p>Envie uma mensagem para iniciar a conversa</p>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" />
+        <button class="btn btn-primary" id="sendBtn" style="border-radius:50%; width:50px; height:50px; padding:0; font-size:1.3rem;">
+          📤
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" id="noChatSelected" style="padding:40px 0;">
+      <div class="empty-icon">👥</div>
+      <h3>Selecione um profissional</h3>
+      <p>Busque por ID ou clique em um usuário da lista para iniciar uma conversa.</p>
     </div>
   </div>
 
@@ -160,7 +152,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
-        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+        <button class="btn btn-primary" id="modalGoToChat">Responder</button>
       </div>
     </div>
   </div>
@@ -168,11 +160,14 @@
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, updateUserProfile, getNotes,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
+      getUserProfile, getChatUsers, sendMessage, getMessages,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
+      findUserById
     } from './supabase-config.js';
 
     let currentUserId = null;
+    let currentChatUser = null;
+    let pollInterval = null;
     let lastMessageId = null;
 
     (async function init() {
@@ -191,6 +186,90 @@
         });
       });
 
+      // Load header
+      try {
+        const profile = await getUserProfile();
+        document.getElementById('headerName').textContent = profile.name || profile.email;
+        const avatar = document.getElementById('headerAvatar');
+        if (profile.avatar_url) {
+          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        } else {
+          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+        }
+      } catch (e) {}
+
+      // ===== BUSCA POR ID =====
+      document.getElementById('searchIdBtn').addEventListener('click', searchById);
+      document.getElementById('searchUserId').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchById();
+      });
+      document.getElementById('clearSearchBtn').addEventListener('click', () => {
+        document.getElementById('searchResult').classList.remove('show');
+        document.getElementById('searchUserId').value = '';
+      });
+      document.getElementById('startChatBtn').addEventListener('click', () => {
+        const result = document.getElementById('searchResult');
+        if (result.dataset.userData) {
+          const userData = JSON.parse(result.dataset.userData);
+          openChat(userData);
+          document.getElementById('searchResult').classList.remove('show');
+        }
+      });
+
+      async function searchById() {
+        const query = document.getElementById('searchUserId').value.trim();
+        if (!query) {
+          showMessage('Digite um ID para buscar.', 'erro');
+          return;
+        }
+
+        const btn = document.getElementById('searchIdBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Buscando...';
+
+        try {
+          let foundUser = await findUserById(query);
+
+          // Se não encontrar exato, tenta busca parcial
+          if (!foundUser) {
+            const results = await searchUserByPartialId(query);
+            if (results.length > 0) {
+              foundUser = results[0];
+            }
+          }
+
+          if (!foundUser) {
+            showMessage('Usuário não encontrado. Verifique o ID.', 'erro');
+            document.getElementById('searchResult').classList.remove('show');
+          } else {
+            displaySearchResult(foundUser);
+          }
+        } catch (error) {
+          showMessage('Erro ao buscar usuário.', 'erro');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔍</span> Buscar';
+        }
+      }
+
+      function displaySearchResult(userData) {
+        const resultDiv = document.getElementById('searchResult');
+        resultDiv.dataset.userData = JSON.stringify(userData);
+
+        document.getElementById('resultName').textContent = userData.name || userData.email || 'Usuário';
+        document.getElementById('resultId').textContent = '#' + userData.id.substring(0, 8) + '...' + userData.id.slice(-4);
+        document.getElementById('resultSpecialty').textContent = userData.specialty ? '🩺 ' + userData.specialty : '';
+
+        const avatar = document.getElementById('resultAvatar');
+        if (userData.avatar_url) {
+          avatar.innerHTML = `<img src="${userData.avatar_url}" alt="">`;
+        } else {
+          avatar.textContent = (userData.name || userData.email || 'U').charAt(0).toUpperCase();
+        }
+
+        resultDiv.classList.add('show');
+      }
+
       // ===== NOTIFICAÇÕES =====
       const bell = document.getElementById('notificationBell');
       const dropdown = document.getElementById('notificationDropdown');
@@ -202,7 +281,9 @@
         if (dropdown.classList.contains('show')) loadNotifications();
       });
       document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+        if (!dropdown.contains(e.target) && e.target !== bell) {
+          dropdown.classList.remove('show');
+        }
       });
       document.getElementById('markAllRead').addEventListener('click', async () => {
         try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
@@ -235,7 +316,11 @@
             item.addEventListener('click', async () => {
               const msgId = item.dataset.msgId;
               const msg = messages.find(m => m.id === msgId);
-              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+              if (msg) {
+                showMessageModal(msg);
+                try { await markMessageAsRead(msgId); } catch(e){}
+                updateBellState(Math.max(0, parseInt(badge.textContent) - 1));
+              }
             });
           });
         } catch(e) { console.error(e); }
@@ -249,7 +334,7 @@
             const messages = await getUnreadMessages();
             if (messages.length > 0 && messages[0].id !== lastMessageId) {
               lastMessageId = messages[0].id;
-              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+              showMessageModal(messages[0]);
             }
           }
         } catch(e) {}
@@ -278,10 +363,100 @@
       document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
       document.getElementById('modalGoToChat').addEventListener('click', () => {
         const senderId = modal.dataset.senderId;
-        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
-        window.location.href = 'chat.html';
+        if (senderId) {
+          sessionStorage.setItem('chatTargetUserId', senderId);
+          modal.classList.remove('show');
+          // Abre o chat com esse usuário
+          loadUsers().then(() => {
+            const userEl = document.querySelector(`.chat-user-item[data-id="${senderId}"]`);
+            if (userEl) userEl.click();
+          });
+        }
       });
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+      // ===== CHAT =====
+      async function loadUsers() {
+        try {
+          const users = await getChatUsers();
+          const container = document.getElementById('userList');
+          if (users.length === 0) {
+            container.innerHTML = '<p style="color:var(--gray-400); font-size:0.9rem; padding:10px;">Nenhum outro usuário encontrado.</p>';
+            return;
+          }
+          container.innerHTML = users.map(u => `
+            <div class="chat-user-item" data-id="${u.id}" data-name="${u.name || u.email}" data-avatar="${u.avatar_url || ''}" data-specialty="${u.specialty || ''}">
+              <div class="user-avatar">
+                ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : (u.name || u.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:600; font-size:0.9rem; color:var(--gray-700);">${u.name || u.email}</div>
+                <div class="user-id">#${u.id.substring(0, 8)}</div>
+                ${u.specialty ? `<div style="font-size:0.75rem; color:var(--gray-400);">🩺 ${u.specialty}</div>` : ''}
+              </div>
+            </div>
+          `).join('');
+          document.querySelectorAll('.chat-user-item').forEach(item => {
+            item.addEventListener('click', () => openChat(item.dataset));
+          });
+
+          // Se veio de notificação, abre o chat automaticamente
+          const targetId = sessionStorage.getItem('chatTargetUserId');
+          if (targetId) {
+            sessionStorage.removeItem('chatTargetUserId');
+            const targetEl = document.querySelector(`.chat-user-item[data-id="${targetId}"]`);
+            if (targetEl) targetEl.click();
+          }
+        } catch (error) {
+          document.getElementById('userList').innerHTML = '<p style="color:var(--gray-400);">Erro ao carregar usuários.</p>';
+        }
+      }
+
+      async function openChat(userData) {
+        currentChatUser = userData;
+        document.querySelectorAll('.chat-user-item').forEach(i => i.classList.remove('active'));
+        document.querySelector(`.chat-user-item[data-id="${userData.id}"]`).classList.add('active');
+        document.getElementById('noChatSelected').style.display = 'none';
+        document.getElementById('chatContainer').style.display = 'flex';
+        document.getElementById('chatUserName').textContent = userData.name;
+        document.getElementById('chatUserId').textContent = '#' + userData.id.substring(0, 8);
+        const avatar = document.getElementById('chatAvatar');
+        if (userData.avatar) avatar.innerHTML = `<img src="${userData.avatar}" alt="">`;
+        else avatar.textContent = (userData.name || 'U').charAt(0).toUpperCase();
+        await loadMessages();
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(() => {
+          if (currentChatUser && currentChatUser.id === userData.id) loadMessages();
+        }, 3000);
+      }
+
+      async function loadMessages() {
+        if (!currentChatUser) return;
+        try {
+          const messages = await getMessages(currentChatUser.id);
+          renderMessages(messages);
+        } catch (error) { console.error('Erro ao carregar mensagens:', error); }
+      }
+
+      function renderMessages(messages) {
+        const container = document.getElementById('chatMessages');
+        if (messages.length === 0) {
+          container.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div class="empty-icon">💬</div><p>Envie uma mensagem para iniciar a conversa</p></div>`;
+          return;
+        }
+        container.innerHTML = messages.map(msg => {
+          const isSent = msg.sender_id === user.id;
+          const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+          return `
+            <div class="chat-message ${isSent ? 'sent' : 'received'}">
+              ${!isSent ? `<div class="msg-sender">${currentChatUser.name}</div>` : ''}
+              <div>${escapeHtml(msg.content)}</div>
+              <div class="msg-time">${time}</div>
+            </div>
+          `;
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+      }
 
       function escapeHtml(text) {
         const div = document.createElement('div');
@@ -289,83 +464,22 @@
         return div.innerHTML;
       }
 
-      // ===== PERFIL =====
-      let currentProfile = null;
-
-      async function loadProfile() {
+      async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const content = input.value.trim();
+        if (!content || !currentChatUser) return;
+        input.value = '';
         try {
-          currentProfile = await getUserProfile();
-          const notes = await getNotes();
-          const favorites = notes.filter(n => n.is_favorite);
-
-          document.getElementById('headerName').textContent = currentProfile.name || currentProfile.email;
-          const headerAvatar = document.getElementById('headerAvatar');
-          if (currentProfile.avatar_url) headerAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar">`;
-          else headerAvatar.textContent = (currentProfile.name || currentProfile.email || 'U').charAt(0).toUpperCase();
-
-          document.getElementById('profileName').textContent = currentProfile.name || 'Sem nome';
-          document.getElementById('profileEmail').textContent = currentProfile.email;
-
-          const profileAvatar = document.getElementById('profileAvatar');
-          if (currentProfile.avatar_url) profileAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="Avatar"><div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-          else profileAvatar.innerHTML = `${(currentProfile.name || 'U').charAt(0).toUpperCase()}<div class="avatar-upload" id="avatarUpload">📷 Alterar</div>`;
-          document.getElementById('avatarUpload').addEventListener('click', () => {
-            document.getElementById('avatarInput').click();
-          });
-
-          if (currentProfile.specialty) {
-            document.getElementById('profileSpecialty').style.display = 'inline-flex';
-            document.getElementById('specialtyText').textContent = currentProfile.specialty;
-          }
-
-          document.getElementById('statNotes').textContent = notes.length;
-          document.getElementById('statFavorites').textContent = favorites.length;
-          document.getElementById('statUserId').textContent = currentProfile.id.substring(0, 8);
-
-          document.getElementById('editName').value = currentProfile.name || '';
-          document.getElementById('editSpecialty').value = currentProfile.specialty || '';
-          document.getElementById('editCrm').value = currentProfile.crm || '';
-          document.getElementById('editPhone').value = currentProfile.phone || '';
-          document.getElementById('editBio').value = currentProfile.bio || '';
-
+          await sendMessage(currentChatUser.id, content);
+          await loadMessages();
         } catch (error) {
-          showMessage('Erro ao carregar perfil.', 'erro');
+          showMessage('Erro ao enviar mensagem.', 'erro');
         }
       }
 
-      document.getElementById('avatarInput').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { showMessage('Imagem muito grande. Máximo 2MB.', 'erro'); return; }
-        try {
-          showMessage('Enviando foto...', 'info');
-          const reader = new FileReader();
-          reader.onload = async (event) => {
-            await updateUserProfile({ avatar_url: event.target.result });
-            showMessage('Foto atualizada!', 'sucesso');
-            await loadProfile();
-          };
-          reader.readAsDataURL(file);
-        } catch (error) { showMessage('Erro ao enviar foto.', 'erro'); }
-      });
-
-      document.getElementById('profileForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('saveProfileBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span> Salvando...';
-        try {
-          await updateUserProfile({
-            name: document.getElementById('editName').value,
-            specialty: document.getElementById('editSpecialty').value,
-            crm: document.getElementById('editCrm').value,
-            phone: document.getElementById('editPhone').value,
-            bio: document.getElementById('editBio').value
-          });
-          showMessage('Perfil atualizado com sucesso!', 'sucesso');
-          await loadProfile();
-        } catch (error) { showMessage('Erro ao salvar perfil.', 'erro'); }
-        finally { btn.disabled = false; btn.innerHTML = '<span>💾</span> Salvar Alterações'; }
+      document.getElementById('sendBtn').addEventListener('click', sendChatMessage);
+      document.getElementById('chatInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
       });
 
       document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -385,7 +499,7 @@
       };
 
       await checkNewMessages();
-      loadProfile();
+      loadUsers();
     })();
   </script>
 </body>
