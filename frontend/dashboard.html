@@ -2,35 +2,56 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NoteMed - Minhas Anotações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Minhas Anotações — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <div class="header">
-      <div class="header-left">
+      <div class="header-brand">
         <div class="logo-icon">📝</div>
-        <div class="app-title">NoteMed <span>for Unisystem</span></div>
+        <div>
+          <h1>NoteMed for Unisystem</h1>
+          <div class="subtitle">Minhas Anotações</div>
+        </div>
       </div>
-      <div class="user-area">
-        <span class="user-name" id="userName"></span>
-        <button class="btn-logout" id="logoutBtn">Sair</button>
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">👤</div>
+        <span class="user-name" id="userName">Carregando...</span>
+        <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
       </div>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
 
-    <button class="btn-new-note" id="novaNotaBtn">+ Nova Anotação</button>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-title">📋 Suas anotações</div>
+      <button id="novaNotaBtn" class="btn btn-primary desktop-only">
+        <span>➕</span> Nova Anotação
+      </button>
+    </div>
 
+    <!-- Lista de Notas -->
     <div id="listaNotas" class="note-list">
-      <p style="color: #8a9aa8; text-align: center; padding: 30px 0;">Carregando anotações...</p>
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        Carregando suas anotações...
+      </div>
     </div>
   </div>
+
+  <!-- Botão flutuante para mobile -->
+  <button class="fab" id="fabNovaNota" title="Nova Anotação">➕</button>
 
   <script type="module">
     import { 
@@ -43,18 +64,24 @@
       checkSingleSession
     } from './supabase-config.js';
 
+    // Verifica sessão única no carregamento
     if (!await ensureValidSession()) {
       // já redirecionado
     }
 
     const user = await getCurrentUser();
     if (!user) window.location.href = 'index.html';
-    document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
 
-    window.toggleFavorito = async (id, currentState) => {
+    document.getElementById('userName').textContent = user.user_metadata?.name || user.email;
+    const initials = (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase();
+    document.getElementById('userAvatar').textContent = initials;
+
+    // Toggle favorito
+    window.toggleFavorito = async (id, currentState, event) => {
+      event.stopPropagation();
       try {
         await toggleFavorite(id, currentState);
-        showMessage('Favorito atualizado!', 'sucesso');
+        showMessage(currentState ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'sucesso');
         await carregarNotas();
       } catch (error) {
         showMessage('Erro ao alterar favorito.', 'erro');
@@ -84,28 +111,54 @@
       try {
         const notas = await getNotes();
         const container = document.getElementById('listaNotas');
+
         if (notas.length === 0) {
-          container.innerHTML = '<p style="color: #8a9aa8; text-align: center; padding: 30px 0;">Nenhuma anotação ainda. Crie sua primeira!</p>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <h3>Nenhuma anotação ainda</h3>
+              <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
+            </div>
+          `;
           return;
         }
+
         container.innerHTML = notas.map(note => `
-          <div class="note-item" data-id="${note.id}">
-            <div class="info">
-              <h3>
-                <a href="view.html?id=${note.id}">
-                  ${note.title}
-                </a>
-              </h3>
-              <p>${note.content ? note.content.substring(0, 100) : ''}${note.content && note.content.length > 100 ? '...' : ''}</p>
-              <small>Atualizado em: ${new Date(note.updated_at).toLocaleString()}</small>
+          <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
+            <div class="note-header">
+              <a href="view.html?id=${note.id}" class="note-title">
+                ${note.title}
+                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
+              </a>
+              <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
+                ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
+              </span>
             </div>
-            <div class="actions">
-              <button class="btn-fav" onclick="toggleFavorito('${note.id}', ${note.is_favorite})" title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
-                ${note.is_favorite ? '⭐' : '☆'}
-              </button>
-              <button onclick="visualizarNota('${note.id}')">Visualizar</button>
-              <button onclick="editarNota('${note.id}')">Editar</button>
-              <button class="btn-danger" onclick="excluirNota('${note.id}')">Excluir</button>
+            <div class="note-content">${note.content || ''}</div>
+            <div class="note-meta">
+              <div class="note-date">
+                <span>🕐</span>
+                ${new Date(note.updated_at).toLocaleString('pt-BR', { 
+                  day: '2-digit', month: 'short', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                })}
+              </div>
+              <div class="note-actions">
+                <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
+                        onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
+                        title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                  ${note.is_favorite ? '⭐' : '☆'}
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
+                  <span>👁️</span> Visualizar
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
+                  <span>✏️</span> Editar
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
+                  <span>🗑️</span> Excluir
+                </button>
+              </div>
             </div>
           </div>
         `).join('');
@@ -114,16 +167,24 @@
       }
     }
 
+    // Nova nota (desktop)
     document.getElementById('novaNotaBtn').addEventListener('click', () => {
       window.location.href = 'note.html';
     });
 
+    // Nova nota (mobile FAB)
+    document.getElementById('fabNovaNota').addEventListener('click', () => {
+      window.location.href = 'note.html';
+    });
+
+    // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await signOut();
       localStorage.removeItem('session_id');
       window.location.href = 'index.html';
     });
 
+    // Verificação periódica de sessão única
     setInterval(async () => {
       await checkSingleSession();
     }, 10000);
@@ -132,7 +193,6 @@
       const el = document.getElementById('mensagem');
       el.textContent = msg;
       el.className = `mensagem ${type}`;
-      el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     };
 
