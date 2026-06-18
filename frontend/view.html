@@ -2,22 +2,38 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NoteMed - Visualizar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Visualizar Anotação — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html" class="voltar">← Voltar</a>
-    <h1 id="noteTitle"></h1>
-    <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 12px; white-space: pre-wrap; min-height: 120px;"></div>
-    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-      <button onclick="editar()">Editar</button>
-      <button onclick="window.location.href='dashboard.html'" class="btn-secondary">Voltar</button>
+    <a href="dashboard.html" class="back-link">
+      <span>←</span> Voltar para anotações
+    </a>
+
+    <div class="note-view">
+      <h1 id="noteTitle">Carregando...</h1>
+      <div class="note-meta-bar">
+        <span class="badge badge-primary" id="noteBadge">📄 Anotação</span>
+        <span class="note-date" id="noteDate">🕐 Carregando...</span>
+      </div>
+      <div class="note-body" id="noteContent"></div>
+      <div class="buttons-row" style="margin-top:32px; padding-top:24px; border-top:1px solid var(--gray-100);">
+        <button class="btn btn-primary" onclick="editar()">
+          <span>✏️</span> Editar
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'">
+          <span>←</span> Voltar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -26,7 +42,7 @@
       getNote, 
       getCurrentUser, 
       ensureValidSession, 
-      checkSingleSession
+      checkSingleSession 
     } from './supabase-config.js';
 
     if (!await ensureValidSession()) {
@@ -47,6 +63,22 @@
       const note = await getNote(noteId);
       document.getElementById('noteTitle').textContent = note.title;
       document.getElementById('noteContent').textContent = note.content;
+
+      // Badge favorito
+      const badge = document.getElementById('noteBadge');
+      if (note.is_favorite) {
+        badge.textContent = '⭐ Favorita';
+        badge.className = 'badge badge-success';
+      }
+
+      // Data formatada
+      document.getElementById('noteDate').innerHTML = `
+        <span>🕐</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', {
+          day: '2-digit', month: 'long', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })}
+      `;
+
       window.editar = () => {
         window.location.href = `note.html?id=${noteId}`;
       };
@@ -55,6 +87,7 @@
       window.location.href = 'dashboard.html';
     }
 
+    // Verificação periódica de sessão única
     setInterval(async () => {
       await checkSingleSession();
     }, 10000);
