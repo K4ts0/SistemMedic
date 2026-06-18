@@ -15,14 +15,14 @@
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html" class="back-link">
-      <span>←</span> Voltar para anotações
+    <a href="#" class="back-link" id="backLink">
+      <span>←</span> Voltar
     </a>
 
     <div class="card">
       <h1 id="formTitle" style="margin-bottom:8px;">📝 Nova Anotação</h1>
-      <p style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
-        Preencha os campos abaixo para ${isEditing ? 'atualizar' : 'criar'} sua anotação médica.
+      <p id="formDesc" style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
+        Preencha os campos abaixo para criar sua anotação médica.
       </p>
 
       <div id="mensagem" class="mensagem"></div>
@@ -58,6 +58,16 @@
       checkSingleSession
     } from './supabase-config.js';
 
+    // ✅ CORREÇÃO: Botão Voltar usa history.back() ao invés de href
+    document.getElementById('backLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    });
+
     if (!await ensureValidSession()) {
       // já redirecionado
     }
@@ -72,7 +82,7 @@
     if (isEditing) {
       document.getElementById('formTitle').textContent = '✏️ Editar Anotação';
       document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
-      document.querySelector('p').textContent = 'Atualize os campos abaixo para editar sua anotação médica.';
+      document.getElementById('formDesc').textContent = 'Atualize os campos abaixo para editar sua anotação médica.';
 
       try {
         const note = await getNote(noteId);
@@ -112,8 +122,13 @@
       }
     });
 
+    // ✅ CORREÇÃO: Botão Cancelar usa history.back() ao invés de href
     document.getElementById('cancelBtn').addEventListener('click', () => {
-      window.location.href = 'dashboard.html';
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'dashboard.html';
+      }
     });
 
     function showMessage(msg, type) {
