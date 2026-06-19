@@ -58,66 +58,89 @@
     import { supabase } from './supabase-config.js';
 
     (async function init() {
-      const url = new URL(window.location.href);
-      const token_hash = url.searchParams.get('token_hash');
-      const type = url.searchParams.get('type');
-      const next = url.searchParams.get('next') || 'dashboard.html';
-
       const icon = document.getElementById('statusIcon');
       const title = document.getElementById('statusTitle');
       const text = document.getElementById('statusText');
       const actions = document.getElementById('actions');
 
-      // Se não tem token_hash, verifica se é um erro no hash
-      if (!token_hash) {
-        const hash = window.location.hash;
-        if (hash && hash.includes('error=')) {
-          const params = new URLSearchParams(hash.slice(1));
-          const errorCode = params.get('error_code');
-          const errorDesc = params.get('error_description');
+      // Verifica se há erro no hash da URL
+      const hash = window.location.hash;
+      if (hash && hash.includes('error=')) {
+        const params = new URLSearchParams(hash.slice(1));
+        const errorCode = params.get('error_code');
+        const errorDesc = params.get('error_description');
 
-          icon.className = 'confirm-icon error';
-          icon.textContent = '❌';
-          title.textContent = 'Link inválido ou expirado';
-          text.textContent = errorDesc 
-            ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
-            : 'O link de confirmação é inválido ou já expirou. Solicite um novo link ou faça login.';
-          actions.style.display = 'flex';
-          return;
-        }
-
-        // Sem token e sem erro - redireciona para login
-        window.location.href = 'index.html';
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Link inválido ou expirado';
+        text.textContent = errorDesc 
+          ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+          : 'O link de confirmação é inválido ou já expirou.';
+        actions.style.display = 'flex';
         return;
       }
 
-      try {
-        const { error } = await supabase.auth.verifyOtp({
-          type: type || 'email',
-          token_hash: token_hash
-        });
+      // FLUXO PADRÃO SUPABASE:
+      // O Supabase redireciona para SiteURL com hash contendo access_token
+      // Ex: #access_token=xxx&refresh_token=xxx&type=signup
+      // A biblioteca supabase-js detecta automaticamente esses tokens
+      // e cria a sessão. Vamos verificar se a sessão foi criada.
 
-        if (error) {
-          throw error;
+      try {
+        // Aguarda um momento para o supabase-js processar o hash
+        await new Promise(r => setTimeout(r, 1000));
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) throw error;
+
+        if (session) {
+          // Sessão criada = email confirmado com sucesso!
+          icon.className = 'confirm-icon success';
+          icon.textContent = '✅';
+          title.textContent = 'Email confirmado com sucesso!';
+          text.textContent = 'Sua conta foi ativada. Redirecionando para o app...';
+
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 2000);
+          return;
         }
 
-        // Sucesso!
-        icon.className = 'confirm-icon success';
-        icon.textContent = '✅';
-        title.textContent = 'Email confirmado com sucesso!';
-        text.textContent = 'Sua conta foi ativada. Você já pode fazer login e começar a usar o NoteMed.';
-        actions.style.display = 'flex';
+        // Se não tem sessão, verifica se há token_hash na query string
+        // (caso usemos token_hash no futuro)
+        const url = new URL(window.location.href);
+        const token_hash = url.searchParams.get('token_hash');
+        const type = url.searchParams.get('type') || 'email';
 
-        // Redireciona automaticamente após 3 segundos
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 3000);
+        if (token_hash) {
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            type: type,
+            token_hash: token_hash
+          });
+
+          if (verifyError) throw verifyError;
+
+          icon.className = 'confirm-icon success';
+          icon.textContent = '✅';
+          title.textContent = 'Email confirmado com sucesso!';
+          text.textContent = 'Sua conta foi ativada. Redirecionando...';
+          setTimeout(() => window.location.href = 'dashboard.html', 2000);
+          return;
+        }
+
+        // Sem sessão e sem token - mostra opções
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Não foi possível confirmar';
+        text.textContent = 'Não detectamos uma confirmação válida. Tente fazer login ou crie uma nova conta.';
+        actions.style.display = 'flex';
 
       } catch (err) {
         icon.className = 'confirm-icon error';
         icon.textContent = '❌';
         title.textContent = 'Erro na confirmação';
-        text.textContent = err.message || 'Não foi possível confirmar seu email. O link pode ter expirado ou já foi usado.';
+        text.textContent = err.message || 'Não foi possível confirmar seu email. O link pode ter expirado.';
         actions.style.display = 'flex';
       }
     })();
