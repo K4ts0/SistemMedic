@@ -168,7 +168,7 @@
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
       getUserProfile, updateUserProfile, getNotes,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, wasPopupShown, markPopupAsShown
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -248,7 +248,11 @@
             const messages = await getUnreadMessages();
             if (messages.length > 0 && messages[0].id !== lastMessageId) {
               lastMessageId = messages[0].id;
-              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+              // Só mostra popup se não foi mostrado nesta sessão e não está no chat
+              if (!window.location.href.includes('chat.html') && !wasPopupShown(messages[0].id)) {
+                showMessageModal(messages[0]);
+                markPopupAsShown(messages[0].id);
+              }
             }
           }
         } catch(e) {}
