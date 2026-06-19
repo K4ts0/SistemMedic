@@ -129,7 +129,7 @@
     import { 
       getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite,
       ensureValidSession, checkSingleSession, getUserProfile,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, wasPopupShown, markPopupAsShown
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -305,10 +305,9 @@
               const latest = messages[0];
               if (latest.id !== lastMessageId) {
                 lastMessageId = latest.id;
-                // Só mostra modal se não estiver no chat e não tiver sido mostrado nesta sessão
-                if (!window.location.href.includes('chat.html') && !wasPopupShown(latest.id)) {
+                // Só mostra modal se não estiver no chat
+                if (!window.location.href.includes('chat.html')) {
                   showMessageModal(latest);
-                  markPopupAsShown(latest.id);
                 }
               }
             }
