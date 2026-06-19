@@ -2,114 +2,340 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Busca CID — NoteMed for Unisystem</title>
+  <title>CID — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ===== ESTILOS ESPECIFICOS CID ===== */
-    .cid-search-box {
+    /* ============================================
+       ESTILOS BASE DA PÁGINA CID
+       ============================================ */
+    :root {
+      --primary: #0f2b4b;
+      --primary-light: #1a3f66;
+      --primary-dark: #091d33;
+      --blue: #3B82F6;
+      --blue-hover: #2563eb;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1e293b;
+      --gray-900: #0f172a;
+      --radius: 16px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      --transition: 0.25s ease;
+    }
+
+    body {
+      background: #f5f7fa;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      padding: 16px;
+      min-height: 100vh;
       display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 20px;
     }
-    .cid-search-box input {
-      flex: 1;
-      padding: 14px 18px;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.2s;
-      background: white;
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .cid-search-box input:focus {
-      outline: none;
-      border-color: #3B82F6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    .logo-icon {
+      font-size: 2rem;
+      line-height: 1;
     }
-    .cid-search-box input::placeholder {
-      color: #9ca3af;
+    .header-brand h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+    }
+    .header-brand .subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      font-weight: 500;
     }
 
-    /* Tags de sintomas rapidos */
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--gray-700);
+      font-size: 0.9rem;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .user-name {
+      font-weight: 500;
+      color: var(--gray-700);
+      font-size: 0.95rem;
+      display: none;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: background var(--transition);
+    }
+    .btn-ghost:hover {
+      background: var(--gray-100);
+    }
+
+    /* ===== NAVEGAÇÃO ===== */
+    .nav-menu {
+      display: flex;
+      gap: 4px;
+      background: var(--gray-100);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .nav-menu::-webkit-scrollbar {
+      display: none;
+    }
+    .nav-item {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-item:hover {
+      background: rgba(59, 130, 246, 0.08);
+      color: var(--blue);
+    }
+    .nav-item.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* ===== BUSCA ===== */
+    .cid-search-box {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .cid-search-box input {
+      flex: 1;
+      min-width: 180px;
+      padding: 14px 18px;
+      border: 2px solid var(--gray-200);
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all var(--transition);
+      background: #fff;
+    }
+    .cid-search-box input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      outline: none;
+    }
+    .cid-search-box input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--blue-hover);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+    .btn-secondary:hover {
+      background: var(--gray-300);
+    }
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+    }
+
+    /* ===== TAGS DE SINTOMAS ===== */
     .symptom-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
+      margin: 12px 0 16px;
     }
     .symptom-tag {
-      padding: 8px 16px;
+      padding: 6px 14px;
       background: #eff6ff;
-      color: #2563eb;
+      color: var(--blue);
       border: 1px solid #bfdbfe;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition);
       font-weight: 500;
+      user-select: none;
     }
     .symptom-tag:hover {
-      background: #3B82F6;
-      color: white;
+      background: var(--blue);
+      color: #fff;
       transform: translateY(-1px);
     }
 
-    /* Resultados */
+    /* ===== DICAS DE BUSCA ===== */
+    .search-tips {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .search-tips h4 {
+      color: var(--gray-700);
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .search-tips p {
+      color: var(--gray-500);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* ===== RESULTADOS ===== */
     .cid-results-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
+      margin-top: 16px;
     }
     .cid-result-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 20px;
-      transition: all 0.2s;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 18px;
+      transition: all var(--transition);
       cursor: pointer;
     }
     .cid-result-card:hover {
-      border-color: #3B82F6;
-      box-shadow: 0 4px 20px rgba(59,130,246,0.1);
-      transform: translateY(-2px);
+      border-color: var(--blue);
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
     }
     .cid-result-card.expanded {
-      border-color: #3B82F6;
-      box-shadow: 0 4px 20px rgba(59,130,246,0.15);
+      border-color: var(--blue);
+      box-shadow: 0 4px 24px rgba(59, 130, 246, 0.12);
     }
+
     .cid-header {
       display: flex;
       align-items: flex-start;
-      gap: 16px;
+      gap: 14px;
+      flex-wrap: wrap;
     }
     .cid-code-badge {
-      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-      color: white;
-      padding: 8px 14px;
+      background: linear-gradient(135deg, var(--blue), #1D4ED8);
+      color: #fff;
+      padding: 6px 14px;
       border-radius: 10px;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1rem;
       flex-shrink: 0;
-      min-width: 70px;
+      min-width: 65px;
       text-align: center;
     }
     .cid-info {
       flex: 1;
+      min-width: 140px;
     }
     .cid-name {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 4px;
+      color: var(--gray-800);
+      margin-bottom: 2px;
     }
     .cid-desc {
-      color: #6b7280;
+      color: var(--gray-500);
       font-size: 0.9rem;
       line-height: 1.5;
     }
@@ -117,14 +343,14 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     .cid-symptom-chip {
       background: #fef3c7;
       color: #92400e;
-      padding: 4px 10px;
+      padding: 2px 10px;
       border-radius: 12px;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 500;
     }
     .cid-match-score {
@@ -134,31 +360,31 @@
       border-radius: 12px;
       font-size: 0.75rem;
       font-weight: 600;
-      margin-left: auto;
+      align-self: center;
       flex-shrink: 0;
     }
 
-    /* Detalhes expandidos */
     .cid-details {
       display: none;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--gray-200);
     }
     .cid-details.show {
       display: block;
     }
+
     .prescription-box {
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
       border-radius: 12px;
       padding: 16px;
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .prescription-box h4 {
       color: #166534;
       font-size: 0.95rem;
-      margin-bottom: 10px;
+      margin: 0 0 10px 0;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -166,13 +392,12 @@
     .prescription-box ul {
       list-style: none;
       padding: 0;
-      margin: 0;
+      margin: 0 0 10px 0;
     }
     .prescription-box li {
-      padding: 6px 0;
-      padding-left: 20px;
+      padding: 4px 0 4px 24px;
       position: relative;
-      color: #374151;
+      color: var(--gray-700);
       font-size: 0.9rem;
     }
     .prescription-box li::before {
@@ -181,7 +406,6 @@
       left: 0;
     }
     .prescription-warning {
-      margin-top: 12px;
       padding: 10px 14px;
       background: #fef3c7;
       border: 1px solid #fcd34d;
@@ -190,39 +414,41 @@
       color: #92400e;
       font-style: italic;
     }
+
     .cid-actions {
       display: flex;
       gap: 10px;
-      margin-top: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
     }
     .cid-actions .btn {
       flex: 1;
-      justify-content: center;
+      min-width: 120px;
     }
 
-    /* CIDs Populares */
+    /* ===== CID POPULARES ===== */
     .popular-cids {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
     .cid-tag {
-      padding: 8px 14px;
-      background: white;
-      border: 1px solid #e5e7eb;
+      padding: 6px 14px;
+      background: #fff;
+      border: 1px solid var(--gray-200);
       border-radius: 10px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: all 0.2s;
-      color: #374151;
+      transition: all var(--transition);
+      color: var(--gray-700);
     }
     .cid-tag:hover {
       background: #eff6ff;
-      border-color: #3B82F6;
-      color: #2563eb;
+      border-color: var(--blue);
+      color: var(--blue);
     }
 
-    /* Busca vazia */
+    /* ===== ESTADOS VAZIOS ===== */
     .search-empty {
       text-align: center;
       padding: 40px 20px;
@@ -232,48 +458,402 @@
       margin-bottom: 12px;
     }
     .search-empty h3 {
-      color: #6b7280;
+      color: var(--gray-600);
       font-size: 1.1rem;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .search-empty p {
-      color: #9ca3af;
+      color: var(--gray-400);
       font-size: 0.9rem;
     }
 
-    /* Dicas de busca */
-    .search-tips {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
+    /* ===== NOTIFICAÇÕES ===== */
+    .notification-bell {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      position: relative;
+      padding: 4px;
     }
-    .search-tips h4 {
-      color: #475569;
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .notification-badge.hidden {
+      display: none;
+    }
+
+    .notification-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 44px;
+      width: 340px;
+      max-width: 90vw;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+      z-index: 100;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .notification-dropdown.show {
+      display: block;
+    }
+    .notification-dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .notification-dropdown-header h3 {
+      font-size: 0.95rem;
+      margin: 0;
+      color: var(--gray-700);
+    }
+    .mark-all-read {
+      font-size: 0.75rem;
+      color: var(--blue);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .mark-all-read:hover {
+      text-decoration: underline;
+    }
+    .notification-list {
+      padding: 8px 0;
+    }
+    .notification-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background var(--transition);
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+    .notification-item:hover {
+      background: var(--gray-50);
+    }
+    .notification-item.unread {
+      background: #f0f7ff;
+    }
+    .notif-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--gray-700);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .notif-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .notif-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .notif-sender {
+      font-weight: 600;
+      color: var(--gray-800);
       font-size: 0.9rem;
+    }
+    .notif-text {
+      color: var(--gray-600);
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notif-time {
+      color: var(--gray-400);
+      font-size: 0.7rem;
+      margin-top: 2px;
+    }
+    .notification-empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--gray-400);
+    }
+    .empty-icon {
+      font-size: 2.5rem;
       margin-bottom: 8px;
     }
-    .search-tips p {
-      color: #64748b;
-      font-size: 0.85rem;
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: var(--radius);
+      max-width: 460px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+      animation: modalFade 0.25s ease;
+    }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 {
+      font-size: 1.1rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--gray-400);
+    }
+    .modal-close:hover {
+      color: var(--gray-600);
+    }
+    .modal-body {
+      margin-bottom: 20px;
+    }
+    .modal-message-text {
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: 12px;
+      color: var(--gray-700);
       line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    .modal-message-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .sender-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sender-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.7rem;
+      color: var(--gray-700);
+      overflow: hidden;
+    }
+    .sender-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .modal-footer .btn {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    /* ============================================
+       RESPONSIVIDADE
+       ============================================ */
+
+    /* Small devices ( smartphones, 480px e abaixo ) */
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .container { padding: 12px; border-radius: 12px; }
+
+      .header-brand h1 { font-size: 1.1rem; }
+      .header-brand .subtitle { font-size: 0.7rem; }
+      .logo-icon { font-size: 1.5rem; }
+      .user-name { display: none; }
+
+      .nav-item { padding: 8px 12px; font-size: 0.8rem; gap: 4px; }
+      .nav-item span { display: none; } /* esconde ícones em telas muito pequenas? Melhor manter ícone e texto curto */
+      /* Na verdade vamos manter ícone + texto curto */
+      .nav-item { font-size: 0.75rem; padding: 6px 10px; }
+      .nav-item span { display: inline; } /* mantém ícone */
+
+      .cid-search-box input { padding: 12px 14px; font-size: 0.95rem; min-width: 120px; }
+      .btn { padding: 10px 14px; font-size: 0.85rem; }
+
+      .cid-result-card { padding: 14px; }
+      .cid-header { gap: 10px; }
+      .cid-code-badge { font-size: 0.85rem; padding: 4px 10px; min-width: 55px; }
+      .cid-name { font-size: 0.95rem; }
+      .cid-desc { font-size: 0.8rem; }
+      .cid-match-score { font-size: 0.65rem; padding: 2px 8px; }
+
+      .cid-actions { flex-direction: column; }
+      .cid-actions .btn { flex: 1; width: 100%; }
+
+      .notification-dropdown { width: calc(100vw - 32px); right: -8px; top: 40px; }
+
+      .modal-content { padding: 16px; }
+      .modal-footer { flex-direction: column; }
+      .modal-footer .btn { width: 100%; }
+    }
+
+    /* Medium devices ( tablets, 768px e abaixo ) */
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+
+      .user-name { display: inline-block; font-size: 0.85rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      .cid-search-box { flex-wrap: wrap; }
+      .cid-search-box input { flex: 1 1 100%; }
+      .cid-search-box .btn { flex: 0 0 auto; }
+
+      .cid-result-card { padding: 16px; }
+      .cid-header { flex-wrap: wrap; }
+      .cid-info { flex: 1 1 100%; order: 2; }
+      .cid-code-badge { order: 1; }
+      .cid-match-score { order: 3; align-self: flex-start; }
+    }
+
+    /* Large devices ( desktops, 1024px e acima ) */
+    @media (min-width: 1024px) {
+      .container { padding: 32px; }
+      .user-name { display: inline-block; }
+      .cid-search-box input { min-width: 300px; }
+      .cid-header { flex-wrap: nowrap; }
+      .cid-info { order: 0; }
+      .cid-code-badge { order: 0; }
+      .cid-match-score { order: 0; }
+    }
+
+    /* Landscape phones e tablets pequenos */
+    @media (max-height: 600px) and (orientation: landscape) {
+      .container { padding: 12px; }
+      .header { margin-bottom: 12px; }
+      .nav-menu { margin-bottom: 12px; }
+      .card { padding: 14px; }
+      .cid-search-box input { padding: 10px 12px; }
+      .btn { padding: 8px 14px; }
+      .cid-result-card { padding: 12px; }
+      .search-tips { padding: 10px; }
+    }
+
+    /* Ajustes para telas muito pequenas ( < 360px ) */
+    @media (max-width: 360px) {
+      .nav-item { font-size: 0.65rem; padding: 4px 8px; gap: 2px; }
+      .nav-item span { font-size: 0.8rem; }
+      .cid-code-badge { font-size: 0.75rem; min-width: 45px; padding: 2px 8px; }
+      .cid-name { font-size: 0.85rem; }
+      .cid-desc { font-size: 0.75rem; }
+      .symptom-tag { font-size: 0.7rem; padding: 4px 10px; }
+      .cid-tag { font-size: 0.7rem; padding: 4px 10px; }
+    }
+
+    /* Tema escuro (opcional, para quem ativar no sistema) */
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f172a; }
+      .container { background: #1e293b; border-color: #334155; }
+      .card { background: #1e293b; border-color: #334155; }
+      .header-brand h1 { color: #e2e8f0; }
+      .header-brand .subtitle { color: #94a3b8; }
+      .user-name { color: #e2e8f0; }
+      .nav-menu { background: #0f172a; }
+      .nav-item { color: #94a3b8; }
+      .nav-item.active { background: #1e293b; color: #e2e8f0; }
+      .cid-search-box input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+      .cid-search-box input:focus { border-color: var(--blue); }
+      .cid-result-card { background: #0f172a; border-color: #334155; }
+      .cid-result-card:hover { border-color: var(--blue); }
+      .cid-name { color: #e2e8f0; }
+      .cid-desc { color: #94a3b8; }
+      .search-tips { background: #0f172a; border-color: #334155; }
+      .search-tips h4 { color: #e2e8f0; }
+      .search-tips p { color: #94a3b8; }
+      .cid-tag { background: #0f172a; border-color: #334155; color: #94a3b8; }
+      .cid-tag:hover { background: #1e293b; border-color: var(--blue); color: var(--blue); }
+      .notification-dropdown { background: #1e293b; border-color: #334155; }
+      .notification-dropdown-header { border-color: #334155; }
+      .notification-dropdown-header h3 { color: #e2e8f0; }
+      .notification-item { border-color: #334155; }
+      .notification-item:hover { background: #0f172a; }
+      .notification-item.unread { background: #172554; }
+      .notif-sender { color: #e2e8f0; }
+      .notif-text { color: #94a3b8; }
+      .modal-content { background: #1e293b; }
+      .modal-header h3 { color: #e2e8f0; }
+      .modal-message-text { background: #0f172a; color: #e2e8f0; }
+      .modal-close { color: #94a3b8; }
+      .prescription-box { background: #064e3b; border-color: #065f46; }
+      .prescription-box h4 { color: #86efac; }
+      .prescription-box li { color: #d1fae5; }
+      .prescription-warning { background: #78350f; border-color: #92400e; color: #fde68a; }
+      .cid-symptom-chip { background: #78350f; color: #fde68a; }
+      .cid-match-score { background: #064e3b; color: #86efac; }
+      .symptom-tag { background: #1e293b; color: #60a5fa; border-color: #3b82f6; }
+      .symptom-tag:hover { background: #3b82f6; color: #fff; }
+      .btn-secondary { background: #334155; color: #e2e8f0; }
+      .btn-secondary:hover { background: #475569; }
     }
   </style>
-<base target="_blank">
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+
+    <!-- ===== HEADER ===== -->
     <div class="header">
       <div class="header-brand">
-        <div class="logo-icon">📝</div>
+        <span class="logo-icon">📝</span>
         <div>
           <h1>NoteMed for Unisystem</h1>
-          <div class="subtitle">Busca CID & Prescrição</div>
+          <div class="subtitle">Busca CID &amp; Prescrição</div>
         </div>
       </div>
-      <div style="display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <div style="position:relative;">
           <button class="notification-bell" id="notificationBell" title="Notificações">
             <span class="bell-icon">🔔</span>
@@ -292,15 +872,15 @@
             </div>
           </div>
         </div>
-        <div class="user-info" id="userInfo">
+        <div class="user-info">
           <div class="avatar" id="headerAvatar">👤</div>
-          <span class="user-name" id="headerName">...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+          <span class="user-name" id="headerName">Carregando...</span>
+          <button class="btn-ghost" id="logoutBtn" title="Sair">🚪</button>
         </div>
       </div>
     </div>
 
-    <!-- Navigation -->
+    <!-- ===== NAVEGAÇÃO ===== -->
     <div class="nav-menu">
       <button class="nav-item" data-page="dashboard"><span>📋</span> Anotações</button>
       <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
@@ -310,22 +890,21 @@
 
     <div id="mensagem" class="mensagem"></div>
 
+    <!-- ===== CARD PRINCIPAL ===== -->
     <div class="card">
-      <h1 style="margin-bottom:8px; font-size:1.5rem;">🔍 Busca Inteligente CID-10</h1>
-      <p style="color:var(--gray-400); margin-bottom:20px; font-size:0.95rem;">
+      <h1 style="margin:0 0 6px 0; font-size:1.5rem; font-weight:700; color:var(--gray-800);">🔍 Busca Inteligente CID-10</h1>
+      <p style="color:var(--gray-500); margin:0 0 20px 0; font-size:0.95rem;">
         Busque por sintomas, nome da doença ou código CID. O sistema sugere os diagnósticos mais prováveis.
       </p>
 
-      <!-- Campo de busca -->
       <div class="cid-search-box">
-        <input type="text" id="cidInput" placeholder="Ex: dor de cabeça, febre, tosse, diarreia, A00..." />
+        <input type="text" id="cidInput" placeholder="Ex: dor de cabeça, febre, tosse, A00..." />
         <button class="btn btn-primary" id="searchBtn">
           <span>🔍</span> Buscar
         </button>
       </div>
 
-      <!-- Tags de sintomas rápidos -->
-      <div style="margin-bottom:8px; font-size:0.85rem; color:#6b7280; font-weight:500;">Sintomas comuns:</div>
+      <div style="margin:12px 0 6px; font-size:0.85rem; color:var(--gray-500); font-weight:500;">Sintomas comuns:</div>
       <div class="symptom-tags" id="symptomTags">
         <span class="symptom-tag" data-term="dor de cabeca">🤕 Dor de cabeça</span>
         <span class="symptom-tag" data-term="febre">🌡️ Febre</span>
@@ -339,24 +918,22 @@
         <span class="symptom-tag" data-term="dor articular">🦴 Dor nas articulações</span>
       </div>
 
-      <!-- Dicas de busca -->
       <div class="search-tips" id="searchTips">
         <h4>💡 Como buscar:</h4>
         <p>
-          • <strong>Sintomas:</strong> "dor de cabeça", "febre alta", "tosse com catarro"<br>
-          • <strong>Parte do corpo:</strong> "olho", "peito", "estômago", "costas"<br>
-          • <strong>Código CID:</strong> "A00", "E11", "I10", "J18"<br>
+          • <strong>Sintomas:</strong> "dor de cabeça", "febre alta", "tosse com catarro"<br />
+          • <strong>Parte do corpo:</strong> "olho", "peito", "estômago", "costas"<br />
+          • <strong>Código CID:</strong> "A00", "E11", "I10", "J18"<br />
           • <strong>Nome da doença:</strong> "diabetes", "asma", "gastrite"
         </p>
       </div>
 
-      <!-- Resultados -->
       <div id="cidResults"></div>
     </div>
 
-    <!-- CIDs Populares -->
-    <div class="card" style="margin-top:24px;">
-      <h2 style="font-size:1.1rem; color:var(--gray-700); margin-bottom:16px;">📋 CIDs Mais Consultados</h2>
+    <!-- ===== CIDs POPULARES ===== -->
+    <div class="card" style="margin-top:0;">
+      <h2 style="font-size:1.1rem; font-weight:600; color:var(--gray-700); margin:0 0 16px 0;">📋 CIDs Mais Consultados</h2>
       <div class="popular-cids">
         <span class="cid-tag" data-code="A09">A09 — Gastroenterite</span>
         <span class="cid-tag" data-code="E11">E11 — Diabetes T2</span>
@@ -372,7 +949,7 @@
     </div>
   </div>
 
-  <!-- Modal de Mensagem -->
+  <!-- ===== MODAL DE MENSAGEM ===== -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -396,6 +973,9 @@
     </div>
   </div>
 
+  <!-- ============================================
+       SCRIPT (lógica existente + melhorias)
+       ============================================ -->
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
@@ -429,9 +1009,13 @@
         const avatar = document.getElementById('headerAvatar');
         if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
         else avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Erro ao carregar perfil:', e);
+      }
 
-      // ===== NOTIFICAÇÕES =====
+      // ==========================================
+      // NOTIFICAÇÕES
+      // ==========================================
       const bell = document.getElementById('notificationBell');
       const dropdown = document.getElementById('notificationDropdown');
       const badge = document.getElementById('notificationBadge');
@@ -444,8 +1028,9 @@
       document.addEventListener('click', (e) => {
         if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
       });
+
       document.getElementById('markAllRead').addEventListener('click', async () => {
-        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
+        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e) {}
       });
 
       async function loadNotifications() {
@@ -475,7 +1060,7 @@
             item.addEventListener('click', async () => {
               const msgId = item.dataset.msgId;
               const msg = messages.find(m => m.id === msgId);
-              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e) {} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
             });
           });
         } catch(e) { console.error(e); }
@@ -501,7 +1086,9 @@
         else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
       }
 
-      // ===== MODAL =====
+      // ==========================================
+      // MODAL
+      // ==========================================
       const modal = document.getElementById('messageModal');
       function showMessageModal(msg) {
         const sender = msg.sender || {};
@@ -529,7 +1116,9 @@
         return div.innerHTML;
       }
 
-      // ===== BUSCA CID =====
+      // ==========================================
+      // BUSCA CID
+      // ==========================================
       function renderResults(results) {
         const container = document.getElementById('cidResults');
         const tips = document.getElementById('searchTips');
@@ -577,7 +1166,7 @@
                   </div>
                 </div>
                 <div class="cid-actions">
-                  <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                  <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
                     <span>📝</span> Copiar para anotação
                   </button>
                   <button class="btn btn-secondary btn-sm" onclick="selectCID('${r.code}')">
@@ -589,21 +1178,14 @@
           `;
         }).join('');
 
-        // Adiciona evento de clique para expandir
         document.querySelectorAll('.cid-result-card').forEach(card => {
           card.addEventListener('click', (e) => {
-            // Não expande se clicou em botão
             if (e.target.closest('.btn')) return;
-
             const index = card.dataset.index;
             const details = document.getElementById(`details-${index}`);
             const isExpanded = details.classList.contains('show');
-
-            // Fecha todos
             document.querySelectorAll('.cid-details').forEach(d => d.classList.remove('show'));
             document.querySelectorAll('.cid-result-card').forEach(c => c.classList.remove('expanded'));
-
-            // Abre o clicado se estava fechado
             if (!isExpanded) {
               details.classList.add('show');
               card.classList.add('expanded');
@@ -626,14 +1208,12 @@
         const result = searchCID(code)[0];
         if (!result) return;
         showMessage(`CID ${code} — ${result.name} selecionado!`, 'sucesso');
-        // Aqui você pode adicionar lógica para usar o CID selecionado
-        // Por exemplo, salvar em uma variável global ou sessionStorage
         sessionStorage.setItem('selectedCID', JSON.stringify({ code, ...result }));
       };
 
       function doSearch() {
-        const query = document.getElementById('cidInput').value;
-        if (!query.trim()) { 
+        const query = document.getElementById('cidInput').value.trim();
+        if (!query) { 
           document.getElementById('cidResults').innerHTML = ''; 
           document.getElementById('searchTips').style.display = 'block';
           return; 
@@ -647,7 +1227,7 @@
         if (e.key === 'Enter') doSearch();
       });
 
-      // Tags de sintomas rápidos
+      // Tags de sintomas
       document.querySelectorAll('.symptom-tag').forEach(tag => {
         tag.addEventListener('click', () => {
           document.getElementById('cidInput').value = tag.dataset.term;
@@ -664,12 +1244,14 @@
         });
       });
 
+      // Logout
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await signOut();
         localStorage.removeItem('session_id');
         window.location.href = 'index.html';
       });
 
+      // Sessão única e notificações
       setInterval(async () => { await checkSingleSession(); }, 10000);
       setInterval(async () => { await checkNewMessages(); }, 8000);
 
