@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#3B82F6" />
+  <title>Confirmando Email — NoteMed</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .confirm-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .confirm-card {
+      text-align: center;
+      max-width: 440px;
+      width: 100%;
+    }
+    .confirm-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
+    }
+    .confirm-icon.success { background: var(--success-soft); }
+    .confirm-icon.error { background: var(--danger-soft); }
+    .confirm-icon.loading { background: var(--primary-soft); }
+    .confirm-title { font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin-bottom: 12px; }
+    .confirm-text { color: var(--gray-500); font-size: 1rem; line-height: 1.6; margin-bottom: 24px; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <div class="confirm-container">
+    <div class="confirm-card card-elevated">
+      <div class="confirm-icon loading" id="statusIcon">⏳</div>
+      <h1 class="confirm-title" id="statusTitle">Confirmando seu email...</h1>
+      <p class="confirm-text" id="statusText">Aguarde enquanto verificamos seu link de confirmação.</p>
+      <div class="confirm-actions" id="actions" style="display:none;">
+        <a href="index.html" class="btn btn-primary">🔐 Fazer Login</a>
+        <a href="register.html" class="btn btn-secondary">✨ Criar Nova Conta</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabase-config.js';
+
+    (async function init() {
+      const url = new URL(window.location.href);
+      const token_hash = url.searchParams.get('token_hash');
+      const type = url.searchParams.get('type');
+      const next = url.searchParams.get('next') || 'dashboard.html';
+
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const text = document.getElementById('statusText');
+      const actions = document.getElementById('actions');
+
+      // Se não tem token_hash, verifica se é um erro no hash
+      if (!token_hash) {
+        const hash = window.location.hash;
+        if (hash && hash.includes('error=')) {
+          const params = new URLSearchParams(hash.slice(1));
+          const errorCode = params.get('error_code');
+          const errorDesc = params.get('error_description');
+
+          icon.className = 'confirm-icon error';
+          icon.textContent = '❌';
+          title.textContent = 'Link inválido ou expirado';
+          text.textContent = errorDesc 
+            ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+            : 'O link de confirmação é inválido ou já expirou. Solicite um novo link ou faça login.';
+          actions.style.display = 'flex';
+          return;
+        }
+
+        // Sem token e sem erro - redireciona para login
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          type: type || 'email',
+          token_hash: token_hash
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        // Sucesso!
+        icon.className = 'confirm-icon success';
+        icon.textContent = '✅';
+        title.textContent = 'Email confirmado com sucesso!';
+        text.textContent = 'Sua conta foi ativada. Você já pode fazer login e começar a usar o NoteMed.';
+        actions.style.display = 'flex';
+
+        // Redireciona automaticamente após 3 segundos
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
+
+      } catch (err) {
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Erro na confirmação';
+        text.textContent = err.message || 'Não foi possível confirmar seu email. O link pode ter expirado ou já foi usado.';
+        actions.style.display = 'flex';
+      }
+    })();
+  </script>
+</body>
+</html>
