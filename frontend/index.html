@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -47,6 +48,10 @@
     import { signIn, getCurrentUser, registerSession } from './supabase-config.js';
 
     (async function init() {
+      // Verifica hash de erro na URL (ex: confirmação de email expirada)
+      checkUrlErrors();
+
+      // Verifica se já está logado
       try {
         const user = await getCurrentUser();
         if (user) window.location.href = 'dashboard.html';
@@ -67,6 +72,34 @@
           msg.className = 'mensagem erro';
         }
       });
+
+      function checkUrlErrors() {
+        // Verifica hash de erro (ex: #error=access_denied&error_code=otp_expired)
+        const hash = window.location.hash;
+        if (hash && hash.includes('error=')) {
+          const params = new URLSearchParams(hash.slice(1));
+          const errorCode = params.get('error_code');
+          const errorDesc = params.get('error_description');
+
+          if (errorCode === 'otp_expired' || errorDesc?.includes('expired')) {
+            showMessage(
+              'O link de confirmação expirou ou já foi usado. ' +
+              'Tente fazer login diretamente ou cadastre-se novamente.', 
+              'erro'
+            );
+          } else if (errorDesc) {
+            showMessage(decodeURIComponent(errorDesc.replace(/\+/g, ' ')), 'erro');
+          }
+          // Limpa o hash da URL
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+
+      function showMessage(msg, type = 'erro') {
+        const el = document.getElementById('mensagem');
+        el.textContent = msg;
+        el.className = `mensagem ${type}`;
+      }
     })();
   </script>
 </body>
