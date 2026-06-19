@@ -11,6 +11,256 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ===== ESTILOS ESPECIFICOS CID ===== */
+    .cid-search-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .cid-search-box input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      background: white;
+    }
+    .cid-search-box input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    .cid-search-box input::placeholder {
+      color: #9ca3af;
+    }
+
+    /* Tags de sintomas rapidos */
+    .symptom-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .symptom-tag {
+      padding: 8px 16px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .symptom-tag:hover {
+      background: #3B82F6;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    /* Resultados */
+    .cid-results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cid-result-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .cid-result-card:hover {
+      border-color: #3B82F6;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.1);
+      transform: translateY(-2px);
+    }
+    .cid-result-card.expanded {
+      border-color: #3B82F6;
+      box-shadow: 0 4px 20px rgba(59,130,246,0.15);
+    }
+    .cid-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .cid-code-badge {
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      min-width: 70px;
+      text-align: center;
+    }
+    .cid-info {
+      flex: 1;
+    }
+    .cid-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .cid-desc {
+      color: #6b7280;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .cid-symptoms {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .cid-symptom-chip {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .cid-match-score {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Detalhes expandidos */
+    .cid-details {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .cid-details.show {
+      display: block;
+    }
+    .prescription-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .prescription-box h4 {
+      color: #166534;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .prescription-box ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .prescription-box li {
+      padding: 6px 0;
+      padding-left: 20px;
+      position: relative;
+      color: #374151;
+      font-size: 0.9rem;
+    }
+    .prescription-box li::before {
+      content: "💊";
+      position: absolute;
+      left: 0;
+    }
+    .prescription-warning {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #92400e;
+      font-style: italic;
+    }
+    .cid-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .cid-actions .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* CIDs Populares */
+    .popular-cids {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cid-tag {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #374151;
+    }
+    .cid-tag:hover {
+      background: #eff6ff;
+      border-color: #3B82F6;
+      color: #2563eb;
+    }
+
+    /* Busca vazia */
+    .search-empty {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .search-empty-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+    .search-empty h3 {
+      color: #6b7280;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .search-empty p {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    /* Dicas de busca */
+    .search-tips {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .search-tips h4 {
+      color: #475569;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    .search-tips p {
+      color: #64748b;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+  </style>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -24,7 +274,6 @@
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
-        <!-- Sino de Notificações -->
         <div style="position:relative;">
           <button class="notification-bell" id="notificationBell" title="Notificações">
             <span class="bell-icon">🔔</span>
@@ -62,33 +311,63 @@
     <div id="mensagem" class="mensagem"></div>
 
     <div class="card">
-      <h1 style="margin-bottom:8px;">🔍 Busca CID-10</h1>
-      <p style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
-        Pesquise por código CID ou nome da doença para ver a prescrição sugerida.
+      <h1 style="margin-bottom:8px; font-size:1.5rem;">🔍 Busca Inteligente CID-10</h1>
+      <p style="color:var(--gray-400); margin-bottom:20px; font-size:0.95rem;">
+        Busque por sintomas, nome da doença ou código CID. O sistema sugere os diagnósticos mais prováveis.
       </p>
 
-      <div class="cid-search">
-        <input type="text" id="cidInput" placeholder="Ex: A00, Diabetes, Hipertensão..." />
+      <!-- Campo de busca -->
+      <div class="cid-search-box">
+        <input type="text" id="cidInput" placeholder="Ex: dor de cabeça, febre, tosse, diarreia, A00..." />
         <button class="btn btn-primary" id="searchBtn">
           <span>🔍</span> Buscar
         </button>
       </div>
 
+      <!-- Tags de sintomas rápidos -->
+      <div style="margin-bottom:8px; font-size:0.85rem; color:#6b7280; font-weight:500;">Sintomas comuns:</div>
+      <div class="symptom-tags" id="symptomTags">
+        <span class="symptom-tag" data-term="dor de cabeca">🤕 Dor de cabeça</span>
+        <span class="symptom-tag" data-term="febre">🌡️ Febre</span>
+        <span class="symptom-tag" data-term="tosse">🫁 Tosse</span>
+        <span class="symptom-tag" data-term="diarreia">💩 Diarreia</span>
+        <span class="symptom-tag" data-term="dor de garganta">😷 Dor garganta</span>
+        <span class="symptom-tag" data-term="dor no peito">❤️ Dor no peito</span>
+        <span class="symptom-tag" data-term="falta de ar">😮‍💨 Falta de ar</span>
+        <span class="symptom-tag" data-term="dor abdominal">🤰 Dor barriga</span>
+        <span class="symptom-tag" data-term="prurido">🩹 Coceira</span>
+        <span class="symptom-tag" data-term="dor articular">🦴 Dor nas articulações</span>
+      </div>
+
+      <!-- Dicas de busca -->
+      <div class="search-tips" id="searchTips">
+        <h4>💡 Como buscar:</h4>
+        <p>
+          • <strong>Sintomas:</strong> "dor de cabeça", "febre alta", "tosse com catarro"<br>
+          • <strong>Parte do corpo:</strong> "olho", "peito", "estômago", "costas"<br>
+          • <strong>Código CID:</strong> "A00", "E11", "I10", "J18"<br>
+          • <strong>Nome da doença:</strong> "diabetes", "asma", "gastrite"
+        </p>
+      </div>
+
+      <!-- Resultados -->
       <div id="cidResults"></div>
     </div>
 
     <!-- CIDs Populares -->
     <div class="card" style="margin-top:24px;">
       <h2 style="font-size:1.1rem; color:var(--gray-700); margin-bottom:16px;">📋 CIDs Mais Consultados</h2>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="A09">A09 - Gastroenterite</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="E11">E11 - Diabetes T2</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="I10">I10 - Hipertensão</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="J06">J06 - Resfriado</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="J18">J18 - Pneumonia</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="F32">F32 - Depressão</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="K29">K29 - Gastrite</button>
-        <button class="btn btn-secondary btn-sm cid-tag" data-code="M79">M79 - Dores musculares</button>
+      <div class="popular-cids">
+        <span class="cid-tag" data-code="A09">A09 — Gastroenterite</span>
+        <span class="cid-tag" data-code="E11">E11 — Diabetes T2</span>
+        <span class="cid-tag" data-code="I10">I10 — Hipertensão</span>
+        <span class="cid-tag" data-code="J06">J06 — Resfriado</span>
+        <span class="cid-tag" data-code="J18">J18 — Pneumonia</span>
+        <span class="cid-tag" data-code="F32">F32 — Depressão</span>
+        <span class="cid-tag" data-code="K29">K29 — Gastrite</span>
+        <span class="cid-tag" data-code="M79">M79 — Dores musculares</span>
+        <span class="cid-tag" data-code="G43">G43 — Enxaqueca</span>
+        <span class="cid-tag" data-code="R52">R52 — Dor</span>
       </div>
     </div>
   </div>
@@ -120,7 +399,7 @@
   <script type="module">
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, searchCID,
+      getUserProfile, searchCID, getCID,
       getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
 
@@ -250,43 +529,115 @@
         return div.innerHTML;
       }
 
-      // ===== CID =====
+      // ===== BUSCA CID =====
       function renderResults(results) {
         const container = document.getElementById('cidResults');
+        const tips = document.getElementById('searchTips');
+
         if (results.length === 0) {
-          container.innerHTML = `<div class="empty-state" style="padding:40px 0;"><div class="empty-icon">🔍</div><h3>Nenhum resultado encontrado</h3><p>Tente buscar por outro código ou nome de doença.</p></div>`;
+          container.innerHTML = `
+            <div class="search-empty">
+              <div class="search-empty-icon">🔍</div>
+              <h3>Nenhum resultado encontrado</h3>
+              <p>Tente buscar por outros sintomas, parte do corpo ou código CID.<br>Exemplo: "dor de cabeça", "febre", "peito", "A00"</p>
+            </div>
+          `;
+          tips.style.display = 'block';
           return;
         }
-        container.innerHTML = results.map(r => `
-          <div class="cid-result">
-            <div class="cid-code">${r.code}</div>
-            <div class="cid-name">${r.name}</div>
-            <div class="cid-desc">${r.desc}</div>
-            <div class="prescription-box">
-              <h4>💊 Prescrição Sugerida</h4>
-              <ul>${r.prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>
-              <p style="margin-top:12px; font-size:0.8rem; color:var(--gray-400); font-style:italic;">⚠️ Esta é uma sugestão automatizada. Sempre valide a prescrição antes de aplicar.</p>
+
+        tips.style.display = 'none';
+
+        container.innerHTML = results.map((r, index) => {
+          const symptomsHtml = (r.symptoms || []).slice(0, 5).map(s => 
+            `<span class="cid-symptom-chip">${s}</span>`
+          ).join('');
+
+          const matchLabel = r.score >= 80 ? '⭐ Melhor correspondência' : 
+                            r.score >= 50 ? '👍 Alta correspondência' : 
+                            r.score >= 20 ? '✓ Correspondência' : 'Relacionado';
+
+          return `
+            <div class="cid-result-card" data-index="${index}" data-code="${r.code}">
+              <div class="cid-header">
+                <div class="cid-code-badge">${r.code}</div>
+                <div class="cid-info">
+                  <div class="cid-name">${r.name}</div>
+                  <div class="cid-desc">${r.desc}</div>
+                  <div class="cid-symptoms">${symptomsHtml}</div>
+                </div>
+                <div class="cid-match-score">${matchLabel}</div>
+              </div>
+              <div class="cid-details" id="details-${index}">
+                <div class="prescription-box">
+                  <h4>💊 Prescrição Sugerida</h4>
+                  <ul>${r.prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>
+                  <div class="prescription-warning">
+                    ⚠️ Esta é uma sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere contraindicações do paciente.
+                  </div>
+                </div>
+                <div class="cid-actions">
+                  <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                    <span>📝</span> Copiar para anotação
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="selectCID('${r.code}')">
+                    <span>✓</span> Selecionar este CID
+                  </button>
+                </div>
+              </div>
             </div>
-            <div style="margin-top:16px; display:flex; gap:8px;">
-              <button class="btn btn-primary btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
-                <span>📝</span> Copiar para anotação
-              </button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+
+        // Adiciona evento de clique para expandir
+        document.querySelectorAll('.cid-result-card').forEach(card => {
+          card.addEventListener('click', (e) => {
+            // Não expande se clicou em botão
+            if (e.target.closest('.btn')) return;
+
+            const index = card.dataset.index;
+            const details = document.getElementById(`details-${index}`);
+            const isExpanded = details.classList.contains('show');
+
+            // Fecha todos
+            document.querySelectorAll('.cid-details').forEach(d => d.classList.remove('show'));
+            document.querySelectorAll('.cid-result-card').forEach(c => c.classList.remove('expanded'));
+
+            // Abre o clicado se estava fechado
+            if (!isExpanded) {
+              details.classList.add('show');
+              card.classList.add('expanded');
+            }
+          });
+        });
       }
 
       window.copyToNote = (code, name) => {
-        const prescriptions = searchCID(code)[0]?.prescriptions || [];
-        const content = `<h3>CID: ${code} - ${name}</h3><p><strong>Prescrição:</strong></p><ul>${prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>`;
+        const result = searchCID(code)[0];
+        if (!result) return;
+        const prescriptions = result.prescriptions || [];
+        const content = `<h3>CID: ${code} — ${name}</h3><p><strong>Prescrição:</strong></p><ul>${prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>`;
         sessionStorage.setItem('cidNoteContent', content);
-        sessionStorage.setItem('cidNoteTitle', `CID ${code} - ${name}`);
+        sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
         window.location.href = 'note.html?fromCid=1';
+      };
+
+      window.selectCID = (code) => {
+        const result = searchCID(code)[0];
+        if (!result) return;
+        showMessage(`CID ${code} — ${result.name} selecionado!`, 'sucesso');
+        // Aqui você pode adicionar lógica para usar o CID selecionado
+        // Por exemplo, salvar em uma variável global ou sessionStorage
+        sessionStorage.setItem('selectedCID', JSON.stringify({ code, ...result }));
       };
 
       function doSearch() {
         const query = document.getElementById('cidInput').value;
-        if (!query.trim()) { document.getElementById('cidResults').innerHTML = ''; return; }
+        if (!query.trim()) { 
+          document.getElementById('cidResults').innerHTML = ''; 
+          document.getElementById('searchTips').style.display = 'block';
+          return; 
+        }
         const results = searchCID(query);
         renderResults(results);
       }
@@ -295,9 +646,20 @@
       document.getElementById('cidInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') doSearch();
       });
-      document.querySelectorAll('.cid-tag').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.getElementById('cidInput').value = btn.dataset.code;
+
+      // Tags de sintomas rápidos
+      document.querySelectorAll('.symptom-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          document.getElementById('cidInput').value = tag.dataset.term;
+          doSearch();
+        });
+      });
+
+      // CIDs populares
+      document.querySelectorAll('.cid-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          const code = tag.dataset.code;
+          document.getElementById('cidInput').value = code;
           doSearch();
         });
       });
@@ -310,6 +672,14 @@
 
       setInterval(async () => { await checkSingleSession(); }, 10000);
       setInterval(async () => { await checkNewMessages(); }, 8000);
+
+      window.showMessage = (msg, type = 'erro') => {
+        const el = document.getElementById('mensagem');
+        el.textContent = msg;
+        el.className = `mensagem ${type}`;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 5000);
+      };
 
       await checkNewMessages();
     })();
