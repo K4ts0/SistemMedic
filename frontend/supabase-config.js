@@ -7,10 +7,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== AUTENTICACAO =====
-export async function signUp(email, password, name) {
+export async function signUp(email, password, name, specialty = '', crm = '') {
   const { data, error } = await supabase.auth.signUp({
     email, password,
-    options: { data: { name } }
+    options: {
+      data: {
+        name,
+        specialty,
+        crm,
+        avatar_url: null,
+        phone: '',
+        bio: ''
+      },
+      emailRedirectTo: window.location.origin + '/index.html'
+    }
   });
   if (error) throw error;
   return data;
