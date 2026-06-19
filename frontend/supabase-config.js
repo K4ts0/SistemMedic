@@ -8,6 +8,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== AUTENTICACAO =====
 export async function signUp(email, password, name, specialty = '', crm = '') {
+  const redirectUrl = typeof window !== 'undefined' ? window.location.origin + '/index.html' : 'http://localhost:3000/index.html';
   const { data, error } = await supabase.auth.signUp({
     email, password,
     options: {
@@ -19,7 +20,7 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
         phone: '',
         bio: ''
       },
-      emailRedirectTo: window.location.origin + '/index.html'
+      emailRedirectTo: redirectUrl
     }
   });
   if (error) throw error;
@@ -358,14 +359,34 @@ export async function getMessages(otherUserId) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data, error } = await supabase
+  const { data: messages, error } = await supabase
     .from('messages')
     .select('*')
     .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return data || [];
+  if (!messages || messages.length === 0) return [];
+
+  // Busca perfis dos remetentes
+  const senderIds = [...new Set(messages.map(m => m.sender_id).filter(Boolean))];
+  let profilesMap = new Map();
+
+  if (senderIds.length > 0) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url')
+      .in('id', senderIds);
+
+    if (!profileError && profiles) {
+      profiles.forEach(p => profilesMap.set(p.id, p));
+    }
+  }
+
+  return messages.map(msg => ({
+    ...msg,
+    sender: profilesMap.get(msg.sender_id) || { name: '', email: '', avatar_url: null }
+  }));
 }
 
 export function subscribeToMessages(otherUserId, callback) {
@@ -901,15 +922,37 @@ export async function getUnreadMessages() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  // Busca mensagens sem JOIN (tabela messages pode nao ter FK para profiles)
+  const { data: messages, error } = await supabase
     .from('messages')
-    .select('*, sender:sender_id(name, email, avatar_url)')
+    .select('*')
     .eq('receiver_id', user.id)
     .eq('read', false)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  if (!messages || messages.length === 0) return [];
+
+  // Busca perfis dos remetentes separadamente
+  const senderIds = [...new Set(messages.map(m => m.sender_id).filter(Boolean))];
+  let profilesMap = new Map();
+
+  if (senderIds.length > 0) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url')
+      .in('id', senderIds);
+
+    if (!profileError && profiles) {
+      profiles.forEach(p => profilesMap.set(p.id, p));
+    }
+  }
+
+  // Mescla dados do remetente em cada mensagem
+  return messages.map(msg => ({
+    ...msg,
+    sender: profilesMap.get(msg.sender_id) || { name: '', email: '', avatar_url: null }
+  }));
 }
 
 export async function markMessageAsRead(messageId) {
