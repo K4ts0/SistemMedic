@@ -165,7 +165,6 @@ export async function getChatUsers() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
 
-  // Busca todos os usuários exceto o atual
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, avatar_url, specialty')
@@ -226,7 +225,6 @@ export function subscribeToMessages(otherUserId, callback) {
 }
 
 function getCurrentUserId() {
-  // Helper para o subscribe
   return supabase.auth.getUser().then(({ data }) => data.user?.id);
 }
 
@@ -319,7 +317,6 @@ export async function ensureValidSession() {
   return true;
 }
 
-
 // ===== NOTIFICAÇÕES =====
 export async function getUnreadMessages() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -370,9 +367,9 @@ export async function getUnreadCount() {
   return count || 0;
 }
 
-// ===== BUSCAR USUÁRIO POR ID =====
+// ===== BUSCAR USUÁRIO POR ID (VERSÃO ÚNICA E CORRETA) =====
 export async function findUserById(userId) {
-  // 1️⃣ VERIFICAR SESSÃO ATIVA ANTES DE BUSCAR
+  // 1️⃣ VERIFICAR SESSÃO ATIVA
   const { data: { session } } = await supabase.auth.getSession();
   
   if (!session) {
@@ -380,20 +377,26 @@ export async function findUserById(userId) {
     throw new Error('Você precisa estar logado para buscar usuários');
   }
 
-  // 2️⃣ FAZER A REQUISIÇÃO COM AUTENTICAÇÃO
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, name, email, avatar_url, specialty')
-    .eq('id', userId)
-    .single();
+  // 2️⃣ VALIDAR FORMATO UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  
+  // Se for UUID completo, busca exato
+  if (uuidRegex.test(userId)) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url, specialty')
+      .eq('id', userId)
+      .single();
 
-  if (error) {
-    console.error('Erro ao buscar usuário:', error.message, error.details, error.hint);
-    // Se não encontrar na tabela profiles, retorna null
-    return null;
+    if (error) {
+      console.error('Erro ao buscar usuário:', error.message);
+      return null;
+    }
+    return data;
   }
   
-  return data;
+  // Se não for UUID completo, retorna null (delega para busca por nome/email)
+  return null;
 }
 
 export async function searchUserByPartialId(partialId) {
@@ -405,14 +408,15 @@ export async function searchUserByPartialId(partialId) {
     throw new Error('Você precisa estar logado para buscar usuários');
   }
 
+  // Busca por nome ou email (não por ID parcial, pois UUID não suporta LIKE bem)
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, email, avatar_url, specialty')
-    .ilike('id', `%${partialId}%`)
+    .or(`name.ilike.%${partialId}%,email.ilike.%${partialId}%`)
     .limit(10);
 
   if (error) {
-    console.error('Erro na busca parcial:', error.message);
+    console.error('Erro na busca:', error.message);
     throw error;
   }
   
@@ -430,51 +434,6 @@ export async function checkSingleSession() {
     alert('⚠️ Sua sessão foi encerrada porque você fez login em outro dispositivo.');
     window.location.href = 'index.html';
     return false;
-   return true;
   }
-  
-  // ===== BUSCAR USUÁRIO POR NOME/EMAIL/ID =====
-export async function findUserById(userId) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    throw new Error('Você precisa estar logado para buscar usuários');
-  }
-
-  // Se parece UUID completo, busca exato
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  
-  if (uuidRegex.test(userId)) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, email, avatar_url, specialty')
-      .eq('id', userId)
-      .single();
-    
-    if (error) return null;
-    return data;
-  }
-  
-  // Se não for UUID, busca por nome ou email
-  return null; // delega para searchUserByPartialId
-}
-
-export async function searchUserByPartialId(partialId) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    throw new Error('Você precisa estar logado para buscar usuários');
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, name, email, avatar_url, specialty')
-    .or(`name.ilike.%${partialId}%,email.ilike.%${partialId}%`)
-    .limit(10);
-
-  if (error) {
-    console.error('Erro na busca:', error.message);
-    throw error;
-  }
-  
-  return data || [];
-}
+  return true;
 }
