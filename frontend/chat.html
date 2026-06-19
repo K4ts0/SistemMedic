@@ -128,6 +128,7 @@
     #chatUserCrm { margin-top: 2px; }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="container container-chat">
@@ -288,7 +289,7 @@
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
       getUserProfile, getChatUsers, sendMessage, getMessages,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, wasPopupShown, markPopupAsShown,
       findUserById, searchUserByPartialId, searchUserByCRM, getConversations, getDoctorsCount
     } from './supabase-config.js';
 
@@ -521,7 +522,11 @@
             const messages = await getUnreadMessages();
             if (messages.length > 0 && messages[0].id !== lastMessageId) {
               lastMessageId = messages[0].id;
-              showMessageModal(messages[0]);
+              // No chat, só mostra popup se não foi mostrado nesta sessão
+              if (!wasPopupShown(messages[0].id)) {
+                showMessageModal(messages[0]);
+                markPopupAsShown(messages[0].id);
+              }
             }
           }
         } catch(e) {}
