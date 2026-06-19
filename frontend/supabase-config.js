@@ -1,4 +1,4 @@
-// supabase-config.js — NoteMed for Unisystem v2.0
+// supabase-config.js — NoteMed for Unisystem v2.1
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -167,13 +167,171 @@ export async function getChatUsers() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, name, email, avatar_url, specialty')
+    .select('id, name, email, avatar_url, specialty, crm')
     .neq('id', user.id);
 
   if (error) throw error;
   return data || [];
 }
 
+// ===== BUSCAR USUÁRIO POR ID =====
+export async function findUserById(userId) {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    console.error('❌ Usuário não autenticado - não pode buscar profiles');
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (uuidRegex.test(userId)) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url, specialty, crm')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Erro ao buscar usuário:', error.message);
+      return null;
+    }
+    return data;
+  }
+
+  return null;
+}
+
+// ===== BUSCAR USUÁRIO POR NOME/EMAIL (busca parcial) =====
+export async function searchUserByPartialId(partialId) {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    console.error('❌ Usuário não autenticado');
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty, crm')
+    .or(`name.ilike.%${partialId}%,email.ilike.%${partialId}%`)
+    .limit(10);
+
+  if (error) {
+    console.error('Erro na busca:', error.message);
+    throw error;
+  }
+
+  return data || [];
+}
+
+// ===== BUSCAR USUÁRIO POR CRM =====
+export async function searchUserByCRM(crm) {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    console.error('❌ Usuário não autenticado');
+    throw new Error('Você precisa estar logado para buscar usuários');
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty, crm')
+    .eq('crm', crm)
+    .single();
+
+  if (error) {
+    // Se não encontrar exato, tenta busca parcial no CRM
+    const { data: partialData, error: partialError } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url, specialty, crm')
+      .ilike('crm', `%${crm}%`)
+      .limit(1);
+
+    if (partialError || !partialData || partialData.length === 0) return null;
+    return partialData[0];
+  }
+
+  return data;
+}
+
+// ===== CONTAR MÉDICOS CADASTRADOS =====
+export async function getDoctorsCount() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .not('crm', 'is', null)
+    .neq('id', user.id);
+
+  if (error) {
+    console.error('Erro ao contar médicos:', error.message);
+    return 0;
+  }
+  return count || 0;
+}
+
+// ===== CONVERSAS INICIADAS =====
+export async function getConversations() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // Busca todas as mensagens do usuário
+  const { data: messages, error } = await supabase
+    .from('messages')
+    .select('id, sender_id, receiver_id, content, created_at, read')
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
+
+  if (error || !messages || messages.length === 0) return [];
+
+  // Agrupa por outro usuário (mantém apenas a mensagem mais recente por conversa)
+  const conversationsMap = new Map();
+
+  messages.forEach(msg => {
+    const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+    if (!conversationsMap.has(otherId)) {
+      conversationsMap.set(otherId, {
+        other_user_id: otherId,
+        last_message: msg,
+        unread_count: 0
+      });
+    }
+    // Conta não lidas (apenas mensagens recebidas e não lidas)
+    if (msg.receiver_id === user.id && msg.read === false) {
+      conversationsMap.get(otherId).unread_count++;
+    }
+  });
+
+  // Busca dados dos usuários das conversas
+  const userIds = Array.from(conversationsMap.keys());
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty, crm')
+    .in('id', userIds);
+
+  if (profileError) {
+    console.error('Erro ao buscar profiles:', profileError.message);
+  }
+
+  const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
+  return Array.from(conversationsMap.values()).map(conv => ({
+    ...conv,
+    other_user: profilesMap.get(conv.other_user_id) || { 
+      id: conv.other_user_id, 
+      name: 'Usuário', 
+      email: '', 
+      avatar_url: null, 
+      specialty: '', 
+      crm: '' 
+    }
+  }));
+}
+
+// ===== MENSAGENS =====
 export async function sendMessage(receiverId, content) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuário não autenticado');
@@ -365,62 +523,6 @@ export async function getUnreadCount() {
 
   if (error) throw error;
   return count || 0;
-}
-
-// ===== BUSCAR USUÁRIO POR ID (VERSÃO ÚNICA E CORRETA) =====
-export async function findUserById(userId) {
-  // 1️⃣ VERIFICAR SESSÃO ATIVA
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (!session) {
-    console.error('❌ Usuário não autenticado - não pode buscar profiles');
-    throw new Error('Você precisa estar logado para buscar usuários');
-  }
-
-  // 2️⃣ VALIDAR FORMATO UUID
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  
-  // Se for UUID completo, busca exato
-  if (uuidRegex.test(userId)) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, email, avatar_url, specialty')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Erro ao buscar usuário:', error.message);
-      return null;
-    }
-    return data;
-  }
-  
-  // Se não for UUID completo, retorna null (delega para busca por nome/email)
-  return null;
-}
-
-export async function searchUserByPartialId(partialId) {
-  // 1️⃣ VERIFICAR SESSÃO ATIVA
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (!session) {
-    console.error('❌ Usuário não autenticado');
-    throw new Error('Você precisa estar logado para buscar usuários');
-  }
-
-  // Busca por nome ou email (não por ID parcial, pois UUID não suporta LIKE bem)
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, name, email, avatar_url, specialty')
-    .or(`name.ilike.%${partialId}%,email.ilike.%${partialId}%`)
-    .limit(10);
-
-  if (error) {
-    console.error('Erro na busca:', error.message);
-    throw error;
-  }
-  
-  return data || [];
 }
 
 export async function checkSingleSession() {
