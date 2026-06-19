@@ -44,6 +44,74 @@ export async function getCurrentUser() {
   return user;
 }
 
+// ===== VALIDAÇÃO DE CRM =====
+export async function checkCRMExists(crm, excludeUserId = null) {
+  if (!crm || !crm.trim()) return false;
+
+  let query = supabase
+    .from('profiles')
+    .select('id, crm')
+    .eq('crm', crm.trim());
+
+  if (excludeUserId) {
+    query = query.neq('id', excludeUserId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Erro ao verificar CRM:', error.message);
+    return false;
+  }
+
+  return data && data.length > 0;
+}
+
+export async function signUp(email, password, name, specialty = '', crm = '') {
+  // Valida se CRM já existe (se fornecido)
+  if (crm && crm.trim()) {
+    const crmExists = await checkCRMExists(crm.trim());
+    if (crmExists) {
+      throw new Error('Este CRM já está cadastrado por outro usuário. Verifique o número ou entre em contato com o suporte.');
+    }
+  }
+
+  const redirectUrl = typeof window !== 'undefined' ? window.location.origin + '/index.html' : 'http://localhost:3000/index.html';
+  const { data, error } = await supabase.auth.signUp({
+    email, password,
+    options: {
+      data: {
+        name,
+        specialty,
+        crm,
+        avatar_url: null,
+        phone: '',
+        bio: ''
+      },
+      emailRedirectTo: redirectUrl
+    }
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+export async function signOut() {
+  try { await supabase.auth.updateUser({ data: { session_id: null } }); } catch (e) {}
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getCurrentUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
 // ===== PERFIL DO USUARIO =====
 export async function getUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -61,6 +129,15 @@ export async function getUserProfile() {
 }
 
 export async function updateUserProfile(profile) {
+  // Valida se CRM já existe (se fornecido e alterado)
+  if (profile.crm && profile.crm.trim()) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const crmExists = await checkCRMExists(profile.crm.trim(), user?.id);
+    if (crmExists) {
+      throw new Error('Este CRM já está cadastrado por outro usuário. Verifique o número ou entre em contato com o suporte.');
+    }
+  }
+
   const { data, error } = await supabase.auth.updateUser({
     data: {
       name: profile.name,
@@ -1002,4 +1079,33 @@ export async function checkSingleSession() {
     return false;
   }
   return true;
+}
+
+
+// ===== CONTROLE DE POPUP DE NOTIFICAÇÕES =====
+const SHOWN_POPUPS_KEY = 'wayforsystem_shown_popups';
+
+export function wasPopupShown(messageId) {
+  try {
+    const shown = JSON.parse(sessionStorage.getItem(SHOWN_POPUPS_KEY) || '[]');
+    return shown.includes(messageId);
+  } catch {
+    return false;
+  }
+}
+
+export function markPopupAsShown(messageId) {
+  try {
+    const shown = JSON.parse(sessionStorage.getItem(SHOWN_POPUPS_KEY) || '[]');
+    if (!shown.includes(messageId)) {
+      shown.push(messageId);
+      sessionStorage.setItem(SHOWN_POPUPS_KEY, JSON.stringify(shown));
+    }
+  } catch (e) {
+    console.error('Erro ao marcar popup:', e);
+  }
+}
+
+export function clearShownPopups() {
+  sessionStorage.removeItem(SHOWN_POPUPS_KEY);
 }
