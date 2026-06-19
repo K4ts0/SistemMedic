@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#3B82F6" />
-  <title>Confirmando Email — NoteMed</title>
+  <title>Email Confirmado — NoteMed</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,8 +45,8 @@
   <div class="confirm-container">
     <div class="confirm-card card-elevated">
       <div class="confirm-icon loading" id="statusIcon">⏳</div>
-      <h1 class="confirm-title" id="statusTitle">Confirmando seu email...</h1>
-      <p class="confirm-text" id="statusText">Aguarde enquanto verificamos seu link de confirmação.</p>
+      <h1 class="confirm-title" id="statusTitle">Verificando seu email...</h1>
+      <p class="confirm-text" id="statusText">Aguarde um momento enquanto confirmamos sua conta.</p>
       <div class="confirm-actions" id="actions" style="display:none;">
         <a href="index.html" class="btn btn-primary">🔐 Fazer Login</a>
         <a href="register.html" class="btn btn-secondary">✨ Criar Nova Conta</a>
@@ -63,7 +63,7 @@
       const text = document.getElementById('statusText');
       const actions = document.getElementById('actions');
 
-      // Verifica se há erro no hash da URL
+      // Verifica se há erro no hash da URL (ex: link expirado)
       const hash = window.location.hash;
       if (hash && hash.includes('error=')) {
         const params = new URLSearchParams(hash.slice(1));
@@ -75,72 +75,47 @@
         title.textContent = 'Link inválido ou expirado';
         text.textContent = errorDesc 
           ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
-          : 'O link de confirmação é inválido ou já expirou.';
+          : 'O link de confirmação é inválido ou já expirou. Solicite um novo cadastro.';
         actions.style.display = 'flex';
         return;
       }
 
-      // FLUXO PADRÃO SUPABASE:
-      // O Supabase redireciona para SiteURL com hash contendo access_token
-      // Ex: #access_token=xxx&refresh_token=xxx&type=signup
-      // A biblioteca supabase-js detecta automaticamente esses tokens
-      // e cria a sessão. Vamos verificar se a sessão foi criada.
-
       try {
-        // Aguarda um momento para o supabase-js processar o hash
-        await new Promise(r => setTimeout(r, 1000));
+        // O Supabase já processou o token e criou a sessão antes de redirecionar
+        // Aguardamos um momento para o supabase-js detectar os tokens no hash
+        await new Promise(r => setTimeout(r, 1500));
 
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) throw error;
 
-        if (session) {
-          // Sessão criada = email confirmado com sucesso!
+        if (session && session.user) {
+          // Email confirmado com sucesso!
           icon.className = 'confirm-icon success';
           icon.textContent = '✅';
-          title.textContent = 'Email confirmado com sucesso!';
-          text.textContent = 'Sua conta foi ativada. Redirecionando para o app...';
+          title.textContent = 'Email verificado com sucesso!';
+          text.textContent = 'Sua conta foi confirmada. Agora você pode fazer login e começar a usar o NoteMed.';
+          actions.style.display = 'flex';
 
+          // Opcional: redireciona automaticamente para dashboard após 4 segundos
           setTimeout(() => {
             window.location.href = 'dashboard.html';
-          }, 2000);
+          }, 4000);
           return;
         }
 
-        // Se não tem sessão, verifica se há token_hash na query string
-        // (caso usemos token_hash no futuro)
-        const url = new URL(window.location.href);
-        const token_hash = url.searchParams.get('token_hash');
-        const type = url.searchParams.get('type') || 'email';
-
-        if (token_hash) {
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            type: type,
-            token_hash: token_hash
-          });
-
-          if (verifyError) throw verifyError;
-
-          icon.className = 'confirm-icon success';
-          icon.textContent = '✅';
-          title.textContent = 'Email confirmado com sucesso!';
-          text.textContent = 'Sua conta foi ativada. Redirecionando...';
-          setTimeout(() => window.location.href = 'dashboard.html', 2000);
-          return;
-        }
-
-        // Sem sessão e sem token - mostra opções
+        // Sem sessão - pode ser que o token já foi usado ou expirou
         icon.className = 'confirm-icon error';
         icon.textContent = '❌';
-        title.textContent = 'Não foi possível confirmar';
-        text.textContent = 'Não detectamos uma confirmação válida. Tente fazer login ou crie uma nova conta.';
+        title.textContent = 'Não foi possível verificar';
+        text.textContent = 'Não detectamos uma confirmação válida. O link pode ter expirado ou já foi usado. Tente fazer login ou cadastre-se novamente.';
         actions.style.display = 'flex';
 
       } catch (err) {
         icon.className = 'confirm-icon error';
         icon.textContent = '❌';
-        title.textContent = 'Erro na confirmação';
-        text.textContent = err.message || 'Não foi possível confirmar seu email. O link pode ter expirado.';
+        title.textContent = 'Erro na verificação';
+        text.textContent = err.message || 'Ocorreu um erro ao verificar seu email. Tente novamente mais tarde.';
         actions.style.display = 'flex';
       }
     })();
