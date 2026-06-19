@@ -11,6 +11,123 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ===== ESTILOS ESPECÍFICOS DO CHAT ===== */
+
+    /* Contador de Médicos */
+    .doctors-counter {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+      color: white;
+      padding: 20px 24px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    .counter-icon { font-size: 2.5rem; }
+    .counter-number { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .counter-label { font-size: 0.9rem; opacity: 0.9; }
+
+    /* Lista de Conversas */
+    .chat-conversations {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .chat-conversation-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chat-conversation-item:hover {
+      background: #f9fafb;
+      border-color: #bfdbfe;
+      transform: translateX(4px);
+    }
+    .chat-conversation-item.active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+    .conversation-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .conversation-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .conversation-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .conversation-name {
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .unread-badge {
+      background: #EF4444;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .conversation-preview {
+      color: #6b7280;
+      font-size: 0.85rem;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .conversation-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .conversation-crm {
+      color: #3b82f6;
+      font-weight: 500;
+    }
+    .conversation-time { margin-left: auto; }
+
+    /* Resultado de busca - CRM */
+    .result-crm {
+      font-size: 0.85rem;
+      color: #2563eb;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    /* Chat header - CRM */
+    #chatUserCrm { margin-top: 2px; }
+  </style>
+<base target="_blank">
 </head>
 <body>
   <div class="container container-chat">
@@ -61,9 +178,9 @@
 
     <div id="mensagem" class="mensagem"></div>
 
-    <!-- Busca por ID -->
+    <!-- Busca por CRM/Nome/Email/ID -->
     <div class="chat-search-box">
-      <input type="text" id="searchUserId" placeholder="Buscar por nome, email ou ID" maxlength="36" />
+      <input type="text" id="searchUserId" placeholder="Buscar por CRM, nome, email ou ID" maxlength="36" />
       <button class="btn btn-primary" id="searchIdBtn">
         <span>🔍</span> Buscar
       </button>
@@ -76,6 +193,7 @@
         <div class="result-info">
           <h4 id="resultName">...</h4>
           <div class="result-id" id="resultId">...</div>
+          <div class="result-crm" id="resultCrm"></div>
           <div class="result-specialty" id="resultSpecialty"></div>
         </div>
       </div>
@@ -89,24 +207,34 @@
       </div>
     </div>
 
-    <!-- User List -->
-    <div class="toolbar" style="margin-bottom:12px;">
-      <div class="toolbar-title">👥 Profissionais Online</div>
+    <!-- Contador de Médicos Cadastrados -->
+    <div class="doctors-counter" id="doctorsCounter">
+      <div class="counter-icon">👨‍⚕️</div>
+      <div class="counter-info">
+        <div class="counter-number" id="doctorsCount">0</div>
+        <div class="counter-label">Médicos Cadastrados</div>
+      </div>
     </div>
-    <div class="chat-user-list" id="userList">
+
+    <!-- Conversas Iniciadas -->
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div class="toolbar-title">💬 Conversas</div>
+    </div>
+    <div class="chat-conversations" id="conversationsList">
       <div class="loading" style="padding:20px;">
         <div class="loading-spinner"></div>
-        Carregando usuários...
+        Carregando conversas...
       </div>
     </div>
 
     <!-- Chat Area -->
     <div class="chat-container" id="chatContainer" style="display:none;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--gray-100);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e5e7eb;">
         <div class="avatar" id="chatAvatar" style="width:40px;height:40px;font-size:1rem;">👤</div>
         <div>
-          <div style="font-weight:600; color:var(--gray-800);" id="chatUserName">...</div>
-          <div style="font-size:0.75rem; color:var(--gray-400); font-family:var(--font-mono);" id="chatUserId">...</div>
+          <div style="font-weight:600; color:#1f2937;" id="chatUserName">...</div>
+          <div style="font-size:0.75rem; color:#9ca3af; font-family:monospace;" id="chatUserId">...</div>
+          <div style="font-size:0.75rem; color:#6b7280;" id="chatUserCrm"></div>
         </div>
       </div>
 
@@ -127,8 +255,8 @@
 
     <div class="empty-state" id="noChatSelected" style="padding:40px 0;">
       <div class="empty-icon">👥</div>
-      <h3>Selecione um profissional</h3>
-      <p>Busque por ID ou clique em um usuário da lista para iniciar uma conversa.</p>
+      <h3>Selecione uma conversa</h3>
+      <p>Busque por CRM ou clique em uma conversa para continuar.</p>
     </div>
   </div>
 
@@ -146,7 +274,7 @@
             <div class="sender-avatar" id="modalSenderAvatar">👤</div>
             <span id="modalSenderName">...</span>
           </div>
-          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+          <span style="color:#9ca3af; font-size:0.85rem;" id="modalMessageTime"></span>
         </div>
       </div>
       <div class="modal-footer">
@@ -161,7 +289,7 @@
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
       getUserProfile, getChatUsers, sendMessage, getMessages,
       getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
-      findUserById, searchUserByPartialId  // ✅ adicionado
+      findUserById, searchUserByPartialId, searchUserByCRM, getConversations, getDoctorsCount
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -197,7 +325,7 @@
         }
       } catch (e) {}
 
-      // ===== BUSCA POR ID =====
+      // ===== BUSCA POR CRM/NOME/EMAIL/ID =====
       document.getElementById('searchIdBtn').addEventListener('click', searchById);
       document.getElementById('searchUserId').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchById();
@@ -218,7 +346,7 @@
       async function searchById() {
         const query = document.getElementById('searchUserId').value.trim();
         if (!query) {
-          showMessage('Digite um ID para buscar.', 'erro');
+          showMessage('Digite um termo para buscar.', 'erro');
           return;
         }
 
@@ -227,9 +355,19 @@
         btn.innerHTML = '<span>⏳</span> Buscando...';
 
         try {
-          let foundUser = await findUserById(query);
+          let foundUser = null;
 
-          // Se não encontrar exato, tenta busca parcial
+          // Tenta buscar por CRM primeiro (se parece com CRM: números com possível barra)
+          if (/^\d{4,}$/.test(query.replace(/\//g, ''))) {
+            foundUser = await searchUserByCRM(query);
+          }
+
+          // Se não encontrar por CRM, tenta busca exata por ID
+          if (!foundUser) {
+            foundUser = await findUserById(query);
+          }
+
+          // Se não encontrar exato, tenta busca parcial por nome/email
           if (!foundUser) {
             const results = await searchUserByPartialId(query);
             if (results.length > 0) {
@@ -238,7 +376,7 @@
           }
 
           if (!foundUser) {
-            showMessage('Usuário não encontrado. Verifique o ID.', 'erro');
+            showMessage('Usuário não encontrado. Verifique o CRM, nome ou ID.', 'erro');
             document.getElementById('searchResult').classList.remove('show');
           } else {
             displaySearchResult(foundUser);
@@ -257,6 +395,7 @@
 
         document.getElementById('resultName').textContent = userData.name || userData.email || 'Usuário';
         document.getElementById('resultId').textContent = '#' + userData.id.substring(0, 8) + '...' + userData.id.slice(-4);
+        document.getElementById('resultCrm').textContent = userData.crm ? '🆔 CRM: ' + userData.crm : '';
         document.getElementById('resultSpecialty').textContent = userData.specialty ? '🩺 ' + userData.specialty : '';
 
         const avatar = document.getElementById('resultAvatar');
@@ -267,6 +406,55 @@
         }
 
         resultDiv.classList.add('show');
+      }
+
+      // ===== CONTADOR DE MÉDICOS =====
+      async function loadDoctorsCount() {
+        try {
+          const count = await getDoctorsCount();
+          document.getElementById('doctorsCount').textContent = count;
+        } catch (e) {
+          console.error('Erro ao carregar contador de médicos:', e);
+        }
+      }
+
+      // ===== CONVERSAS INICIADAS =====
+      async function loadConversations() {
+        try {
+          const conversations = await getConversations();
+          const container = document.getElementById('conversationsList');
+          if (conversations.length === 0) {
+            container.innerHTML = '<p style="color:#9ca3af; font-size:0.9rem; padding:10px;">Nenhuma conversa iniciada.</p>';
+            return;
+          }
+          container.innerHTML = conversations.map(conv => {
+            const otherUser = conv.other_user || {};
+            const lastMsg = conv.last_message || {};
+            const time = lastMsg.created_at ? new Date(lastMsg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
+            const unread = conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count}</span>` : '';
+            const avatar = otherUser.avatar_url ? `<img src="${otherUser.avatar_url}" alt="">` : (otherUser.name || otherUser.email || 'U').charAt(0).toUpperCase();
+            const preview = lastMsg.content ? escapeHtml(lastMsg.content.substring(0, 50)) + (lastMsg.content.length > 50 ? '...' : '') : 'Sem mensagens';
+            return `
+              <div class="chat-conversation-item" data-id="${otherUser.id}" data-name="${otherUser.name || otherUser.email || ''}" data-avatar="${otherUser.avatar_url || ''}" data-specialty="${otherUser.specialty || ''}" data-crm="${otherUser.crm || ''}">
+                <div class="conversation-avatar">${avatar}</div>
+                <div class="conversation-info">
+                  <div class="conversation-name">${otherUser.name || otherUser.email}${unread}</div>
+                  <div class="conversation-preview">${preview}</div>
+                  <div class="conversation-meta">
+                    <span class="conversation-crm">${otherUser.crm ? '🆔 ' + otherUser.crm : ''}</span>
+                    <span class="conversation-time">${time}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          document.querySelectorAll('.chat-conversation-item').forEach(item => {
+            item.addEventListener('click', () => openChat(item.dataset));
+          });
+        } catch (error) {
+          console.error('Erro ao carregar conversas:', error);
+          document.getElementById('conversationsList').innerHTML = '<p style="color:#9ca3af;">Erro ao carregar conversas.</p>';
+        }
       }
 
       // ===== NOTIFICAÇÕES =====
@@ -365,60 +553,25 @@
         if (senderId) {
           sessionStorage.setItem('chatTargetUserId', senderId);
           modal.classList.remove('show');
-          // Abre o chat com esse usuário
-          loadUsers().then(() => {
-            const userEl = document.querySelector(`.chat-user-item[data-id="${senderId}"]`);
-            if (userEl) userEl.click();
+          loadConversations().then(() => {
+            const convEl = document.querySelector(`.chat-conversation-item[data-id="${senderId}"]`);
+            if (convEl) convEl.click();
           });
         }
       });
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
 
       // ===== CHAT =====
-      async function loadUsers() {
-        try {
-          const users = await getChatUsers();
-          const container = document.getElementById('userList');
-          if (users.length === 0) {
-            container.innerHTML = '<p style="color:var(--gray-400); font-size:0.9rem; padding:10px;">Nenhum outro usuário encontrado.</p>';
-            return;
-          }
-          container.innerHTML = users.map(u => `
-            <div class="chat-user-item" data-id="${u.id}" data-name="${u.name || u.email}" data-avatar="${u.avatar_url || ''}" data-specialty="${u.specialty || ''}">
-              <div class="user-avatar">
-                ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : (u.name || u.email || 'U').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div style="font-weight:600; font-size:0.9rem; color:var(--gray-700);">${u.name || u.email}</div>
-                <div class="user-id">#${u.id.substring(0, 8)}</div>
-                ${u.specialty ? `<div style="font-size:0.75rem; color:var(--gray-400);">🩺 ${u.specialty}</div>` : ''}
-              </div>
-            </div>
-          `).join('');
-          document.querySelectorAll('.chat-user-item').forEach(item => {
-            item.addEventListener('click', () => openChat(item.dataset));
-          });
-
-          // Se veio de notificação, abre o chat automaticamente
-          const targetId = sessionStorage.getItem('chatTargetUserId');
-          if (targetId) {
-            sessionStorage.removeItem('chatTargetUserId');
-            const targetEl = document.querySelector(`.chat-user-item[data-id="${targetId}"]`);
-            if (targetEl) targetEl.click();
-          }
-        } catch (error) {
-          document.getElementById('userList').innerHTML = '<p style="color:var(--gray-400);">Erro ao carregar usuários.</p>';
-        }
-      }
-
       async function openChat(userData) {
         currentChatUser = userData;
-        document.querySelectorAll('.chat-user-item').forEach(i => i.classList.remove('active'));
-        document.querySelector(`.chat-user-item[data-id="${userData.id}"]`).classList.add('active');
+        document.querySelectorAll('.chat-conversation-item').forEach(i => i.classList.remove('active'));
+        const convEl = document.querySelector(`.chat-conversation-item[data-id="${userData.id}"]`);
+        if (convEl) convEl.classList.add('active');
         document.getElementById('noChatSelected').style.display = 'none';
         document.getElementById('chatContainer').style.display = 'flex';
-        document.getElementById('chatUserName').textContent = userData.name;
+        document.getElementById('chatUserName').textContent = userData.name || userData.email || 'Usuário';
         document.getElementById('chatUserId').textContent = '#' + userData.id.substring(0, 8);
+        document.getElementById('chatUserCrm').textContent = userData.crm ? '🆔 CRM: ' + userData.crm : '';
         const avatar = document.getElementById('chatAvatar');
         if (userData.avatar) avatar.innerHTML = `<img src="${userData.avatar}" alt="">`;
         else avatar.textContent = (userData.name || 'U').charAt(0).toUpperCase();
@@ -448,7 +601,7 @@
           const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
           return `
             <div class="chat-message ${isSent ? 'sent' : 'received'}">
-              ${!isSent ? `<div class="msg-sender">${currentChatUser.name}</div>` : ''}
+              ${!isSent ? `<div class="msg-sender">${currentChatUser.name || currentChatUser.email || 'Usuário'}</div>` : ''}
               <div>${escapeHtml(msg.content)}</div>
               <div class="msg-time">${time}</div>
             </div>
@@ -471,6 +624,7 @@
         try {
           await sendMessage(currentChatUser.id, content);
           await loadMessages();
+          await loadConversations(); // Atualiza lista de conversas
         } catch (error) {
           showMessage('Erro ao enviar mensagem.', 'erro');
         }
@@ -498,7 +652,8 @@
       };
 
       await checkNewMessages();
-      loadUsers();
+      await loadDoctorsCount();
+      await loadConversations();
     })();
   </script>
 </body>
