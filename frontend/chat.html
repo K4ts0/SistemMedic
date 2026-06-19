@@ -445,7 +445,7 @@
           return;
         }
         container.innerHTML = messages.map(msg => {
-          const isSent = msg.sender_id === user.id;
+          const isSent = msg.sender_id === currentUserId;
           const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
           return `
             <div class="chat-message ${isSent ? 'sent' : 'received'}">
