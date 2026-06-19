@@ -1,4 +1,4 @@
-// supabase-config.js — NoteMed for Unisystem v2.1
+// supabase-config.js — NoteMed for Unisystem v2.2
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== AUTENTICAÇÃO =====
+// ===== AUTENTICACAO =====
 export async function signUp(email, password, name) {
   const { data, error } = await supabase.auth.signUp({
     email, password,
@@ -33,10 +33,10 @@ export async function getCurrentUser() {
   return user;
 }
 
-// ===== PERFIL DO USUÁRIO =====
+// ===== PERFIL DO USUARIO =====
 export async function getUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   return {
     id: user.id,
     email: user.email,
@@ -66,7 +66,7 @@ export async function updateUserProfile(profile) {
 
 export async function uploadAvatar(file) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
 
   const fileExt = file.name.split('.').pop();
   const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -88,7 +88,7 @@ export async function uploadAvatar(file) {
 // ===== CRUD NOTAS =====
 export async function getNotes() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { data, error } = await supabase
     .from('notes')
     .select('*')
@@ -100,7 +100,7 @@ export async function getNotes() {
 
 export async function getNote(id) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { data, error } = await supabase
     .from('notes')
     .select('*')
@@ -113,7 +113,7 @@ export async function getNote(id) {
 
 export async function createNote(title, content) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { data, error } = await supabase
     .from('notes')
     .insert([{ title, content, user_id: user.id }])
@@ -124,7 +124,7 @@ export async function createNote(title, content) {
 
 export async function updateNote(id, title, content) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { data, error } = await supabase
     .from('notes')
     .update({ title, content })
@@ -137,7 +137,7 @@ export async function updateNote(id, title, content) {
 
 export async function deleteNote(id) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { error } = await supabase
     .from('notes')
     .delete()
@@ -149,7 +149,7 @@ export async function deleteNote(id) {
 // ===== FAVORITOS =====
 export async function toggleFavorite(id, currentState) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
   const { data, error } = await supabase
     .from('notes')
     .update({ is_favorite: !currentState })
@@ -163,7 +163,7 @@ export async function toggleFavorite(id, currentState) {
 // ===== CHAT =====
 export async function getChatUsers() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
 
   const { data, error } = await supabase
     .from('profiles')
@@ -174,13 +174,13 @@ export async function getChatUsers() {
   return data || [];
 }
 
-// ===== BUSCAR USUÁRIO POR ID =====
+// ===== BUSCAR USUARIO POR ID =====
 export async function findUserById(userId) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    console.error('❌ Usuário não autenticado - não pode buscar profiles');
-    throw new Error('Você precisa estar logado para buscar usuários');
+    console.error('Usuario nao autenticado - nao pode buscar profiles');
+    throw new Error('Voce precisa estar logado para buscar usuarios');
   }
 
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -193,7 +193,7 @@ export async function findUserById(userId) {
       .single();
 
     if (error) {
-      console.error('Erro ao buscar usuário:', error.message);
+      console.error('Erro ao buscar usuario:', error.message);
       return null;
     }
     return data;
@@ -202,13 +202,13 @@ export async function findUserById(userId) {
   return null;
 }
 
-// ===== BUSCAR USUÁRIO POR NOME/EMAIL (busca parcial) =====
+// ===== BUSCAR USUARIO POR NOME/EMAIL =====
 export async function searchUserByPartialId(partialId) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    console.error('❌ Usuário não autenticado');
-    throw new Error('Você precisa estar logado para buscar usuários');
+    console.error('Usuario nao autenticado');
+    throw new Error('Voce precisa estar logado para buscar usuarios');
   }
 
   const { data, error } = await supabase
@@ -225,13 +225,13 @@ export async function searchUserByPartialId(partialId) {
   return data || [];
 }
 
-// ===== BUSCAR USUÁRIO POR CRM =====
+// ===== BUSCAR USUARIO POR CRM =====
 export async function searchUserByCRM(crm) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    console.error('❌ Usuário não autenticado');
-    throw new Error('Você precisa estar logado para buscar usuários');
+    console.error('Usuario nao autenticado');
+    throw new Error('Voce precisa estar logado para buscar usuarios');
   }
 
   const { data, error } = await supabase
@@ -241,7 +241,6 @@ export async function searchUserByCRM(crm) {
     .single();
 
   if (error) {
-    // Se não encontrar exato, tenta busca parcial no CRM
     const { data: partialData, error: partialError } = await supabase
       .from('profiles')
       .select('id, name, email, avatar_url, specialty, crm')
@@ -255,7 +254,7 @@ export async function searchUserByCRM(crm) {
   return data;
 }
 
-// ===== CONTAR MÉDICOS CADASTRADOS =====
+// ===== CONTAR MEDICOS CADASTRADOS =====
 export async function getDoctorsCount() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return 0;
@@ -267,7 +266,7 @@ export async function getDoctorsCount() {
     .neq('id', user.id);
 
   if (error) {
-    console.error('Erro ao contar médicos:', error.message);
+    console.error('Erro ao contar medicos:', error.message);
     return 0;
   }
   return count || 0;
@@ -278,7 +277,6 @@ export async function getConversations() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Busca todas as mensagens do usuário
   const { data: messages, error } = await supabase
     .from('messages')
     .select('id, sender_id, receiver_id, content, created_at, read')
@@ -287,7 +285,6 @@ export async function getConversations() {
 
   if (error || !messages || messages.length === 0) return [];
 
-  // Agrupa por outro usuário (mantém apenas a mensagem mais recente por conversa)
   const conversationsMap = new Map();
 
   messages.forEach(msg => {
@@ -299,13 +296,11 @@ export async function getConversations() {
         unread_count: 0
       });
     }
-    // Conta não lidas (apenas mensagens recebidas e não lidas)
     if (msg.receiver_id === user.id && msg.read === false) {
       conversationsMap.get(otherId).unread_count++;
     }
   });
 
-  // Busca dados dos usuários das conversas
   const userIds = Array.from(conversationsMap.keys());
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')
@@ -322,7 +317,7 @@ export async function getConversations() {
     ...conv,
     other_user: profilesMap.get(conv.other_user_id) || { 
       id: conv.other_user_id, 
-      name: 'Usuário', 
+      name: 'Usuario', 
       email: '', 
       avatar_url: null, 
       specialty: '', 
@@ -334,7 +329,7 @@ export async function getConversations() {
 // ===== MENSAGENS =====
 export async function sendMessage(receiverId, content) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
 
   const { data, error } = await supabase
     .from('messages')
@@ -351,7 +346,7 @@ export async function sendMessage(receiverId, content) {
 
 export async function getMessages(otherUserId) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  if (!user) throw new Error('Usuario nao autenticado');
 
   const { data, error } = await supabase
     .from('messages')
@@ -386,52 +381,468 @@ function getCurrentUserId() {
   return supabase.auth.getUser().then(({ data }) => data.user?.id);
 }
 
-// ===== CID / PRESCRIÇÃO (dados locais) =====
+// ============================================================
+// ===== CID / PRESCRICAO — BANCO EXPANDIDO COM SINTOMAS =====
+// ============================================================
+
 export const CID_DATABASE = {
-  'A00': { name: 'Cólera', desc: 'Doença diarreica aguda causada por Vibrio cholerae.', prescriptions: ['Reidratação oral (ORS)', 'Azitromicina 1g dose única', 'Zinco 20mg/dia (crianças)'] },
-  'A01': { name: 'Febre Tifóide', desc: 'Infecção sistêmica causada por Salmonella typhi.', prescriptions: ['Azitromicina 500mg 1x/dia x 7 dias', 'Ciprofloxacino 500mg 2x/dia x 10 dias', 'Repouso e hidratação'] },
-  'A02': { name: 'Outras infecções por Salmonella', desc: 'Gastroenterite não tifóide por Salmonella.', prescriptions: ['Ciprofloxacino 500mg 2x/dia x 5-7 dias', 'Hidratação oral', 'Dieta leve'] },
-  'A09': { name: 'Gastroenterite e colite de origem infecciosa', desc: 'Diarreia infecciosa aguda.', prescriptions: ['ORS - Soro caseiro', 'Loperamida 2mg (adultos)', 'Probióticos', 'Zinco (crianças)'] },
-  'B01': { name: 'Varicela', desc: 'Infecção por vírus varicela-zoster.', prescriptions: ['Aciclovir 800mg 5x/dia x 7 dias', 'Calamina tópica', 'Dipirona 1g para febre'] },
-  'B02': { name: 'Herpes Zoster', desc: 'Reativação do VZV (cobreiro).', prescriptions: ['Aciclovir 800mg 5x/dia x 7-10 dias', 'Amitriptilina 25mg para neuralgia', 'Analgésicos'] },
-  'B35': { name: 'Dermatofitose', desc: 'Micose superficial (tinea).', prescriptions: ['Terbinafina 250mg 1x/dia x 2-4 semanas', 'Cetoconazol creme 2x/dia', 'Miconazol tópico'] },
-  'E10': { name: 'Diabetes Mellitus tipo 1', desc: 'Deficiência absoluta de insulina.', prescriptions: ['Insulina regular (basal-bolus)', 'Monitorização glicêmica', 'Metformina (adjuvante)'] },
-  'E11': { name: 'Diabetes Mellitus tipo 2', desc: 'Resistência à insulina com defeito secretor.', prescriptions: ['Metformina 850mg 2x/dia', 'Glibenclamida 5mg 1x/dia', 'Sinvastatina 20mg', 'Controle glicêmico'] },
-  'E66': { name: 'Obesidade', desc: 'IMC ≥ 30 kg/m².', prescriptions: ['Orlistate 120mg 3x/dia', 'Dieta hipocalórica', 'Exercício físico', 'Acompanhamento nutricional'] },
-  'F32': { name: 'Episódio depressivo', desc: 'Transtorno depressivo maior.', prescriptions: ['Sertralina 50mg 1x/dia', 'Fluoxetina 20mg 1x/dia', 'Psicoterapia', 'Atividade física'] },
-  'F41': { name: 'Transtorno de ansiedade generalizada', desc: 'TAG - ansiedade excessiva persistente.', prescriptions: ['Sertralina 50mg 1x/dia', 'Clonazepam 0,5mg (curto prazo)', 'Terapia cognitivo-comportamental'] },
-  'G40': { name: 'Epilepsia', desc: 'Distúrbio neurológico crônico com crises recorrentes.', prescriptions: ['Fenitoína 100mg 3x/dia', 'Carbamazepina 200mg 2x/dia', 'Ácido valpróico 500mg 2x/dia'] },
-  'H10': { name: 'Conjuntivite', desc: 'Inflamação da conjuntiva ocular.', prescriptions: ['Tobramicina colírio 3-4x/dia', 'Ciprofloxacino colírio', 'Compressas mornas'] },
-  'I10': { name: 'Hipertensão Essencial', desc: 'Pressão arterial sistêmica elevada.', prescriptions: ['Losartana 50mg 1x/dia', 'Amlodipino 5mg 1x/dia', 'Hidroclorotiazida 25mg', 'Restrição de sódio'] },
-  'I20': { name: 'Angina Pectoris', desc: 'Dor torácica por isquemia miocárdica.', prescriptions: ['Nitroglicerina SL (crise)', 'AAS 100mg 1x/dia', 'Atorvastatina 40mg', 'Metoprolol 50mg 2x/dia'] },
-  'I50': { name: 'Insuficiência Cardíaca', desc: 'Incapacidade do coração de bombear adequadamente.', prescriptions: ['Enalapril 10mg 2x/dia', 'Furosemida 40mg 1x/dia', 'Espironolactona 25mg', 'Repouso'] },
-  'J06': { name: 'Infecções agudas das vias aéreas superiores', desc: 'Resfriado comum, faringite, amigdalite.', prescriptions: ['Dipirona 1g (febre/dor)', 'Loratadina 10mg 1x/dia', 'Xarope expectorante', 'Repouso e hidratação'] },
-  'J18': { name: 'Pneumonia', desc: 'Infecção dos pulmões.', prescriptions: ['Azitromicina 500mg 1x/dia x 5 dias', 'Amoxicilina 1g 3x/dia x 7 dias', 'Ambroxol xarope', 'Oxigênio (se necessário)'] },
-  'J45': { name: 'Asma', desc: 'Doença inflamatória crônica das vias aéreas.', prescriptions: ['Salbutamol inalador (resgate)', 'Budesonida inalador (manutenção)', 'Montelucaste 10mg 1x/noite'] },
-  'K29': { name: 'Gastrite e duodenite', desc: 'Inflamação da mucosa gástrica/duodenal.', prescriptions: ['Omeprazol 20mg 1x/dia', 'Ranitidina 150mg 2x/dia', 'Sucralfato 1g 4x/dia', 'Dieta branda'] },
-  'L20': { name: 'Dermatite atópica', desc: 'Eczema crônico com prurido.', prescriptions: ['Hidrocortisona creme 1%', 'Cetirizina 10mg 1x/dia', 'Emolientes', 'Evitar alérgenos'] },
-  'M06': { name: 'Artrite reumatoide', desc: 'Doença autoimune das articulações.', prescriptions: ['Metotrexato 15mg/semana', 'Prednisona 5mg 1x/dia', 'AAS 100mg', 'Fisioterapia'] },
-  'M79': { name: 'Outras afecções dos tecidos moles', desc: 'Dores musculares, fibromialgia.', prescriptions: ['Paracetamol 750mg 3x/dia', 'Ciclobenzaprina 10mg 1x/noite', 'Fisioterapia', 'Alongamento'] },
-  'N18': { name: 'Doença renal crônica', desc: 'Redução progressiva da função renal.', prescriptions: ['Losartana 50mg', 'Furosemida 40mg', 'Eritropoetina', 'Restrição de proteínas'] },
-  'N39': { name: 'Outras afecções do trato urinário', desc: 'Infecção urinária, cistite.', prescriptions: ['Nitrofurantoína 100mg 2x/dia x 7 dias', 'Ciprofloxacino 500mg 2x/dia', 'Hidratação abundante'] },
-  'O80': { name: 'Parto único espontâneo', desc: 'Parto vaginal normal.', prescriptions: ['Oxitocina (se necessário)', 'Analgesia peridural', 'Acompanhamento obstétrico'] },
-  'R50': { name: 'Febre de origem desconhecida', desc: 'Febre sem causa identificada.', prescriptions: ['Dipirona 1g (sintomático)', 'Paracetamol 750mg', 'Investigação diagnóstica'] },
-  'S72': { name: 'Fratura do fêmur', desc: 'Fratura do osso da coxa.', prescriptions: ['Analgésicos (morfina se necessário)', 'Imobilização', 'Cirurgia ortopédica'] },
-  'Z00': { name: 'Exame geral de saúde', desc: 'Consulta de rotina/check-up.', prescriptions: ['Exames laboratoriais', 'Avaliação clínica completa', 'Orientações preventivas'] },
-  'Z51': { name: 'Cuidados médicos por radioterapia/quimioterapia', desc: 'Tratamento oncológico.', prescriptions: ['Protocolo oncológico específico', 'Antieméticos', 'Suporte hematológico'] }
+  // === INFECCOES ===
+  'A00': { 
+    name: 'Colera', 
+    desc: 'Doenca diarreica aguda causada por Vibrio cholerae. Caracterizada por diarreia aquosa profusa, vomitos e desidratacao rapida.',
+    symptoms: ['diarreia aquosa', 'vomitos', 'desidratacao', 'caibras', 'fraqueza extrema', 'fezes rice water'],
+    keywords: ['colera', 'diarreia profusa', 'desidratacao', 'vibrio', 'fezes aquosas', 'colera asiatica'],
+    prescriptions: ['Reidratacao oral (ORS) — 1 sache em 1L de agua', 'Azitromicina 1g dose unica', 'Zinco 20mg/dia (criancas)', 'Tetraciclina 500mg 4x/dia x 3 dias']
+  },
+  'A01': { 
+    name: 'Febre Tifoide', 
+    desc: 'Infeccao sistemica causada por Salmonella typhi. Febre prolongada, dor abdominal, rose spots na pele.',
+    symptoms: ['febre alta prolongada', 'dor abdominal', 'rose spots', 'bradicardia relativa', 'hepatoesplenomegalia', 'constipacao'],
+    keywords: ['tifo', 'febre tifoide', 'salmonella', 'rose spots', 'febre prolongada', 'tifico'],
+    prescriptions: ['Azitromicina 500mg 1x/dia x 7 dias', 'Ciprofloxacino 500mg 2x/dia x 10 dias', 'Ceftriaxona 2g IV 1x/dia (grave)', 'Repouso e hidratacao']
+  },
+  'A02': { 
+    name: 'Outras infeccoes por Salmonella', 
+    desc: 'Gastroenterite nao tifoide por Salmonella. Diarreia, febre, colicas abdominais.',
+    symptoms: ['diarreia', 'febre', 'colicas abdominais', 'nauseas', 'vomitos'],
+    keywords: ['salmonelose', 'gastroenterite', 'salmonella', 'intoxicacao alimentar', 'diarreia bacteriana'],
+    prescriptions: ['Ciprofloxacino 500mg 2x/dia x 5-7 dias', 'Azitromicina 500mg 1x/dia x 3 dias', 'Hidratacao oral', 'Dieta leve (arroz, banana, maca)']
+  },
+  'A09': { 
+    name: 'Gastroenterite e colite de origem infecciosa', 
+    desc: 'Diarreia infecciosa aguda — a causa mais comum de consulta medica. Pode ser viral, bacteriana ou parasitaria.',
+    symptoms: ['diarreia', 'nauseas', 'vomitos', 'colicas', 'febre', 'dores abdominais', 'desidratacao'],
+    keywords: ['gastroenterite', 'diarreia', 'vomito', 'colite', 'gripe intestinal', 'intoxicacao alimentar', 'dor de barriga', 'nausea', 'indisposicao estomacal'],
+    prescriptions: ['ORS — Soro caseiro (1L agua + 1 colher cafe sal + 2 colheres acucar)', 'Loperamida 2mg (adultos, sem sangue na fezes)', 'Probióticos (Saccharomyces boulardii)', 'Zinco 20mg/dia (criancas < 5 anos)', 'Metronidazol 500mg 3x/dia (se parasitose)']
+  },
+  'B01': { 
+    name: 'Varicela', 
+    desc: 'Infeccao por virus varicela-zoster (VZV). Exantema vesicular pruriginoso em surtos.',
+    symptoms: ['vesiculas pruriginosas', 'febre', 'mal-estar', 'exantema', 'prurido intenso', 'lesoes em crosta'],
+    keywords: ['varicela', 'catapora', 'vesiculas', 'virus varicela', 'zoster', 'catapora adulto'],
+    prescriptions: ['Aciclovir 800mg 5x/dia x 7 dias (adultos)', 'Calamina topica 3-4x/dia', 'Dipirona 1g para febre', 'Antihistaminico (Cetirizina 10mg) para coceira', 'Higiene das lesoes']
+  },
+  'B02': { 
+    name: 'Herpes Zoster', 
+    desc: 'Reativacao do VZV (cobreiro). Dor neuropatica unilateral seguida de vesiculas em dermatoma.',
+    symptoms: ['dor neuropatica unilateral', 'vesiculas em dermatoma', 'ardor', 'hiperestesia', 'prurido'],
+    keywords: ['herpes zoster', 'cobreiro', 'neuralgia pos-herpetica', 'zoster', 'vesiculas dor', 'herpes dor'],
+    prescriptions: ['Aciclovir 800mg 5x/dia x 7-10 dias (iniciar em 72h)', 'Amitriptilina 25mg 1x/noite (neuralgia)', 'Pregabalina 75mg 2x/dia (neuropatia)', 'Analgesicos (Paracetamol 750mg 3x/dia)', 'Creme aciclovir topico']
+  },
+  'B35': { 
+    name: 'Dermatofitose', 
+    desc: 'Micose superficial (tinea) causada por fungos dermatofitos. Lesoes circinadas, descamacao, prurido.',
+    symptoms: ['lesoes circinadas', 'descamacao', 'prurido', 'eritema', 'bordas elevadas', 'alopecia localizada'],
+    keywords: ['micose', 'tinea', 'pe de atleta', 'tinha', 'dermatofitose', 'fungos', 'candidiase cutanea', 'lesao circular'],
+    prescriptions: ['Terbinafina 250mg 1x/dia x 2-4 semanas', 'Cetoconazol creme 2x/dia x 4 semanas', 'Miconazol topico 2x/dia', 'Itraconazol 200mg 1x/dia x 1 semana (pulse)']
+  },
+
+  // === ENDOCRINOLOGIA / METABOLISMO ===
+  'E10': { 
+    name: 'Diabetes Mellitus tipo 1', 
+    desc: 'Deficiencia absoluta de insulina. Inicio juvenil, dependente de insulina.',
+    symptoms: ['poliuria', 'polidipsia', 'polifagia', 'perda de peso', 'cetonuria', 'fadiga'],
+    keywords: ['diabetes tipo 1', 'DM1', 'insulina dependente', 'juvenil', 'cetoacidose', 'glicemia alta', 'acucar alto'],
+    prescriptions: ['Insulina NPH (basal) + Regular (bolus) — ajustar por glicemia', 'Monitorizacao glicemica 4x/dia', 'Metformina 500mg 2x/dia (adjuvante)', 'Educacao em diabetes', 'A1c a cada 3 meses']
+  },
+  'E11': { 
+    name: 'Diabetes Mellitus tipo 2', 
+    desc: 'Resistencia a insulina com defeito secretor. Associado a obesidade e sedentarismo.',
+    symptoms: ['fadiga', 'poliuria', 'visao turva', 'feridas que nao cicatrizam', 'infeccoes recorrentes', 'parestesias'],
+    keywords: ['diabetes tipo 2', 'DM2', 'glicemia elevada', 'acucar no sangue', 'resistencia insulina', 'pre-diabetes', 'hiperglicemia'],
+    prescriptions: ['Metformina 850mg 2x/dia (inicio 500mg)', 'Glibenclamida 5mg 1x/dia (se HbA1c > 7%)', 'Sinvastatina 20mg 1x/noite', 'AAS 100mg 1x/dia', 'Controle glicemico (glicemia jejum < 100mg/dL)', 'Dieta hipoglicemica']
+  },
+  'E66': { 
+    name: 'Obesidade', 
+    desc: 'IMC >= 30 kg/m2. Doenca cronica multifatorial com risco cardiovascular aumentado.',
+    symptoms: ['excesso de peso', 'dispneia aos esforcos', 'apneia do sono', 'hipertensao', 'dor articular'],
+    keywords: ['obesidade', 'sobrepeso', 'IMC alto', 'gordura', 'excesso peso', 'apneia sono', 'sindrome metabolica'],
+    prescriptions: ['Orlistate 120mg 3x/dia (refeicoes)', 'Dieta hipocalorica (1200-1500 kcal)', 'Exercicio fisico 150min/semana', 'Acompanhamento nutricional', 'Bariatrica (IMC > 40 ou > 35 com comorbidades)']
+  },
+
+  // === PSIQUIATRIA ===
+  'F32': { 
+    name: 'Episodio depressivo', 
+    desc: 'Transtorno depressivo maior. Humor deprimido persistente com perda de interesse.',
+    symptoms: ['humor deprimido', 'perda de interesse', 'insonia ou hipersonia', 'fadiga', 'culpa', 'dificuldade concentracao', 'ideacao suicida'],
+    keywords: ['depressao', 'tristeza', 'humor baixo', 'ansiedade', 'insonia', 'falta vontade', 'depressao maior', 'melancolia', 'suicidio'],
+    prescriptions: ['Sertralina 50mg 1x/dia (aumentar para 100mg em 2 semanas)', 'Fluoxetina 20mg 1x/dia (manha)', 'Escitalopram 10mg 1x/dia', 'Psicoterapia (TCC)', 'Atividade fisica regular', 'Avaliar risco suicida a cada consulta']
+  },
+  'F41': { 
+    name: 'Transtorno de ansiedade generalizada', 
+    desc: 'TAG — ansiedade excessiva persistente por >= 6 meses. Preocupacoes multiplas dificeis de controlar.',
+    symptoms: ['ansiedade excessiva', 'preocupacao constante', 'irritabilidade', 'tensao muscular', 'insonia', 'fadiga', 'dificuldade concentracao'],
+    keywords: ['ansiedade', 'TAG', 'nervosismo', 'preocupacao excessiva', 'panico', 'stress', 'estresse', 'tensao', 'inquietacao'],
+    prescriptions: ['Sertralina 50mg 1x/dia', 'Escitalopram 10mg 1x/dia', 'Clonazepam 0,5mg 2x/dia (curto prazo, max 4 semanas)', 'Terapia cognitivo-comportamental (TCC)', 'Relaxamento e mindfulness']
+  },
+
+  // === NEUROLOGIA ===
+  'G40': { 
+    name: 'Epilepsia', 
+    desc: 'Disturbio neurologico cronico com crises recorrentes nao provocadas.',
+    symptoms: ['crises convulsivas', 'perda consciencia', 'aura', 'movimentos tonico-clonicos', 'confusao pos-critica', 'lingua mordida'],
+    keywords: ['epilepsia', 'convulsao', 'crise convulsiva', 'mal', 'ataque', 'desmaio com convulsao', 'tonico clonica'],
+    prescriptions: ['Carbamazepina 200mg 2x/dia (crises parciais)', 'Fenitoina 100mg 3x/dia', 'Acido valproico 500mg 2x/dia (crises generalizadas)', 'Levetiracetam 500mg 2x/dia', 'Evitar gatilhos (falta sono, alcool)']
+  },
+  'G43': {
+    name: 'Enxaqueca',
+    desc: 'Cefaleia primaria pulsatil, unilateral, moderada a grave, agravada por esforco fisico.',
+    symptoms: ['dor de cabeca pulsatil', 'nauseas', 'fotofobia', 'fonofobia', 'aura visual', 'vomitos'],
+    keywords: ['enxaqueca', 'migranea', 'dor de cabeca', 'cefaleia', 'migraine', 'dor cabeca forte', 'enjoo cabeca'],
+    prescriptions: ['Sumatriptano 50mg (crise, max 200mg/dia)', 'Paracetamol 1g + Cafeina 65mg', 'Metoclopramida 10mg (nausea)', 'Propranolol 40mg 2x/dia (profilaxia)', 'Amitriptilina 25mg/noite (profilaxia cronica)']
+  },
+  'G44': {
+    name: 'Outras sindromes de cefaleia',
+    desc: 'Cefaleia tensional, cluster e outras formas de dor de cabeca primaria.',
+    symptoms: ['dor de cabeca em faixa', 'pressao occipital', 'lacrimejo', 'congestao nasal', 'agitacao'],
+    keywords: ['cefaleia', 'dor de cabeca', 'tensional', 'cluster', 'sinusite', 'pressao cabeca'],
+    prescriptions: ['Paracetamol 750mg 3x/dia', 'Ibuprofeno 400mg 3x/dia', 'Amitriptilina 25mg/noite (tensional cronica)', 'Verapamil 240mg (cluster)', 'Oxigenio 100% 7-15L/min (cluster aguda)']
+  },
+
+  // === OFTALMOLOGIA ===
+  'H10': { 
+    name: 'Conjuntivite', 
+    desc: 'Inflamacao da conjuntiva ocular. Pode ser viral, bacteriana ou alergica.',
+    symptoms: ['olho vermelho', 'secrecao', 'prurido', 'ardor', 'lacrimejo', 'sensacao corpo estranho'],
+    keywords: ['conjuntivite', 'olho vermelho', 'olho irritado', 'secrecao ocular', 'olho inchado', 'blefarite'],
+    prescriptions: ['Tobramicina colirio 3-4x/dia (bacteriana)', 'Ciprofloxacino colirio 4x/dia', 'Lubrificante ocular (carboximetilcelulose)', 'Compressas mornas', 'Higiene das palpebras (blefarite)']
+  },
+  'H25': {
+    name: 'Catarata senil',
+    desc: 'Opacificacao do cristalino relacionada a idade. Visao embacada progressiva.',
+    symptoms: ['visao embacada', 'ofuscamento', 'dificuldade noturna', 'halos', 'desbotamento cores'],
+    keywords: ['catarata', 'visao turva', 'cristalino', 'opacificacao', 'olho embacado'],
+    prescriptions: ['Cirurgia de facoemulsificacao (indicacao principal)', 'Colirio lubrificante', 'Oculos de sol UV', 'Reavaliacao a cada 6 meses']
+  },
+  'H52': {
+    name: 'Erros de refracao',
+    desc: 'Miopia, hipermetropia, astigmatismo e presbiopia.',
+    symptoms: ['visao embacada', 'dor de cabeca', 'astenopia', 'dificuldade leitura', 'ofuscamento'],
+    keywords: ['miopia', 'hipermetropia', 'astigmatismo', 'presbiopia', 'oculos', 'visao ruim', 'dificuldade enxergar'],
+    prescriptions: ['Prescricao de oculos corretivos', 'Lentes de contato (se indicado)', 'Cirurgia refrativa (LASIK, PRK)', 'Reavaliacao anual']
+  },
+
+  // === CARDIOLOGIA ===
+  'I10': { 
+    name: 'Hipertensao Essencial', 
+    desc: 'Pressao arterial sistemica elevada (PAS >= 140 ou PAD >= 90 mmHg) sem causa secundaria identificavel.',
+    symptoms: ['assintomatica', 'cefaleia occipital', 'tontura', 'epistaxe', 'dispneia', 'palpitacoes'],
+    keywords: ['hipertensao', 'pressao alta', 'PA elevada', 'HAS', 'hipertensao arterial', 'pressao', 'tensao alta'],
+    prescriptions: ['Losartana 50mg 1x/dia (inicio)', 'Amlodipino 5mg 1x/dia', 'Hidroclorotiazida 25mg 1x/dia', 'Enalapril 10mg 2x/dia', 'Restricao de sodio (< 2g/dia)', 'Monitoramento domiciliar']
+  },
+  'I20': { 
+    name: 'Angina Pectoris', 
+    desc: 'Dor toracica por isquemia miocardica transitoria. Dor em aperto, irradiacao para braco esquerdo.',
+    symptoms: ['dor toracica em aperto', 'irradiacao braco esquerdo', 'dispneia aos esforcos', 'suor frio', 'nauseas'],
+    keywords: ['angina', 'dor no peito', 'isquemia', 'coronaria', 'infarto', 'dor cardiaca', 'aperto peito'],
+    prescriptions: ['Nitroglicerina SL 0,5mg (crise, max 3 doses)', 'AAS 100mg 1x/dia', 'Atorvastatina 40mg 1x/noite', 'Metoprolol 50mg 2x/dia', 'Clopidogrel 75mg 1x/dia', 'Cinecoronariografia se alto risco']
+  },
+  'I21': {
+    name: 'Infarto agudo do miocardio',
+    desc: 'Necrose miocardica por oclusao coronaria aguda. Emergencia medica.',
+    symptoms: ['dor toracica intensa', 'suor frio', 'nauseas', 'vomitos', 'dispneia', 'palidez', 'medo de morrer'],
+    keywords: ['infarto', 'IAM', 'ataque cardiaco', 'dor peito intensa', 'coronaria aguda', 'emergencia cardiaca'],
+    prescriptions: ['AAS 300mg (mastigar)', 'Clopidogrel 600mg (loading)', 'Nitroglicerina SL', 'Heparina IV', 'Metoprolol 5mg IV', 'Angioplastia primaria < 90min', 'Atorvastatina 80mg', 'ENCAMINHAR EMERGENCIA']
+  },
+  'I50': { 
+    name: 'Insuficiencia Cardiaca', 
+    desc: 'Incapacidade do coracao de bombear adequadamente. Edema, dispneia, ortopneia.',
+    symptoms: ['dispneia aos esforcos', 'ortopneia', 'edema de MMII', 'fadiga', 'ingurgitamento jugular', 'hepatomegalia'],
+    keywords: ['insuficiencia cardiaca', 'IC', 'edema', 'falta ar', 'dispneia', 'coracao fraco', 'congestao'],
+    prescriptions: ['Enalapril 10mg 2x/dia', 'Furosemida 40mg 1x/dia (aumentar se edema)', 'Espironolactona 25mg 1x/dia', 'Carvedilol 12,5mg 2x/dia (estavel)', 'Restricao hidrica e de sodio']
+  },
+  'I48': {
+    name: 'Fibrilacao atrial',
+    desc: 'Arritmia supraventricular mais comum. Ritmo irregular, risco de AVC.',
+    symptoms: ['palpitacoes', 'fadiga', 'dispneia', 'tontura', 'sincope', 'ritmo irregular'],
+    keywords: ['fibrilacao', 'arritmia', 'palpitacao', 'batimento irregular', 'FA', 'AVC'],
+    prescriptions: ['Amiodarona 200mg 3x/dia (controle ritmo)', 'Warfarina 5mg (INR 2-3) ou Rivaroxabana 20mg', 'Metoprolol 50mg 2x/dia (controle frequencia)', 'Ablacao por cateter (sintomatico refratario)']
+  },
+
+  // === PNEUMOLOGIA ===
+  'J06': { 
+    name: 'Infeccoes agudas das vias aereas superiores', 
+    desc: 'Resfriado comum, faringite, amigdalite, rinite aguda. Causada principalmente por virus.',
+    symptoms: ['coriza', 'espirros', 'dor de garganta', 'tosse', 'febre baixa', 'mal-estar', 'congestao nasal'],
+    keywords: ['resfriado', 'gripe', 'faringite', 'amigdalite', 'coriza', 'nariz entupido', 'dor garganta', 'tosse seca', 'sintomas gripais'],
+    prescriptions: ['Dipirona 1g (febre/dor)', 'Paracetamol 750mg 3x/dia', 'Loratadina 10mg 1x/dia', 'Xarope expectorante (Ambroxol)', 'Repouso e hidratacao', 'Nao usar antibiotico (viral)']
+  },
+  'J18': { 
+    name: 'Pneumonia', 
+    desc: 'Infeccao dos pulmoes. Tosse produtiva, febre alta, dispneia, estertores.',
+    symptoms: ['tosse produtiva', 'febre alta', 'dispneia', 'dor toracica pleuritica', 'estertores', 'taquipneia'],
+    keywords: ['pneumonia', 'pulmao infectado', 'tosse com catarro', 'febre alta', 'infeccao pulmonar', 'broncopneumonia'],
+    prescriptions: ['Azitromicina 500mg 1x/dia x 5 dias', 'Amoxicilina 1g 3x/dia x 7 dias', 'Ambroxol xarope 3x/dia', 'Oxigenio (se SpO2 < 92%)', 'Hidratacao IV (se desidratado)', 'Raio-X de torax']
+  },
+  'J45': { 
+    name: 'Asma', 
+    desc: 'Doenca inflamatoria cronica das vias aereas. Broncoespasmo reversivel.',
+    symptoms: ['dispneia', 'sibilos', 'tosse noturna', 'opressao toracica', 'crises de falta de ar'],
+    keywords: ['asma', 'falta de ar', 'sibilos', 'bronquite', 'crise asmatica', 'dispneia', 'opressao peito'],
+    prescriptions: ['Salbutamol inalador 100mcg 2 jatos (resgate)', 'Budesonide inalador 200mcg 2x/dia (manutencao)', 'Montelucaste 10mg 1x/noite', 'Prednisona 40mg 1x/dia (exacerbacao)', 'Plano de acao escrito']
+  },
+  'J44': {
+    name: 'Doenca pulmonar obstrutiva cronica',
+    desc: 'DPOC — doenca progressiva com limitacao ao fluxo aereo. Fumantes > 40 anos.',
+    symptoms: ['dispneia progressiva', 'tosse cronica', 'expectoracao', 'sibilos', 'fadiga'],
+    keywords: ['DPOC', 'enfisema', 'bronquite cronica', 'fumante', 'falta ar progressiva', 'pulmao obstrutivo'],
+    prescriptions: ['Tiotropio 18mcg inalador 1x/dia', 'Salbutamol inalador (resgate)', 'Budesonide/Formoterol (manutencao)', 'Oxigenio domiciliar (PaO2 < 55mmHg)', 'Cessacao tabagica', 'Vacina pneumococica e influenza']
+  },
+
+  // === GASTROENTEROLOGIA ===
+  'K29': { 
+    name: 'Gastrite e duodenite', 
+    desc: 'Inflamacao da mucosa gastrica/duodenal. Pode ser aguda ou cronica.',
+    symptoms: ['dor epigastrica', 'pirose', 'nauseas', 'vomitos', 'saciedade precoce', 'eructacao'],
+    keywords: ['gastrite', 'azia', 'dor estomago', 'pirose', 'ulcera', 'refluxo', 'ma digestao', 'queimacao'],
+    prescriptions: ['Omeprazol 20mg 1x/dia (30min antes cafe)', 'Ranitidina 150mg 2x/dia', 'Sucralfato 1g 4x/dia (1h antes refeicoes)', 'Teste de H. pylori (ureia respiratoria)', 'Eradicacao: OMA (Omeprazol + Amoxicilina + Claritromicina)']
+  },
+  'K30': {
+    name: 'Dispepsia',
+    desc: 'Ma digestao funcional. Dor ou desconforto epigastrico sem causa organica.',
+    symptoms: ['ma digestao', 'saciedade precoce', 'distensao abdominal', 'eructacao', 'nauseas'],
+    keywords: ['dispepsia', 'ma digestao', 'estomago pesado', 'gases', 'inchaco', 'digestao lenta'],
+    prescriptions: ['Omeprazol 20mg 1x/dia', 'Dimeticona 40mg 4x/dia', 'Metoclopramida 10mg 3x/dia', 'Dieta fracionada', 'Evitar gorduras e alcool']
+  },
+  'K59': {
+    name: 'Constipacao',
+    desc: 'Evacuacoes infrequentes ou dificuldade na defecacao.',
+    symptoms: ['evacuacao dificultosa', 'fezes endurecidas', 'distensao abdominal', 'tenesmo', 'sangramento as vezes'],
+    keywords: ['prisao de ventre', 'constipacao', 'evacuar dificil', 'fezes duras', 'intestino preso'],
+    prescriptions: ['Polietilenoglicol 3350 17g/dia', 'Lactulose 15ml 2x/dia', 'Senna 15mg (noturno)', 'Fibra alimentar 25-30g/dia', 'Hidratacao abundante (> 2L/dia)', 'Exercicio fisico']
+  },
+  'K70': {
+    name: 'Doenca alcoolica do figado',
+    desc: 'Esteatose, esteato-hepatite, cirrose por consumo cronico de alcool.',
+    symptoms: ['hepatomegalia', 'ictericia', 'ascite', 'encefalopatia', 'hemorragia varicosa'],
+    keywords: ['cirrose', 'figado gorduroso', 'hepatite alcoolica', 'alcool', 'ictericia', 'ascite'],
+    prescriptions: ['Abstinencia alcoolica total', 'Prednisona 40mg/dia (hepatite alcoolica grave)', 'Pentoxifilina 400mg 3x/dia', 'Propranolol (prevencao varizes)', 'Espironolactona + Furosemida (ascite)', 'Transplante hepatico (avaliacao)']
+  },
+
+  // === DERMATOLOGIA ===
+  'L20': { 
+    name: 'Dermatite atopica', 
+    desc: 'Eczema cronico com prurido. Historia familiar de atopia.',
+    symptoms: ['prurido intenso', 'lesoes eritematosas', 'lichenificacao', 'xerose', 'excoriacoes'],
+    keywords: ['eczema', 'dermatite', 'coceira', 'pele seca', 'atopia', 'dermatite alergica'],
+    prescriptions: ['Hidrocortisona creme 1% 2x/dia (aguda)', 'Betametasona creme (cronica)', 'Cetirizina 10mg 1x/dia', 'Emolientes (glicerina, ureia 10%)', 'Evitar alegenos e sabonetes']
+  },
+  'L50': {
+    name: 'Urticaria',
+    desc: 'Edema dermico transitorio com prurido. Pode ser aguda ou cronica.',
+    symptoms: ['lesoes eritematosas edemaciadas', 'prurido intenso', 'angioedema', 'wheals', 'queimacao'],
+    keywords: ['urticaria', 'alergia pele', 'coceira', 'bolhas pele', 'angioedema', 'intolerancia alimentar'],
+    prescriptions: ['Cetirizina 10mg 1x/dia', 'Loratadina 10mg 1x/dia', 'Dexametasona 4mg IM (aguda grave)', 'Epinefrina 0,3mg IM (anafilaxia)', 'Identificar e evitar gatilhos']
+  },
+  'L70': {
+    name: 'Acne vulgar',
+    desc: 'Doenca dos foliculos pilosebaceos. Comedoes, papulas, pustulas, nodulos.',
+    symptoms: ['comedoes', 'papulas', 'pustulas', 'nodulos', 'cicatrizes', 'seborreia'],
+    keywords: ['acne', 'espinhas', 'cravos', 'pele oleosa', 'seborreia', 'comedoes'],
+    prescriptions: ['Adapaleno 0,1% gel (noturno)', 'Peroxido de benzoila 5% gel (manha)', 'Minociclina 100mg 1x/dia (moderada-grave)', 'Isotretinoína 0,5mg/kg/dia (grave)', 'Acido salicilico 2%']
+  },
+
+  // === REUMATOLOGIA ===
+  'M06': { 
+    name: 'Artrite reumatoide', 
+    desc: 'Doenca autoimune das articulacoes. Poliartrite simetrica, rigidez matinal.',
+    symptoms: ['poliartrite simetrica', 'rigidez matinal > 1h', 'edema articular', 'nodulos reumatoides', 'fadiga'],
+    keywords: ['artrite', 'reumatismo', 'dor articular', 'inchaco articulacoes', 'rigidez', 'reumatoide'],
+    prescriptions: ['Metotrexato 15mg/semana (oral ou SC)', 'Prednisona 5-10mg 1x/dia', 'AAS 100mg 1x/dia', 'Hidroxicloroquina 400mg/dia', 'Fisioterapia', 'Anti-TNF (Adalimumab) se refratario']
+  },
+  'M15': {
+    name: 'Artrose policentrica',
+    desc: 'Doenca degenerativa articular. Dor mecanica, rigidez < 30min.',
+    symptoms: ['dor articular mecanica', 'rigidez matinal curta', 'crepitacao', 'deformidade articular', 'limitacao movimento'],
+    keywords: ['artrose', 'osteoartrite', 'desgaste cartilagem', 'dor joelho', 'coxartrose', 'gonartrose'],
+    prescriptions: ['Paracetamol 750mg 3x/dia (1ª linha)', 'Ibuprofeno 400mg 3x/dia (se necessario)', 'Condroitina + Glucosamina', 'Acido hialuronico intra-articular', 'Artroplastia (caso refratario)']
+  },
+  'M54': {
+    name: 'Dorsalgia / Lombalgia',
+    desc: 'Dor na coluna lombar ou toracica. Causa mais comum de incapacidade.',
+    symptoms: ['dor lombar', 'rigidez', 'ciatica', 'dor irradiada perna', 'parestesia'],
+    keywords: ['lombalgia', 'dor nas costas', 'ciatica', 'hernia disco', 'coluna', 'dor lombar'],
+    prescriptions: ['Paracetamol 750mg 3x/dia', 'Diclofenaco 50mg 2x/dia (aguda)', 'Tizanidina 2mg 2x/dia (relaxante)', 'Fisioterapia', 'Exercicios de fortalecimento', 'RM se deficit neurologico']
+  },
+  'M79': { 
+    name: 'Outras afecoes dos tecidos moles', 
+    desc: 'Dores musculares, fibromialgia, mialgia, fascite plantar.',
+    symptoms: ['dor muscular difusa', 'pontos gatilho', 'fadiga', 'disturbio sono', 'rigidez'],
+    keywords: ['fibromialgia', 'dor muscular', 'mialgia', 'dor corpo', 'cansaco muscular', 'fascite plantar'],
+    prescriptions: ['Paracetamol 750mg 3x/dia', 'Ciclobenzaprina 10mg 1x/noite', 'Pregabalina 75mg 2x/dia', 'Fisioterapia', 'Alongamento', 'Exercicio aerobio leve', 'Amitriptilina 25mg/noite']
+  },
+
+  // === NEFROLOGIA ===
+  'N18': { 
+    name: 'Doenca renal cronica', 
+    desc: 'Reducao progressiva da funcao renal por >= 3 meses.',
+    symptoms: ['edema', 'hipertensao', 'anemia', 'prurido', 'nauseas', 'uremia'],
+    keywords: ['insuficiencia renal', 'rim', 'creatinina alta', 'ureia alta', 'DRC', 'dialise', 'nefropatia'],
+    prescriptions: ['Losartana 50mg (protecao renal)', 'Furosemida 40mg (edema)', 'Eritropoetina (anemia)', 'Restricao de proteinas 0,8g/kg', 'Controle de fosforo e potassio', 'Nefrologista (eGFR < 30)']
+  },
+  'N39': { 
+    name: 'Outras afecoes do trato urinario', 
+    desc: 'Infeccao urinaria, cistite, uretrite. Disuria, polaciuria, dor suprapubica.',
+    symptoms: ['disuria', 'polaciuria', 'dor suprapubica', 'urgencia miccional', 'sangue na urina', 'febre (pielonefrite)'],
+    keywords: ['cistite', 'infeccao urinaria', 'ardor urinar', 'urina frequente', 'disuria', 'ITU', 'urina com sangue'],
+    prescriptions: ['Nitrofurantoína 100mg 2x/dia x 7 dias', 'Ciprofloxacino 500mg 2x/dia x 3 dias', 'Fosfomicina trometamol 3g dose unica', 'Hidratacao abundante (> 2L/dia)', 'Urocultura']
+  },
+  'N20': {
+    name: 'Calculo renal',
+    desc: 'Nefrolitiase. Dor lombar intensa (colica nefretica), hematuria.',
+    symptoms: ['colica nefretica', 'dor lombar intensa', 'hematuria', 'nauseas', 'vomitos', 'disuria'],
+    keywords: ['pedra no rim', 'calculo renal', 'colica', 'dor lado', 'hematuria', 'nefrolitiase'],
+    prescriptions: ['Diclofenaco 75mg IM (dor aguda)', 'Hidratacao abundante', 'Tansulosina 0,4mg 1x/dia (facilita passagem)', 'Citrato de potassio (urina acida)', 'Litotripsia extracorporea (ESWL)', 'Analise do calculo']
+  },
+
+  // === GINECOLOGIA / OBSTETRICIA ===
+  'O80': { 
+    name: 'Parto unico espontaneo', 
+    desc: 'Parto vaginal normal. Acompanhamento obstetrico adequado.',
+    symptoms: ['contractions uterinas regulares', 'dilatacao cervical', 'ruptura de membranas'],
+    keywords: ['parto', 'gestacao', 'gravida', 'trabalho de parto', 'nascimento'],
+    prescriptions: ['Oxitocina 10UI em 1L SG 5% (se necessario)', 'Analgesia peridural', 'Acompanhamento obstetrico continuo', 'Parto humanizado']
+  },
+  'N94': {
+    name: 'Dismenorreia',
+    desc: 'Dor menstrual. Primaria (sem causa) ou secundaria (endometriose, mioma).',
+    symptoms: ['dor menstrual', 'colica', 'nauseas', 'diarreia', 'dor lombar'],
+    keywords: ['colica menstrual', 'dor menstruacao', 'TPM', 'dismenorreia', 'colica'],
+    prescriptions: ['Ibuprofeno 400mg 3x/dia (iniciar 1 dia antes)', 'Mefenamico 500mg 3x/dia', 'Anticoncepcional oral (se recorrente)', 'Calor local', 'Exercicio fisico']
+  },
+
+  // === SINTOMAS GERAIS ===
+  'R50': { 
+    name: 'Febre de origem desconhecida', 
+    desc: 'Febre persistente sem diagnostico apos investigacao inicial.',
+    symptoms: ['febre persistente', 'calafrios', 'sudorese', 'perda de peso', 'fadiga'],
+    keywords: ['febre', 'febre alta', 'calafrio', 'sudorese', 'temperatura alta', 'febre persistente'],
+    prescriptions: ['Dipirona 1g (sintomatico)', 'Paracetamol 750mg 3x/dia', 'Investigacao diagnostica completa', 'Hemocultura, urina, RX torax', 'TC abdome se necessario']
+  },
+  'R51': {
+    name: 'Cefaleia',
+    desc: 'Dor de cabeca nao especificada. Pode ser primaria ou secundaria.',
+    symptoms: ['dor de cabeca', 'cefaleia', 'pressao craniana', 'tontura'],
+    keywords: ['dor de cabeca', 'cefaleia', 'enxaqueca', 'migranea', 'dor cabeca', 'tensao'],
+    prescriptions: ['Paracetamol 750mg 3x/dia', 'Ibuprofeno 400mg 3x/dia', 'Dipirona 1g', 'Hidratacao', 'Repouso em ambiente escuro']
+  },
+  'R52': {
+    name: 'Dor nao especificada',
+    desc: 'Dor aguda ou cronica sem causa identificada.',
+    symptoms: ['dor generalizada', 'dor localizada', 'dor cronica', 'dor aguda'],
+    keywords: ['dor', 'dores', 'muita dor', 'dor intensa', 'dor generalizada', 'mal estar'],
+    prescriptions: ['Paracetamol 750mg 3x/dia', 'Dipirona 1g 4x/dia', 'Tramadol 50mg (dor moderada-grave)', 'Investigar causa subjacente', 'Analgesicos por etapas (OMS)']
+  },
+
+  // === TRAUMATOLOGIA ===
+  'S72': { 
+    name: 'Fratura do femur', 
+    desc: 'Fratura do osso da coxa. Emergencia ortopedica, especialmente em idosos.',
+    symptoms: ['dor intensa coxa', 'deformidade', 'encurtamento', 'impotencia funcional', 'edema'],
+    keywords: ['fratura', 'femur', 'quadril', 'coxa quebrada', 'queda', 'trauma'],
+    prescriptions: ['Analgesicos (Morfina 5mg IV se necessario)', 'Imobilizacao', 'Cirurgia ortopedica (osteosintese ou artroplastia)', 'Profilaxia de trombose', 'Fisioterapia precoce']
+  },
+  'S82': {
+    name: 'Fratura da tibia ou peronio',
+    desc: 'Fratura da perna. Pode ser exposta ou fechada.',
+    symptoms: ['dor perna', 'deformidade', 'edema', 'crepitacao', 'impotencia funcional'],
+    keywords: ['fratura perna', 'tibia', 'peronio', 'perna quebrada', 'trauma'],
+    prescriptions: ['Imobilizacao gessada', 'Analgesicos', 'Elevacao do membro', 'Cirurgia se desvio > 5mm', 'Fisioterapia']
+  },
+
+  // === PREVENCAO / SAUDE ===
+  'Z00': { 
+    name: 'Exame geral de saude', 
+    desc: 'Consulta de rotina/check-up. Avaliacao preventiva completa.',
+    symptoms: ['assintomatico', 'check-up', 'avaliacao preventiva'],
+    keywords: ['check-up', 'exame rotina', 'avaliacao saude', 'prevencao', 'consulta anual', 'exame periodico'],
+    prescriptions: ['Exames laboratoriais (CBC, glicemia, creatinina, lipidograma, TSH)', 'Avaliacao clinica completa', 'Orientacoes preventivas', 'Vacinas em dia', 'Rastreamento cancer (idade apropriada)']
+  },
+  'Z51': { 
+    name: 'Cuidados medicos por radioterapia/quimioterapia', 
+    desc: 'Tratamento oncologico sistemico ou local.',
+    symptoms: ['nauseas', 'vomitos', 'mielossupressao', 'alopecia', 'mucosite', 'fadiga'],
+    keywords: ['quimioterapia', 'radioterapia', 'cancer', 'onco', 'tratamento oncologia', 'neoplasia'],
+    prescriptions: ['Protocolo oncologico especifico', 'Ondansetrona 8mg (nausea)', 'Filgrastim (neutropenia)', 'Suporte transfusional', 'Nutricao enteral/parenteral se necessario']
+  },
+  'Z72': {
+    name: 'Problemas relacionados ao estilo de vida',
+    desc: 'Tabagismo, sedentarismo, alcoolismo, ma alimentacao.',
+    symptoms: ['tabagismo', 'sedentarismo', 'obesidade', 'estresse'],
+    keywords: ['tabagismo', 'fumar', 'sedentarismo', 'alcool', 'estilo vida', 'habitos saudaveis'],
+    prescriptions: ['Cessacao tabagica (Bupropiona 150mg + adesivo nicotina)', 'Exercicio fisico regular', 'Dieta mediterranea', 'Reducao alcool', 'Acompanhamento psicologico']
+  }
 };
 
+// ===== BUSCA INTELIGENTE CID COM SINONIMOS E SINTOMAS =====
 export function searchCID(query) {
   query = query.toUpperCase().trim();
-  if (!query) return [];
+  if (!query || query.length < 2) return [];
 
   const results = [];
+  const queryTerms = query.split(/\s+/);
+
   for (const [code, data] of Object.entries(CID_DATABASE)) {
-    if (code.includes(query) || data.name.toUpperCase().includes(query)) {
-      results.push({ code, ...data });
+    let score = 0;
+    const searchableText = [
+      code,
+      data.name,
+      ...(data.keywords || []),
+      ...(data.symptoms || []),
+      data.desc
+    ].join(' ').toUpperCase();
+
+    // Codigo CID exato ou prefixo
+    if (code === query) {
+      score += 100;
+    } else if (code.startsWith(query)) {
+      score += 50;
+    }
+
+    // Nome exato
+    if (data.name.toUpperCase() === query) {
+      score += 80;
+    }
+
+    // Cada termo da busca
+    for (const term of queryTerms) {
+      if (term.length < 2) continue;
+
+      // Palavra-chave exata
+      if (data.keywords && data.keywords.some(k => k.toUpperCase() === term)) {
+        score += 30;
+      }
+      else if (data.keywords && data.keywords.some(k => k.toUpperCase().includes(term))) {
+        score += 15;
+      }
+
+      // Sintoma exato
+      if (data.symptoms && data.symptoms.some(s => s.toUpperCase() === term)) {
+        score += 25;
+      }
+      else if (data.symptoms && data.symptoms.some(s => s.toUpperCase().includes(term))) {
+        score += 10;
+      }
+
+      // Nome ou descricao
+      if (data.name.toUpperCase().includes(term)) {
+        score += 12;
+      }
+      if (data.desc.toUpperCase().includes(term)) {
+        score += 8;
+      }
+    }
+
+    if (score > 0) {
+      results.push({ code, score, ...data });
     }
   }
-  return results;
+
+  // Ordena por pontuacao (maior primeiro)
+  results.sort((a, b) => b.score - a.score);
+
+  // Retorna top 15 resultados
+  return results.slice(0, 15);
 }
 
 export function getCID(code) {
@@ -439,7 +850,7 @@ export function getCID(code) {
   return data ? { code: code.toUpperCase(), ...data } : null;
 }
 
-// ===== SESSÃO ÚNICA =====
+// ===== SESSAO UNICA =====
 function generateSessionId() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
@@ -475,7 +886,7 @@ export async function ensureValidSession() {
   return true;
 }
 
-// ===== NOTIFICAÇÕES =====
+// ===== NOTIFICACOES =====
 export async function getUnreadMessages() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
@@ -533,7 +944,7 @@ export async function checkSingleSession() {
   if (serverSession && storedSession && serverSession !== storedSession) {
     await signOut();
     localStorage.removeItem('session_id');
-    alert('⚠️ Sua sessão foi encerrada porque você fez login em outro dispositivo.');
+    alert('⚠️ Sua sessao foi encerrada porque voce fez login em outro dispositivo.');
     window.location.href = 'index.html';
     return false;
   }
