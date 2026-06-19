@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -62,6 +63,18 @@
 
     <div id="mensagem" class="mensagem"></div>
 
+    <!-- Search Bar -->
+    <div class="search-bar-wrapper" style="margin-bottom:20px;">
+      <div class="search-bar" style="display:flex; gap:10px; align-items:center; background:var(--white); border:2px solid var(--gray-200); border-radius:var(--radius); padding:4px 4px 4px 16px; transition:all var(--transition-fast);">
+        <span style="font-size:1.2rem; color:var(--gray-400);">🔍</span>
+        <input type="text" id="searchNotes" placeholder="Pesquisar anotações por título ou conteúdo..." 
+               style="flex:1; border:none; padding:10px 0; background:transparent; outline:none; font-size:0.95rem;" />
+        <button id="clearSearch" class="btn btn-ghost btn-sm" style="display:none; padding:8px 12px;">
+          <span>✕</span> Limpar
+        </button>
+      </div>
+    </div>
+
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-title">📋 Suas anotações</div>
@@ -76,6 +89,13 @@
         <div class="loading-spinner"></div>
         Carregando suas anotações...
       </div>
+    </div>
+
+    <!-- Empty search result -->
+    <div id="searchEmpty" class="empty-state" style="display:none;">
+      <div class="empty-icon">🔍</div>
+      <h3>Nenhuma anotação encontrada</h3>
+      <p>Tente buscar com outros termos ou crie uma nova anotação.</p>
     </div>
   </div>
 
@@ -115,6 +135,7 @@
 
     let currentUserId = null;
     let lastMessageId = null;
+    let allNotes = []; // Armazena todas as notas para pesquisa
 
     (async function init() {
       const isValid = await ensureValidSession();
@@ -140,7 +161,8 @@
       }
 
       // Clique no perfil vai para página de perfil
-      document.getElementById('userInfo').addEventListener('click', () => {
+      document.getElementById('userInfo').addEventListener('click', (e) => {
+        if (e.target.closest('#logoutBtn')) return;
         window.location.href = 'profile.html';
       });
 
@@ -151,6 +173,46 @@
           if (page) window.location.href = page + '.html';
         });
       });
+
+      // ===== PESQUISA DE NOTAS =====
+      const searchInput = document.getElementById('searchNotes');
+      const clearBtn = document.getElementById('clearSearch');
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (query) {
+          clearBtn.style.display = 'inline-flex';
+          filterNotes(query);
+        } else {
+          clearBtn.style.display = 'none';
+          renderNotes(allNotes);
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        renderNotes(allNotes);
+      });
+
+      function filterNotes(query) {
+        const filtered = allNotes.filter(note => {
+          const title = (note.title || '').toLowerCase();
+          const content = stripHtml(note.content || '').toLowerCase();
+          return title.includes(query) || content.includes(query);
+        });
+        renderNotes(filtered);
+
+        const emptyState = document.getElementById('searchEmpty');
+        const lista = document.getElementById('listaNotas');
+        if (filtered.length === 0 && allNotes.length > 0) {
+          emptyState.style.display = 'block';
+          lista.style.display = 'none';
+        } else {
+          emptyState.style.display = 'none';
+          lista.style.display = 'flex';
+        }
+      }
 
       // ===== NOTIFICAÇÕES =====
       const bell = document.getElementById('notificationBell');
@@ -341,12 +403,18 @@
         }
       };
 
-      async function carregarNotas() {
-        try {
-          const notas = await getNotes();
-          const container = document.getElementById('listaNotas');
+      function stripHtml(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+      }
 
-          if (notas.length === 0) {
+      function renderNotes(notas) {
+        const container = document.getElementById('listaNotas');
+        const emptyState = document.getElementById('searchEmpty');
+
+        if (notas.length === 0) {
+          if (allNotes.length === 0) {
             container.innerHTML = `
               <div class="empty-state">
                 <div class="empty-icon">📭</div>
@@ -354,57 +422,68 @@
                 <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
               </div>
             `;
-            return;
           }
+          emptyState.style.display = 'none';
+          container.style.display = 'flex';
+          return;
+        }
 
-          container.innerHTML = notas.map(note => `
-            <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
-              <div class="note-header">
-                <a href="view.html?id=${note.id}" class="note-title">
-                  ${note.title}
-                  ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
-                </a>
-                <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
-                  ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
-                </span>
+        container.innerHTML = notas.map(note => `
+          <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
+            <div class="note-header">
+              <a href="view.html?id=${note.id}" class="note-title">
+                ${note.title}
+                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
+              </a>
+              <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
+                ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
+              </span>
+            </div>
+            <div class="note-content">${stripHtml(note.content || '')}</div>
+            <div class="note-meta">
+              <div class="note-date">
+                <span>🕐</span>
+                ${new Date(note.updated_at).toLocaleString('pt-BR', { 
+                  day: '2-digit', month: 'short', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                })}
               </div>
-              <div class="note-content">${stripHtml(note.content || '')}</div>
-              <div class="note-meta">
-                <div class="note-date">
-                  <span>🕐</span>
-                  ${new Date(note.updated_at).toLocaleString('pt-BR', { 
-                    day: '2-digit', month: 'short', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                  })}
-                </div>
-                <div class="note-actions">
-                  <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
-                          onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
-                          title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
-                    ${note.is_favorite ? '⭐' : '☆'}
-                  </button>
-                  <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
-                    <span>👁️</span> Visualizar
-                  </button>
-                  <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
-                    <span>✏️</span> Editar
-                  </button>
-                  <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
-                    <span>🗑️</span> Excluir
-                  </button>
-                </div>
+              <div class="note-actions">
+                <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
+                        onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
+                        title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                  ${note.is_favorite ? '⭐' : '☆'}
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
+                  <span>👁️</span> Visualizar
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
+                  <span>✏️</span> Editar
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
+                  <span>🗑️</span> Excluir
+                </button>
               </div>
             </div>
-          `).join('');
+          </div>
+        `).join('');
+
+        emptyState.style.display = 'none';
+        container.style.display = 'flex';
+      }
+
+      async function carregarNotas() {
+        try {
+          allNotes = await getNotes();
+          const query = document.getElementById('searchNotes').value.trim().toLowerCase();
+          if (query) {
+            filterNotes(query);
+          } else {
+            renderNotes(allNotes);
+          }
         } catch (error) {
           showMessage('Erro ao carregar notas.', 'erro');
         }
-      }
-
-      function stripHtml(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
       }
 
       document.getElementById('novaNotaBtn').addEventListener('click', () => {
