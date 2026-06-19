@@ -430,9 +430,9 @@ export async function checkSingleSession() {
     alert('⚠️ Sua sessão foi encerrada porque você fez login em outro dispositivo.');
     window.location.href = 'index.html';
     return false;
+   return true;
   }
-  return true;
-
+  
   // ===== BUSCAR USUÁRIO POR NOME/EMAIL/ID =====
 export async function findUserById(userId) {
   const { data: { session } } = await supabase.auth.getSession();
