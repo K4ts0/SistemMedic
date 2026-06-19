@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Minhas Anotações — NoteMed for Unisystem</title>
+  <title>Cadastro — NoteMed for Unisystem</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,510 +14,148 @@
 <base target="_blank">
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-brand">
-        <div class="logo-icon">📝</div>
-        <div>
-          <h1>NoteMed for Unisystem</h1>
-          <div class="subtitle">Minhas Anotações</div>
-        </div>
+  <div class="auth-container">
+    <div class="auth-card card-elevated">
+      <div class="auth-header">
+        <div class="logo">📝</div>
+        <h1>NoteMed for Unisystem</h1>
+        <p>Crie sua conta para começar</p>
       </div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <!-- Sino de Notificações -->
-        <div style="position:relative;">
-          <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span class="bell-icon">🔔</span>
-            <span class="notification-badge hidden" id="notificationBadge">0</span>
-          </button>
-          <!-- Dropdown de Notificações -->
-          <div class="notification-dropdown" id="notificationDropdown">
-            <div class="notification-dropdown-header">
-              <h3>🔔 Notificações</h3>
-              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
-            </div>
-            <div class="notification-list" id="notificationList">
-              <div class="notification-empty">
-                <div class="empty-icon">📭</div>
-                <p>Sem notificações</p>
-              </div>
-            </div>
-          </div>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label" for="name">Nome completo</label>
+          <input type="text" id="name" placeholder="Dr. João Silva" required autocomplete="name" />
         </div>
-        <div class="user-info" id="userInfo" title="Ver perfil">
-          <div class="avatar" id="userAvatar">👤</div>
-          <span class="user-name" id="userName">Carregando...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email" />
         </div>
-      </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="nav-menu">
-      <button class="nav-item active" data-page="dashboard"><span>📋</span> Anotações</button>
-      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
-      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
-    </div>
-
-    <div id="mensagem" class="mensagem"></div>
-
-    <!-- Search Bar -->
-    <div class="search-bar-wrapper" style="margin-bottom:20px;">
-      <div class="search-bar" style="display:flex; gap:10px; align-items:center; background:var(--white); border:2px solid var(--gray-200); border-radius:var(--radius); padding:4px 4px 4px 16px; transition:all var(--transition-fast);">
-        <span style="font-size:1.2rem; color:var(--gray-400);">🔍</span>
-        <input type="text" id="searchNotes" placeholder="Pesquisar anotações por título ou conteúdo..." 
-               style="flex:1; border:none; padding:10px 0; background:transparent; outline:none; font-size:0.95rem;" />
-        <button id="clearSearch" class="btn btn-ghost btn-sm" style="display:none; padding:8px 12px;">
-          <span>✕</span> Limpar
+        <div class="form-group">
+          <label class="form-label" for="password">Senha</label>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="new-password" minlength="6" />
+          <small style="color:var(--gray-400); font-size:0.8rem; margin-top:4px; display:block;">Mínimo 6 caracteres</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="specialty">Especialidade</label>
+          <select id="specialty" required>
+            <option value="">Selecione sua especialidade...</option>
+            <option value="Cardiologia">❤️ Cardiologia</option>
+            <option value="Dermatologia">🔬 Dermatologia</option>
+            <option value="Endocrinologia">🩸 Endocrinologia</option>
+            <option value="Gastroenterologia">🫁 Gastroenterologia</option>
+            <option value="Ginecologia">👩 Ginecologia</option>
+            <option value="Neurologia">🧠 Neurologia</option>
+            <option value="Oftalmologia">👁️ Oftalmologia</option>
+            <option value="Ortopedia">🦴 Ortopedia</option>
+            <option value="Pediatria">👶 Pediatria</option>
+            <option value="Psiquiatria">💭 Psiquiatria</option>
+            <option value="Urologia">🚹 Urologia</option>
+            <option value="Clínica Geral">🩺 Clínica Geral</option>
+            <option value="Outra">📋 Outra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="crm">CRM / Registro Profissional</label>
+          <input type="text" id="crm" placeholder="CRM-SP 123456" required />
+          <small style="color:var(--gray-400); font-size:0.8rem; margin-top:4px; display:block;">Ex: CRM-SP 123456, CRM-RJ 654321</small>
+        </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" style="margin-top:8px;" id="submitBtn">
+          <span>✨</span> Cadastrar
         </button>
-      </div>
-    </div>
+      </form>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="toolbar-title">📋 Suas anotações</div>
-      <button id="novaNotaBtn" class="btn btn-primary desktop-only">
-        <span>➕</span> Nova Anotação
-      </button>
-    </div>
-
-    <!-- Lista de Notas -->
-    <div id="listaNotas" class="note-list">
-      <div class="loading">
-        <div class="loading-spinner"></div>
-        Carregando suas anotações...
-      </div>
-    </div>
-
-    <!-- Empty search result -->
-    <div id="searchEmpty" class="empty-state" style="display:none;">
-      <div class="empty-icon">🔍</div>
-      <h3>Nenhuma anotação encontrada</h3>
-      <p>Tente buscar com outros termos ou crie uma nova anotação.</p>
-    </div>
-  </div>
-
-  <!-- FAB Mobile -->
-  <button class="fab" id="fabNovaNota" title="Nova Anotação">➕</button>
-
-  <!-- Modal de Mensagem -->
-  <div class="modal-overlay" id="messageModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3><span>💬</span> Nova Mensagem</h3>
-        <button class="modal-close" id="modalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-message-text" id="modalMessageText"></div>
-        <div class="modal-message-meta">
-          <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
-            <span id="modalSenderName">...</span>
-          </div>
-          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
-        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      <div class="auth-footer">
+        Já tem conta? <a href="index.html">Faça login</a>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { 
-      getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite,
-      ensureValidSession, checkSingleSession, getUserProfile,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
-    } from './supabase-config.js';
-
-    let currentUserId = null;
-    let lastMessageId = null;
-    let allNotes = []; // Armazena todas as notas para pesquisa
+    import { signUp, getCurrentUser } from './supabase-config.js';
 
     (async function init() {
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
-
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
-
-      // Carrega dados do perfil
+      // Verifica se já está logado
       try {
-        const profile = await getUserProfile();
-        document.getElementById('userName').textContent = profile.name || profile.email;
-        const avatarEl = document.getElementById('userAvatar');
-        if (profile.avatar_url) {
-          avatarEl.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        } else {
-          const initials = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-          avatarEl.textContent = initials;
+        const user = await getCurrentUser();
+        if (user) window.location.href = 'dashboard.html';
+      } catch {}
+
+      document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const specialty = document.getElementById('specialty').value;
+        const crm = document.getElementById('crm').value.trim();
+
+        // Validações
+        if (!name || !email || !password || !specialty || !crm) {
+          showMessage('Preencha todos os campos obrigatórios.', 'erro');
+          return;
         }
-      } catch (e) {
-        document.getElementById('userName').textContent = user.email;
-      }
-
-      // Clique no perfil vai para página de perfil
-      document.getElementById('userInfo').addEventListener('click', (e) => {
-        if (e.target.closest('#logoutBtn')) return;
-        window.location.href = 'profile.html';
-      });
-
-      // Navegação
-      document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = btn.dataset.page;
-          if (page) window.location.href = page + '.html';
-        });
-      });
-
-      // ===== PESQUISA DE NOTAS =====
-      const searchInput = document.getElementById('searchNotes');
-      const clearBtn = document.getElementById('clearSearch');
-
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim().toLowerCase();
-        if (query) {
-          clearBtn.style.display = 'inline-flex';
-          filterNotes(query);
-        } else {
-          clearBtn.style.display = 'none';
-          renderNotes(allNotes);
-        }
-      });
-
-      clearBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        renderNotes(allNotes);
-      });
-
-      function filterNotes(query) {
-        const filtered = allNotes.filter(note => {
-          const title = (note.title || '').toLowerCase();
-          const content = stripHtml(note.content || '').toLowerCase();
-          return title.includes(query) || content.includes(query);
-        });
-        renderNotes(filtered);
-
-        const emptyState = document.getElementById('searchEmpty');
-        const lista = document.getElementById('listaNotas');
-        if (filtered.length === 0 && allNotes.length > 0) {
-          emptyState.style.display = 'block';
-          lista.style.display = 'none';
-        } else {
-          emptyState.style.display = 'none';
-          lista.style.display = 'flex';
-        }
-      }
-
-      // ===== NOTIFICAÇÕES =====
-      const bell = document.getElementById('notificationBell');
-      const dropdown = document.getElementById('notificationDropdown');
-      const badge = document.getElementById('notificationBadge');
-
-      bell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) {
-          loadNotifications();
-        }
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) {
-          dropdown.classList.remove('show');
-        }
-      });
-
-      document.getElementById('markAllRead').addEventListener('click', async () => {
-        try {
-          await markAllMessagesAsRead();
-          updateBellState(0);
-          loadNotifications();
-        } catch (e) {}
-      });
-
-      async function loadNotifications() {
-        try {
-          const messages = await getUnreadMessages();
-          const list = document.getElementById('notificationList');
-
-          if (messages.length === 0) {
-            list.innerHTML = `
-              <div class="notification-empty">
-                <div class="empty-icon">📭</div>
-                <p>Sem notificações</p>
-              </div>
-            `;
-            return;
-          }
-
-          list.innerHTML = messages.map(msg => {
-            const sender = msg.sender || {};
-            const time = new Date(msg.created_at).toLocaleString('pt-BR', {
-              hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
-            });
-            const avatar = sender.avatar_url 
-              ? `<img src="${sender.avatar_url}" alt="">` 
-              : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-            return `
-              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
-                <div class="notif-avatar">${avatar}</div>
-                <div class="notif-content">
-                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
-                  <div class="notif-text">${escapeHtml(msg.content)}</div>
-                  <div class="notif-time">${time}</div>
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          // Clique na notificação abre modal
-          document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', async () => {
-              const msgId = item.dataset.msgId;
-              const senderId = item.dataset.senderId;
-              const msg = messages.find(m => m.id === msgId);
-              if (msg) {
-                showMessageModal(msg);
-                try { await markMessageAsRead(msgId); } catch(e){}
-                updateBellState(Math.max(0, parseInt(badge.textContent) - 1));
-              }
-            });
-          });
-        } catch (error) {
-          console.error('Erro ao carregar notificações:', error);
-        }
-      }
-
-      async function checkNewMessages() {
-        try {
-          const count = await getUnreadCount();
-          updateBellState(count);
-
-          // Se há novas mensagens e é uma mensagem nova (não vista), mostra modal
-          if (count > 0) {
-            const messages = await getUnreadMessages();
-            if (messages.length > 0) {
-              const latest = messages[0];
-              if (latest.id !== lastMessageId) {
-                lastMessageId = latest.id;
-                // Só mostra modal se não estiver no chat
-                if (!window.location.href.includes('chat.html')) {
-                  showMessageModal(latest);
-                }
-              }
-            }
-          }
-        } catch (e) {}
-      }
-
-      function updateBellState(count) {
-        badge.textContent = count;
-        if (count > 0) {
-          badge.classList.remove('hidden');
-          bell.classList.add('has-unread');
-        } else {
-          badge.classList.add('hidden');
-          bell.classList.remove('has-unread');
-        }
-      }
-
-      // ===== MODAL DE MENSAGEM =====
-      const modal = document.getElementById('messageModal');
-
-      function showMessageModal(msg) {
-        const sender = msg.sender || {};
-        document.getElementById('modalMessageText').textContent = msg.content;
-        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
-        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
-
-        const avatar = document.getElementById('modalSenderAvatar');
-        if (sender.avatar_url) {
-          avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
-        } else {
-          avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-        }
-
-        modal.classList.add('show');
-
-        // Guarda sender ID para ir ao chat
-        modal.dataset.senderId = msg.sender_id;
-      }
-
-      document.getElementById('modalClose').addEventListener('click', () => {
-        modal.classList.remove('show');
-      });
-      document.getElementById('modalDismiss').addEventListener('click', () => {
-        modal.classList.remove('show');
-      });
-      document.getElementById('modalGoToChat').addEventListener('click', () => {
-        const senderId = modal.dataset.senderId;
-        if (senderId) {
-          sessionStorage.setItem('chatTargetUserId', senderId);
-        }
-        window.location.href = 'chat.html';
-      });
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('show');
-      });
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      // ===== FUNÇÕES DAS NOTAS =====
-      window.toggleFavorito = async (id, currentState, event) => {
-        event.stopPropagation();
-        try {
-          await toggleFavorite(id, currentState);
-          showMessage(currentState ? 'Removido dos favoritos' : 'Adicionado aos favoritos!', 'sucesso');
-          await carregarNotas();
-        } catch (error) {
-          showMessage('Erro ao alterar favorito.', 'erro');
-        }
-      };
-
-      window.visualizarNota = (id) => {
-        window.location.href = `view.html?id=${id}`;
-      };
-
-      window.editarNota = (id) => {
-        window.location.href = `note.html?id=${id}`;
-      };
-
-      window.excluirNota = async (id) => {
-        if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
-        try {
-          await deleteNote(id);
-          showMessage('Nota excluída com sucesso!', 'sucesso');
-          await carregarNotas();
-        } catch (error) {
-          showMessage('Erro ao excluir nota.', 'erro');
-        }
-      };
-
-      function stripHtml(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-      }
-
-      function renderNotes(notas) {
-        const container = document.getElementById('listaNotas');
-        const emptyState = document.getElementById('searchEmpty');
-
-        if (notas.length === 0) {
-          if (allNotes.length === 0) {
-            container.innerHTML = `
-              <div class="empty-state">
-                <div class="empty-icon">📭</div>
-                <h3>Nenhuma anotação ainda</h3>
-                <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
-              </div>
-            `;
-          }
-          emptyState.style.display = 'none';
-          container.style.display = 'flex';
+        if (password.length < 6) {
+          showMessage('A senha deve ter pelo menos 6 caracteres.', 'erro');
           return;
         }
 
-        container.innerHTML = notas.map(note => `
-          <div class="note-item ${note.is_favorite ? 'favorite' : ''}" data-id="${note.id}">
-            <div class="note-header">
-              <a href="view.html?id=${note.id}" class="note-title">
-                ${note.title}
-                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
-              </a>
-              <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
-                ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
-              </span>
-            </div>
-            <div class="note-content">${stripHtml(note.content || '')}</div>
-            <div class="note-meta">
-              <div class="note-date">
-                <span>🕐</span>
-                ${new Date(note.updated_at).toLocaleString('pt-BR', { 
-                  day: '2-digit', month: 'short', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit'
-                })}
-              </div>
-              <div class="note-actions">
-                <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
-                        onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
-                        title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
-                  ${note.is_favorite ? '⭐' : '☆'}
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
-                  <span>👁️</span> Visualizar
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
-                  <span>✏️</span> Editar
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
-                  <span>🗑️</span> Excluir
-                </button>
-              </div>
-            </div>
-          </div>
-        `).join('');
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Cadastrando...';
 
-        emptyState.style.display = 'none';
-        container.style.display = 'flex';
-      }
-
-      async function carregarNotas() {
         try {
-          allNotes = await getNotes();
-          const query = document.getElementById('searchNotes').value.trim().toLowerCase();
-          if (query) {
-            filterNotes(query);
+          const { user, session } = await signUp(email, password, name, specialty, crm);
+
+          // Se o cadastro retornou sessão (confirmação de email desativada), loga direto
+          if (session) {
+            showMessage('Cadastro realizado com sucesso! Redirecionando...', 'sucesso');
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
           } else {
-            renderNotes(allNotes);
+            // Confirmação de email ativada - mostra mensagem amigável
+            showMessage(
+              'Cadastro realizado! Verifique seu email e clique no link de confirmação. ' +
+              'Se não receber, verifique a pasta de spam.', 
+              'sucesso'
+            );
+            // Mostra botão para reenviar confirmação
+            btn.disabled = false;
+            btn.innerHTML = '<span>📧</span> Reenviar Email de Confirmação';
+            btn.onclick = async () => {
+              btn.disabled = true;
+              btn.innerHTML = '<span>⏳</span> Reenviando...';
+              try {
+                const { supabase } = await import('./supabase-config.js');
+                const { error } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: email,
+                  options: { emailRedirectTo: window.location.origin + '/index.html' }
+                });
+                if (error) throw error;
+                showMessage('Email de confirmação reenviado! Verifique sua caixa de entrada.', 'sucesso');
+              } catch (err) {
+                showMessage(err.message || 'Erro ao reenviar email.', 'erro');
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>📧</span> Reenviar Email de Confirmação';
+              }
+            };
           }
         } catch (error) {
-          showMessage('Erro ao carregar notas.', 'erro');
+          showMessage(error.message || 'Erro no cadastro. Tente novamente.', 'erro');
+          btn.disabled = false;
+          btn.innerHTML = '<span>✨</span> Cadastrar';
         }
-      }
-
-      document.getElementById('novaNotaBtn').addEventListener('click', () => {
-        window.location.href = 'note.html';
-      });
-      document.getElementById('fabNovaNota').addEventListener('click', () => {
-        window.location.href = 'note.html';
-      });
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await signOut();
-        localStorage.removeItem('session_id');
-        window.location.href = 'index.html';
       });
 
-      // Verificação periódica
-      setInterval(async () => { 
-        await checkSingleSession(); 
-      }, 10000);
-
-      // Verificação de novas mensagens a cada 8 segundos
-      setInterval(async () => { 
-        await checkNewMessages(); 
-      }, 8000);
-
-      window.showMessage = (msg, type = 'erro') => {
+      function showMessage(msg, type = 'erro') {
         const el = document.getElementById('mensagem');
         el.textContent = msg;
         el.className = `mensagem ${type}`;
-        setTimeout(() => el.style.display = 'none', 5000);
-      };
-
-      // Primeira verificação
-      await checkNewMessages();
-      carregarNotas();
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 8000);
+      }
     })();
   </script>
 </body>
