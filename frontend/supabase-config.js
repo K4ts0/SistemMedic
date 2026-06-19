@@ -20,7 +20,6 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
         phone: '',
         bio: ''
       },
-      emailRedirectTo: window.location.origin + '/index.html'
       emailRedirectTo: redirectUrl
     }
   });
@@ -360,7 +359,6 @@ export async function getMessages(otherUserId) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data, error } = await supabase
   const { data: messages, error } = await supabase
     .from('messages')
     .select('*')
@@ -368,7 +366,6 @@ export async function getMessages(otherUserId) {
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return data || [];
   if (!messages || messages.length === 0) return [];
 
   // Busca perfis dos remetentes
@@ -925,18 +922,14 @@ export async function getUnreadMessages() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
-  // Busca mensagens sem JOIN (tabela messages pode nao ter FK para profiles)
   const { data: messages, error } = await supabase
     .from('messages')
-    .select('*, sender:sender_id(name, email, avatar_url)')
     .select('*')
     .eq('receiver_id', user.id)
     .eq('read', false)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
   if (!messages || messages.length === 0) return [];
 
   // Busca perfis dos remetentes separadamente
