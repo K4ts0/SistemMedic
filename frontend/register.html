@@ -11,7 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -74,7 +73,7 @@
   </div>
 
   <script type="module">
-    import { signUp, getCurrentUser, checkEmailExists, checkCRMExists } from './supabase-config.js';
+    import { signUp, getCurrentUser, checkEmailExists, checkCRMExists, checkEmailDuplicate } from './supabase-config.js';
 
     (async function init() {
       // Verifica se já está logado
@@ -105,19 +104,6 @@
         btn.disabled = true;
         btn.innerHTML = '<span>⏳</span> Verificando...';
 
-        // Verifica email duplicado
-        try {
-          const emailExists = await checkEmailExists(email);
-          if (emailExists) {
-            showMessage('Email já cadastrado. Faça login ou use outro email.', 'erro');
-            btn.disabled = false;
-            btn.innerHTML = '<span>✨</span> Cadastrar';
-            return;
-          }
-        } catch (e) {
-          console.error('Erro ao verificar email:', e);
-        }
-
         // Verifica CRM duplicado
         try {
           const crmExists = await checkCRMExists(crm);
@@ -129,6 +115,19 @@
           }
         } catch (e) {
           console.error('Erro ao verificar CRM:', e);
+        }
+
+        // Verifica email duplicado (profiles + auth)
+        try {
+          const emailExists = await checkEmailDuplicate(email);
+          if (emailExists) {
+            showMessage('Email já cadastrado. Faça login ou use outro email.', 'erro');
+            btn.disabled = false;
+            btn.innerHTML = '<span>✨</span> Cadastrar';
+            return;
+          }
+        } catch (e) {
+          console.error('Erro ao verificar email:', e);
         }
 
         btn.innerHTML = '<span>⏳</span> Cadastrando...';
@@ -155,10 +154,11 @@
               btn.innerHTML = '<span>⏳</span> Reenviando...';
               try {
                 const { supabase } = await import('./supabase-config.js');
+                // CORRIGIDO: emailRedirectTo agora aponta para auth-confirm.html
                 const { error } = await supabase.auth.resend({
                   type: 'signup',
                   email: email,
-                  options: { emailRedirectTo: window.location.origin + '/index.html' }
+                  options: { emailRedirectTo: window.location.origin + '/auth-confirm.html' }
                 });
                 if (error) throw error;
                 showMessage('Email de confirmação reenviado! Verifique sua caixa de entrada.', 'sucesso');
