@@ -7,35 +7,29 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== AUTENTICACAO =====
+// ===== VALIDACAO DE DUPLICADAS =====
 export async function checkEmailExists(email) {
-  // Tenta fazer signIn com senha vazia para verificar se email existe
-  // Ou consulta a tabela profiles
+  // Verifica na tabela profiles se email ja existe
   const { data, error } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, email')
     .eq('email', email)
     .maybeSingle();
 
-  if (data) return true;
-
-  // Também verifica via auth (método alternativo)
-  try {
-    const { data: authData } = await supabase.auth.signInWithOtp({
-      email: email,
-      options: { shouldCreateUser: false }
-    });
-    // Se não der erro, o usuário existe
-    return true;
-  } catch (e) {
+  if (error) {
+    console.error('Erro ao verificar email:', error.message);
     return false;
   }
+  return !!data;
 }
 
 export async function checkCRMExists(crm) {
+  if (!crm || crm.trim() === '') return false;
+
   const { data, error } = await supabase
     .from('profiles')
-    .select('id')
-    .eq('crm', crm)
+    .select('id, crm')
+    .eq('crm', crm.trim())
     .maybeSingle();
 
   if (error) {
@@ -46,37 +40,21 @@ export async function checkCRMExists(crm) {
 }
 
 export async function signUp(email, password, name, specialty = '', crm = '') {
-  // Verifica se email já existe
-  const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
-  // Método alternativo: tenta login para verificar
-
-  // Verifica CRM duplicado
-  if (crm) {
-    const { data: crmData, error: crmError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('crm', crm)
-      .maybeSingle();
-
-    if (crmData) {
-      throw new Error('CRM já cadastrado. Use outro número ou faça login.');
+  // 1. Verifica CRM duplicado na tabela profiles
+  if (crm && crm.trim() !== '') {
+    const crmExists = await checkCRMExists(crm);
+    if (crmExists) {
+      throw new Error('CRM já cadastrado no sistema. Use outro número ou faça login.');
     }
   }
 
-  // O Supabase Auth já impede email duplicado retornando um erro apropriado
-  // Mas vamos tentar fazer login primeiro para verificar
-  try {
-    const { error: testError } = await supabase.auth.signInWithPassword({ email, password: 'test123456!' });
-    // Se chegou aqui sem erro de credenciais, o email existe (improvável com senha errada)
-  } catch (testErr) {
-    // Se o erro for "Invalid login credentials", o email pode existir ou não
-    // Se for "Email not confirmed", o email existe
-    if (testErr.message && (testErr.message.includes('Email not confirmed') || testErr.message.includes('not confirmed'))) {
-      throw new Error('Email já cadastrado. Verifique sua caixa de entrada para confirmar ou faça login.');
-    }
+  // 2. Verifica email duplicado na tabela profiles
+  const emailExists = await checkEmailExists(email);
+  if (emailExists) {
+    throw new Error('Email já cadastrado. Faça login ou use outro email.');
   }
 
-  // Site URL no Supabase está configurado como /auth-confirm.html
+  // 3. Site URL no Supabase deve apontar para auth-confirm.html
   const redirectUrl = typeof window !== 'undefined' 
     ? window.location.origin + '/auth-confirm.html' 
     : 'http://localhost:3000/auth-confirm.html';
@@ -95,13 +73,19 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
       emailRedirectTo: redirectUrl
     }
   });
+
+  // 4. Se o Supabase retornar erro de duplicata (caso profiles não esteja sincronizada)
   if (error) {
-    // Traduz erros comuns
-    if (error.message.includes('User already registered') || error.message.includes('already')) {
+    if (error.message && (
+      error.message.includes('User already registered') ||
+      error.message.includes('already registered') ||
+      error.message.includes('duplicate')
+    )) {
       throw new Error('Email já cadastrado. Faça login ou use outro email.');
     }
     throw error;
   }
+
   return data;
 }
 
