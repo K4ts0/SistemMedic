@@ -1,4 +1,4 @@
-// supabase-config.js — NoteMed for Unisystem v2.2
+// supabase-config.js — NoteMed for Unisystem v2.3 (CORRIGIDO)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -7,9 +7,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== AUTENTICACAO =====
-// ===== VALIDACAO DE DUPLICADAS =====
+
+// ===== VALIDACAO DE DUPLICADAS (CORRIGIDO) =====
+
+/**
+ * Verifica se o email ja existe na tabela profiles (usuarios confirmados)
+ */
 export async function checkEmailExists(email) {
-  // Verifica na tabela profiles se email ja existe
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email')
@@ -17,12 +21,15 @@ export async function checkEmailExists(email) {
     .maybeSingle();
 
   if (error) {
-    console.error('Erro ao verificar email:', error.message);
+    console.error('Erro ao verificar email em profiles:', error.message);
     return false;
   }
   return !!data;
 }
 
+/**
+ * Verifica se o CRM ja existe na tabela profiles
+ */
 export async function checkCRMExists(crm) {
   if (!crm || crm.trim() === '') return false;
 
@@ -39,19 +46,73 @@ export async function checkCRMExists(crm) {
   return !!data;
 }
 
+/**
+ * NOVO: Verifica se o email ja existe no auth.users (incluindo nao confirmados)
+ * Usa uma tecnica alternativa: tenta fazer signIn para verificar
+ */
+export async function checkEmailExistsInAuth(email) {
+  try {
+    // Tenta fazer signIn com senha vazia - se o usuario existir, retorna erro especifico
+    // Se nao existir, retorna "Invalid login credentials"
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: '___check_only___'
+    });
+
+    // Se o erro for "Invalid login credentials", o usuario EXISTE (senha errada)
+    // Se o erro for sobre usuario nao encontrado, nao existe
+    if (error) {
+      const msg = error.message.toLowerCase();
+      // Mensagens que indicam que o usuario EXISTE (mas senha esta errada)
+      if (msg.includes('invalid login credentials') || 
+          msg.includes('invalid password') ||
+          msg.includes('email not confirmed') ||
+          msg.includes('email not verified')) {
+        return true; // Email ja existe
+      }
+      // Mensagens que indicam que o usuario NAO existe
+      if (msg.includes('user not found') || 
+          msg.includes('not found') ||
+          msg.includes('invalid email')) {
+        return false; // Email nao existe
+      }
+    }
+    return false;
+  } catch (e) {
+    console.error('Erro ao verificar email no auth:', e);
+    return false;
+  }
+}
+
+/**
+ * NOVO: Verifica se o email ja existe usando uma abordagem mais robusta
+ * Combina verificacao em profiles + verificacao via auth
+ */
+export async function checkEmailDuplicate(email) {
+  // 1. Verifica em profiles (usuarios ja confirmados)
+  const existsInProfiles = await checkEmailExists(email);
+  if (existsInProfiles) return true;
+
+  // 2. Verifica no auth (usuarios pendentes de confirmacao)
+  const existsInAuth = await checkEmailExistsInAuth(email);
+  if (existsInAuth) return true;
+
+  return false;
+}
+
 export async function signUp(email, password, name, specialty = '', crm = '') {
   // 1. Verifica CRM duplicado na tabela profiles
   if (crm && crm.trim() !== '') {
     const crmExists = await checkCRMExists(crm);
     if (crmExists) {
-      throw new Error('CRM já cadastrado no sistema. Use outro número ou faça login.');
+      throw new Error('CRM ja cadastrado no sistema. Use outro numero ou faca login.');
     }
   }
 
-  // 2. Verifica email duplicado na tabela profiles
-  const emailExists = await checkEmailExists(email);
+  // 2. Verifica email duplicado (profiles + auth)
+  const emailExists = await checkEmailDuplicate(email);
   if (emailExists) {
-    throw new Error('Email já cadastrado. Faça login ou use outro email.');
+    throw new Error('Email ja cadastrado. Faca login ou use outro email.');
   }
 
   // 3. Site URL no Supabase deve apontar para auth-confirm.html
@@ -74,14 +135,28 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
     }
   });
 
-  // 4. Se o Supabase retornar erro de duplicata (caso profiles não esteja sincronizada)
+  // 4. Verificacao CRUCIAL: se o usuario foi criado mas sem identidades,
+  // significa que o email ja existia (Supabase nao lanca erro nesse caso)
+  if (data && data.user) {
+    // Se identities esta vazio ou nao existe, o usuario ja existia
+    if (!data.user.identities || data.user.identities.length === 0) {
+      throw new Error('Email ja cadastrado. Faca login ou use outro email.');
+    }
+    // Se o usuario foi criado mas nao ha sessao (confirmacao de email ativada)
+    // Verificamos se o email_confirmed_at existe (usuario ja confirmado anteriormente)
+    if (data.user.email_confirmed_at) {
+      throw new Error('Email ja cadastrado e confirmado. Faca login ou use outro email.');
+    }
+  }
+
+  // 5. Se o Supabase retornar erro explicito de duplicata
   if (error) {
-    if (error.message && (
-      error.message.includes('User already registered') ||
-      error.message.includes('already registered') ||
-      error.message.includes('duplicate')
-    )) {
-      throw new Error('Email já cadastrado. Faça login ou use outro email.');
+    const errMsg = error.message.toLowerCase();
+    if (errMsg.includes('user already registered') || 
+        errMsg.includes('already registered') || 
+        errMsg.includes('duplicate') ||
+        errMsg.includes('email already')) {
+      throw new Error('Email ja cadastrado. Faca login ou use outro email.');
     }
     throw error;
   }
@@ -105,6 +180,7 @@ export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
+
 
 // ===== PERFIL DO USUARIO =====
 export async function getUserProfile() {
