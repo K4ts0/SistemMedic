@@ -74,7 +74,7 @@
   </div>
 
   <script type="module">
-    import { signUp, getCurrentUser, checkCRMExists } from './supabase-config.js';
+    import { signUp, getCurrentUser, checkEmailExists, checkCRMExists } from './supabase-config.js';
 
     (async function init() {
       // Verifica se já está logado
@@ -91,7 +91,7 @@
         const specialty = document.getElementById('specialty').value;
         const crm = document.getElementById('crm').value.trim();
 
-        // Validações
+        // Validações básicas
         if (!name || !email || !password || !specialty || !crm) {
           showMessage('Preencha todos os campos obrigatórios.', 'erro');
           return;
@@ -103,9 +103,22 @@
 
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span> Cadastrando...';
+        btn.innerHTML = '<span>⏳</span> Verificando...';
 
-        // Verifica CRM duplicado antes de enviar
+        // Verifica email duplicado
+        try {
+          const emailExists = await checkEmailExists(email);
+          if (emailExists) {
+            showMessage('Email já cadastrado. Faça login ou use outro email.', 'erro');
+            btn.disabled = false;
+            btn.innerHTML = '<span>✨</span> Cadastrar';
+            return;
+          }
+        } catch (e) {
+          console.error('Erro ao verificar email:', e);
+        }
+
+        // Verifica CRM duplicado
         try {
           const crmExists = await checkCRMExists(crm);
           if (crmExists) {
@@ -114,9 +127,11 @@
             btn.innerHTML = '<span>✨</span> Cadastrar';
             return;
           }
-        } catch (checkErr) {
-          console.error('Erro ao verificar CRM:', checkErr);
+        } catch (e) {
+          console.error('Erro ao verificar CRM:', e);
         }
+
+        btn.innerHTML = '<span>⏳</span> Cadastrando...';
 
         try {
           const { user, session } = await signUp(email, password, name, specialty, crm);
@@ -157,11 +172,11 @@
           }
         } catch (error) {
           let msg = error.message || 'Erro no cadastro. Tente novamente.';
-          // Melhora mensagens de erro do Supabase
-          if (msg.includes('User already registered')) {
+          // Traduz erros comuns do Supabase
+          if (msg.includes('User already registered') || msg.includes('already registered')) {
             msg = 'Email já cadastrado. Faça login ou use outro email.';
-          } else if (msg.includes('already')) {
-            msg = 'Dados já cadastrados. Verifique email e CRM.';
+          } else if (msg.includes('duplicate')) {
+            msg = 'Dados já cadastrados (email ou CRM). Verifique e tente novamente.';
           }
           showMessage(msg, 'erro');
           btn.disabled = false;
