@@ -7,8 +7,80 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== AUTENTICACAO =====
+export async function checkEmailExists(email) {
+  // Tenta fazer signIn com senha vazia para verificar se email existe
+  // Ou consulta a tabela profiles
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (data) return true;
+
+  // Também verifica via auth (método alternativo)
+  try {
+    const { data: authData } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: { shouldCreateUser: false }
+    });
+    // Se não der erro, o usuário existe
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function checkCRMExists(crm) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('crm', crm)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Erro ao verificar CRM:', error.message);
+    return false;
+  }
+  return !!data;
+}
+
 export async function signUp(email, password, name, specialty = '', crm = '') {
-  const redirectUrl = typeof window !== 'undefined' ? window.location.origin + '/index.html' : 'http://localhost:3000/index.html';
+  // Verifica se email já existe
+  const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
+  // Método alternativo: tenta login para verificar
+
+  // Verifica CRM duplicado
+  if (crm) {
+    const { data: crmData, error: crmError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('crm', crm)
+      .maybeSingle();
+
+    if (crmData) {
+      throw new Error('CRM já cadastrado. Use outro número ou faça login.');
+    }
+  }
+
+  // O Supabase Auth já impede email duplicado retornando um erro apropriado
+  // Mas vamos tentar fazer login primeiro para verificar
+  try {
+    const { error: testError } = await supabase.auth.signInWithPassword({ email, password: 'test123456!' });
+    // Se chegou aqui sem erro de credenciais, o email existe (improvável com senha errada)
+  } catch (testErr) {
+    // Se o erro for "Invalid login credentials", o email pode existir ou não
+    // Se for "Email not confirmed", o email existe
+    if (testErr.message && (testErr.message.includes('Email not confirmed') || testErr.message.includes('not confirmed'))) {
+      throw new Error('Email já cadastrado. Verifique sua caixa de entrada para confirmar ou faça login.');
+    }
+  }
+
+  // Site URL no Supabase está configurado como /auth-confirm.html
+  const redirectUrl = typeof window !== 'undefined' 
+    ? window.location.origin + '/auth-confirm.html' 
+    : 'http://localhost:3000/auth-confirm.html';
+
   const { data, error } = await supabase.auth.signUp({
     email, password,
     options: {
@@ -23,7 +95,13 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
       emailRedirectTo: redirectUrl
     }
   });
-  if (error) throw error;
+  if (error) {
+    // Traduz erros comuns
+    if (error.message.includes('User already registered') || error.message.includes('already')) {
+      throw new Error('Email já cadastrado. Faça login ou use outro email.');
+    }
+    throw error;
+  }
   return data;
 }
 
