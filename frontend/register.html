@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -73,7 +74,7 @@
   </div>
 
   <script type="module">
-    import { signUp, getCurrentUser } from './supabase-config.js';
+    import { signUp, getCurrentUser, checkCRMExists } from './supabase-config.js';
 
     (async function init() {
       // Verifica se já está logado
@@ -103,6 +104,19 @@
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerHTML = '<span>⏳</span> Cadastrando...';
+
+        // Verifica CRM duplicado antes de enviar
+        try {
+          const crmExists = await checkCRMExists(crm);
+          if (crmExists) {
+            showMessage('CRM já cadastrado no sistema. Use outro número ou faça login.', 'erro');
+            btn.disabled = false;
+            btn.innerHTML = '<span>✨</span> Cadastrar';
+            return;
+          }
+        } catch (checkErr) {
+          console.error('Erro ao verificar CRM:', checkErr);
+        }
 
         try {
           const { user, session } = await signUp(email, password, name, specialty, crm);
@@ -142,7 +156,14 @@
             };
           }
         } catch (error) {
-          showMessage(error.message || 'Erro no cadastro. Tente novamente.', 'erro');
+          let msg = error.message || 'Erro no cadastro. Tente novamente.';
+          // Melhora mensagens de erro do Supabase
+          if (msg.includes('User already registered')) {
+            msg = 'Email já cadastrado. Faça login ou use outro email.';
+          } else if (msg.includes('already')) {
+            msg = 'Dados já cadastrados. Verifique email e CRM.';
+          }
+          showMessage(msg, 'erro');
           btn.disabled = false;
           btn.innerHTML = '<span>✨</span> Cadastrar';
         }
