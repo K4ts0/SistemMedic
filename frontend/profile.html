@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -168,7 +169,7 @@
     import { 
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
       getUserProfile, updateUserProfile, getNotes,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, wasPopupShown
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -248,11 +249,7 @@
             const messages = await getUnreadMessages();
             if (messages.length > 0 && messages[0].id !== lastMessageId) {
               lastMessageId = messages[0].id;
-              // Só mostra popup se não foi mostrado nesta sessão e não está no chat
-              if (!window.location.href.includes('chat.html') && !wasPopupShown(messages[0].id)) {
-                showMessageModal(messages[0]);
-                markPopupAsShown(messages[0].id);
-              }
+              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
             }
           }
         } catch(e) {}
