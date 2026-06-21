@@ -976,37 +976,84 @@ export function getCID(code) {
 /**
  * Retorna resumo geral para o painel admin
  */
+
+/**
+ * Retorna resumo geral para o painel admin
+ * Formato compativel com admin.html
+ */
 export async function getAdminSummary() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
   try {
-    const todayISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
+    // Busca contagens basicas
     const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
     const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
     const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
 
-    let todayAccess = 0;
+    // Calcula usuarios online baseado em updated_at recente (fallback quando access_logs nao existe)
+    let onlineNow = 0;
     try {
-      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', todayISO);
-      todayAccess = count || 0;
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', fiveMinutesAgo);
+      onlineNow = count || 0;
     } catch (e) {
-      todayAccess = 0;
+      onlineNow = 0;
+    }
+
+    // Tenta buscar de access_logs para dados mais precisos
+    let todayAccess = 0;
+    let peakHourToday = null;
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString());
+      todayAccess = count || 0;
+
+      // Calcula hora de pico
+      const { data: hourlyData } = await supabase
+        .from('access_logs')
+        .select('created_at')
+        .gte('created_at', today.toISOString());
+
+      if (hourlyData && hourlyData.length > 0) {
+        const hourCounts = {};
+        hourlyData.forEach(log => {
+          const hour = new Date(log.created_at).getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        });
+        let maxCount = 0;
+        for (const [hour, count] of Object.entries(hourCounts)) {
+          if (count > maxCount) {
+            maxCount = count;
+            peakHourToday = parseInt(hour);
+          }
+        }
+      }
+    } catch (e) {
+      // access_logs pode nao existir, ignora silenciosamente
     }
 
     return {
-      totalUsers: totalUsers || 0,
-      totalNotes: totalNotes || 0,
-      totalMessages: totalMessages || 0,
-      todayAccess: todayAccess
+      total_users: totalUsers || 0,
+      total_notes: totalNotes || 0,
+      total_messages: totalMessages || 0,
+      online_now: onlineNow,
+      today_access: todayAccess,
+      peak_hour_today: peakHourToday
     };
   } catch (err) {
     console.warn('Erro em getAdminSummary:', err.message);
-    return { totalUsers: 0, totalNotes: 0, totalMessages: 0, todayAccess: 0 };
+    return { 
+      total_users: 0, 
+      total_notes: 0, 
+      total_messages: 0, 
+      online_now: 0, 
+      today_access: 0,
+      peak_hour_today: null 
+    };
   }
 }
-
 /**
  * Retorna lista de todos os usuarios (apenas admin)
  */
@@ -1175,6 +1222,11 @@ export async function getNotesStats() {
 /**
  * Retorna usuarios online (baseado em acessos nos ultimos 15 minutos)
  */
+
+/**
+ * Retorna usuarios online (baseado em acessos nos ultimos 15 minutos)
+ * Fallback para profiles.updated_at quando access_logs nao existe
+ */
 export async function getOnlineUsers() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
@@ -1182,56 +1234,59 @@ export async function getOnlineUsers() {
   try {
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-    // Busca apenas os user_ids dos acessos recentes (SEM join!)
-    const { data, error } = await supabase
-      .from('access_logs')
-      .select('user_id, accessed_at')
-      .gte('accessed_at', fifteenMinutesAgo)
-      .not('user_id', 'is', null)
-      .order('accessed_at', { ascending: false });
+    // Tenta buscar de access_logs primeiro
+    try {
+      const { data, error } = await supabase
+        .from('access_logs')
+        .select('user_id, accessed_at')
+        .gte('accessed_at', fifteenMinutesAgo)
+        .not('user_id', 'is', null)
+        .order('accessed_at', { ascending: false });
 
-    if (error) {
-      if (error.message.includes('does not exist') || error.code === '42P01') {
-        return [];
+      if (!error && data && data.length > 0) {
+        const uniqueUserIds = [...new Set(data.map(log => log.user_id).filter(Boolean))];
+        if (uniqueUserIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name, email, avatar_url, specialty, crm, updated_at')
+            .in('id', uniqueUserIds);
+
+          const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+          return uniqueUserIds.map(id => {
+            const p = profilesMap.get(id);
+            const lastLog = data.find(l => l.user_id === id);
+            return p ? { ...p, last_activity: lastLog?.accessed_at || p.updated_at } : { 
+              id, name: 'Usuario', email: '', avatar_url: null, specialty: '', crm: '', last_activity: new Date().toISOString()
+            };
+          });
+        }
       }
-      throw error;
+    } catch (e) {
+      // access_logs pode nao existir, continua para fallback
     }
 
-    // Remove duplicados - pega apenas o acesso mais recente de cada usuario
-    const uniqueUserIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))];
-
-    if (uniqueUserIds.length === 0) return [];
-
-    // Busca perfis em query SEPARADA (SEM join!)
+    // FALLBACK: Usa profiles.updated_at como indicador de atividade
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select('id, name, email, avatar_url, specialty, crm')
-      .in('id', uniqueUserIds);
+      .select('id, name, email, avatar_url, specialty, crm, updated_at')
+      .gte('updated_at', fifteenMinutesAgo)
+      .order('updated_at', { ascending: false });
 
     if (profileError) {
-      console.error('Erro ao buscar perfis:', profileError.message);
-      return uniqueUserIds.map(id => ({ id, name: 'Usuario', email: '', avatar_url: null, specialty: '', crm: '' }));
+      console.error('Erro ao buscar perfis online:', profileError.message);
+      return [];
     }
 
-    const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+    return (profiles || []).map(p => ({
+      ...p,
+      last_activity: p.updated_at
+    }));
 
-    return uniqueUserIds.map(id => profilesMap.get(id) || { 
-      id, 
-      name: 'Usuario', 
-      email: '', 
-      avatar_url: null, 
-      specialty: '', 
-      crm: '' 
-    });
   } catch (err) {
     console.warn('Erro em getOnlineUsers:', err.message);
     return [];
   }
 }
-
-/**
- * Retorna usuarios banidos
- */
 export async function getBannedUsers() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
@@ -1553,6 +1608,11 @@ export async function isAdmin() {
  * Retorna estatisticas de acesso por hora (ultimas 24h)
  * Requer tabela 'access_logs' com colunas: id, user_id, page, accessed_at
  */
+
+/**
+ * Retorna estatisticas de acesso por hora (ultimas 24h)
+ * Requer tabela 'access_logs' com colunas: id, user_id, page, accessed_at
+ */
 export async function getAccessStatsByHour() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
@@ -1562,15 +1622,14 @@ export async function getAccessStatsByHour() {
 
     const { data, error } = await supabase
       .from('access_logs')
-      .select('accessed_at')
-      .gte('accessed_at', twentyFourHoursAgo)
-      .order('accessed_at', { ascending: true });
+      .select('created_at')
+      .gte('created_at', twentyFourHoursAgo)
+      .order('created_at', { ascending: true });
 
     if (error) {
-      // Se a tabela nao existir, retorna dados vazios
       if (error.message.includes('does not exist') || error.code === '42P01') {
         console.warn('Tabela access_logs nao existe. Retornando dados vazios.');
-        return Array.from({length: 24}, (_, i) => ({ hour: i, count: 0 }));
+        return Array.from({length: 24}, (_, i) => ({ hour_of_day: i, access_count: 0 }));
       }
       throw error;
     }
@@ -1582,20 +1641,19 @@ export async function getAccessStatsByHour() {
     }
 
     (data || []).forEach(log => {
-      const hour = new Date(log.accessed_at).getHours();
+      const hour = new Date(log.created_at).getHours();
       hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
     });
 
     return Object.entries(hourlyStats).map(([hour, count]) => ({
-      hour: parseInt(hour),
-      count
+      hour_of_day: parseInt(hour),
+      access_count: count
     }));
   } catch (err) {
     console.warn('Erro em getAccessStatsByHour:', err.message);
-    return Array.from({length: 24}, (_, i) => ({ hour: i, count: 0 }));
+    return Array.from({length: 24}, (_, i) => ({ hour_of_day: i, access_count: 0 }));
   }
 }
-
 /**
  * Retorna estatisticas do dia atual
  */
@@ -1903,8 +1961,8 @@ export async function logAccess(page) {
       .from('access_logs')
       .insert([{
         user_id: user?.id || null,
-        page: page,
-        accessed_at: new Date().toISOString()
+        action: page || 'page_view',
+        created_at: new Date().toISOString()
       }]);
 
     if (error) {
