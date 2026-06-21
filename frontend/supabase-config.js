@@ -968,6 +968,155 @@ export function getCID(code) {
 
 
 // ============================================================
+
+// ============================================================
+// ===== ADMIN / PAINEL ADMINISTRATIVO =====
+// ============================================================
+
+/**
+ * Retorna resumo geral para o painel admin
+ */
+export async function getAdminSummary() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const [
+    { count: totalUsers },
+    { count: totalNotes },
+    { count: totalMessages },
+    { count: todayAccess }
+  ] = await Promise.all([
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('notes').select('*', { count: 'exact', head: true }),
+    supabase.from('messages').select('*', { count: 'exact', head: true }),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true })
+      .gte('accessed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+  ]);
+
+  return {
+    totalUsers: totalUsers || 0,
+    totalNotes: totalNotes || 0,
+    totalMessages: totalMessages || 0,
+    todayAccess: todayAccess || 0
+  };
+}
+
+/**
+ * Retorna lista de todos os usuarios (apenas admin)
+ */
+export async function getAllUsers() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty, crm, phone, bio, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Retorna lista de todas as notas (apenas admin)
+ */
+export async function getAllNotes() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('notes')
+    .select('*, profiles(name, email)')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Retorna estatisticas de usuarios por dia (ultimos 7 dias)
+ */
+export async function getUserGrowthStats() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('created_at')
+    .gte('created_at', sevenDaysAgo)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar crescimento de usuarios:', error.message);
+    return [];
+  }
+
+  const dailyStats = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    dailyStats[key] = 0;
+  }
+
+  (data || []).forEach(profile => {
+    const date = new Date(profile.created_at).toISOString().split('T')[0];
+    dailyStats[date] = (dailyStats[date] || 0) + 1;
+  });
+
+  return Object.entries(dailyStats)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Retorna atividade recente do sistema
+ */
+export async function getRecentActivity(limit = 20) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('access_logs')
+    .select('*, profiles(name, email)')
+    .order('accessed_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Erro ao buscar atividade recente:', error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Retorna estatisticas de notas
+ */
+export async function getNotesStats() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const [
+    { count: total },
+    { count: favorites },
+    { count: thisWeek }
+  ] = await Promise.all([
+    supabase.from('notes').select('*', { count: 'exact', head: true }),
+    supabase.from('notes').select('*', { count: 'exact', head: true }).eq('is_favorite', true),
+    supabase.from('notes').select('*', { count: 'exact', head: true })
+      .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+  ]);
+
+  return {
+    total: total || 0,
+    favorites: favorites || 0,
+    thisWeek: thisWeek || 0
+  };
+}
+
 // ===== ANALYTICS / ESTATISTICAS DO ADMIN =====
 // ============================================================
 
