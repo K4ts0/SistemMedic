@@ -52,35 +52,30 @@ export async function checkCRMExists(crm) {
  */
 export async function checkEmailExistsInAuth(email) {
   try {
-    // Tenta fazer signIn com senha vazia - se o usuario existir, retorna erro especifico
-    // Se nao existir, retorna "Invalid login credentials"
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: '___check_only___'
+    // Use a service_role key (apenas para desenvolvimento)
+    const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
+    const SERVICE_ROLE_KEY = 'SUA_CHAVE_SERVICE_ROLE_AQUI'; // Cole a chave do Settings → API
+
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
+      method: 'GET',
+      headers: {
+        'apikey': SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+      }
     });
 
-    // Se o erro for "Invalid login credentials", o usuario EXISTE (senha errada)
-    // Se o erro for sobre usuario nao encontrado, nao existe
-    if (error) {
-      const msg = error.message.toLowerCase();
-      // Mensagens que indicam que o usuario EXISTE (mas senha esta errada)
-      if (msg.includes('invalid login credentials') || 
-          msg.includes('invalid password') ||
-          msg.includes('email not confirmed') ||
-          msg.includes('email not verified')) {
-        return true; // Email ja existe
-      }
-      // Mensagens que indicam que o usuario NAO existe
-      if (msg.includes('user not found') || 
-          msg.includes('not found') ||
-          msg.includes('invalid email')) {
-        return false; // Email nao existe
-      }
+    if (!response.ok) {
+      // Se der erro, fallback para o método antigo
+      return await checkEmailExistsInAuthFallback(email);
     }
-    return false;
+
+    const data = await response.json();
+    // Se retornar uma lista com pelo menos um usuário, o email existe
+    return data && data.length > 0;
   } catch (e) {
-    console.error('Erro ao verificar email no auth:', e);
-    return false;
+    console.error('Erro na verificação via Admin API:', e);
+    // Fallback para o método antigo
+    return await checkEmailExistsInAuthFallback(email);
   }
 }
 
