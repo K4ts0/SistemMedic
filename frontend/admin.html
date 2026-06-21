@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head><title>Admin - Excluir Usuário</title></head>
+<body>
+  <h1>Excluir Usuário (Admin)</h1>
+  <input type="email" id="adminEmail" placeholder="Email do usuário">
+  <button onclick="deleteUserByEmail()">Excluir</button>
+  <div id="result"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
+    const SERVICE_ROLE_KEY = 'SUA_CHAVE_SERVICE_ROLE_AQUI';
+
+    async function deleteUserByEmail() {
+      const email = document.getElementById('adminEmail').value;
+      if (!email) return alert('Digite um email');
+
+      // Primeiro, busca o usuário pelo email
+      const listResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'apikey': SERVICE_ROLE_KEY,
+          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+        }
+      });
+      const users = await listResp.json();
+      if (!users || users.length === 0) {
+        document.getElementById('result').innerHTML = '❌ Usuário não encontrado.';
+        return;
+      }
+      const user = users[0];
+      const userId = user.id;
+
+      // Deleta o usuário
+      const deleteResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': SERVICE_ROLE_KEY,
+          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+        }
+      });
+      if (deleteResp.ok) {
+        document.getElementById('result').innerHTML = `✅ Usuário ${email} excluído com sucesso!`;
+      } else {
+        const err = await deleteResp.json();
+        document.getElementById('result').innerHTML = `❌ Erro: ${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
