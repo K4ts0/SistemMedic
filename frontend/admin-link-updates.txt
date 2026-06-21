@@ -1,0 +1,198 @@
+# ATUALIZAÇÕES PARA ADICIONAR LINK DO ADMIN
+
+## Instruções:
+1. Adicione o import do logAccess em cada página autenticada
+2. Adicione a chamada await logAccess() no início do init()
+3. Adicione o bloco de admin link no final do init()
+
+## Páginas que precisam de atualização:
+- dashboard.html
+- profile.html  
+- chat.html
+- cid.html
+- note.html
+- view.html
+
+## Código para adicionar ao início do init():
+
+// ===== REGISTRAR ACESSO (ADICIONAR EM CADA PÁGINA AUTENTICADA) =====
+// Coloque no início da função init() de cada página
+
+import { logAccess } from './supabase-config.js';
+
+// Registra acesso à página atual
+await logAccess('page_view', window.location.pathname);
+
+
+## Código para adicionar ao final do init() (dashboard):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do dashboard.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
+
+
+## Código para adicionar ao final do init() (profile):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do profile.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
+
+
+## Código para adicionar ao final do init() (chat):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do chat.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
+
+
+## Código para adicionar ao final do init() (cid):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do cid.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
+
+
+## Código para adicionar ao final do init() (note):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do note.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
+
+
+## Código para adicionar ao final do init() (view):
+
+<!-- ADICIONAR NO FINAL DO SCRIPT do view.html, antes do fechamento do init() -->
+
+// ===== LINK PARA ADMIN (APENAS ADMIN) =====
+(async function addAdminLink() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && user.email === 'admin@wayforsystem.med') {
+      const navMenu = document.querySelector('.nav-menu');
+      if (navMenu && !document.getElementById('adminNavLink')) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'nav-item';
+        adminBtn.id = 'adminNavLink';
+        adminBtn.innerHTML = '<span>🛡️</span> Admin';
+        adminBtn.style.background = 'linear-gradient(135deg, #EF4444, #F59E0B)';
+        adminBtn.style.color = '#fff';
+        adminBtn.style.borderColor = '#EF4444';
+        adminBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+        adminBtn.addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+        navMenu.appendChild(adminBtn);
+      }
+    }
+  } catch (e) {}
+})();
