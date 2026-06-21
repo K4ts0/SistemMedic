@@ -142,7 +142,10 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
+            currentUserId = user.id;
+
+      // Registra acesso
+      try { await logAccess('dashboard'); } catch(e) {}
 
       // Carrega dados do perfil
       try {
