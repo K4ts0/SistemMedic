@@ -942,8 +942,6 @@
       .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
     }
   </style>
-<base target="_blank">
-<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -1097,7 +1095,10 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
+            currentUserId = user.id;
+
+      // Registra acesso
+      try { await logAccess('cid'); } catch(e) {}
 
       // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
