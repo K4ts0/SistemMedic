@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -44,7 +45,7 @@
   </div>
 
   <script type="module">
-    import { signIn, getCurrentUser, registerSession } from './supabase-config.js';
+    import { signIn, getCurrentUser, registerSession, supabase } from './supabase-config.js';
 
     (async function init() {
       // Verifica hash de erro na URL (ex: confirmação de email expirada)
@@ -53,7 +54,14 @@
       // Verifica se já está logado
       try {
         const user = await getCurrentUser();
-        if (user) window.location.href = 'dashboard.html';
+        if (user) {
+          // Admin vai direto para o painel administrativo
+          if (user.email === 'admin@wayforsystem.med') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        }
       } catch {}
 
       document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -64,7 +72,13 @@
         try {
           await signIn(email, password);
           await registerSession();
-          window.location.href = 'dashboard.html';
+          // Verifica se é admin para redirecionar ao painel correto
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.email === 'admin@wayforsystem.med') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
         } catch (error) {
           const msg = document.getElementById('mensagem');
           msg.textContent = error.message || 'Erro no login';
