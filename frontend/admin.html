@@ -44,7 +44,7 @@
     }
     @media(max-width:768px){ .admin-wrapper{padding:16px;} }
 
-    /* ===== HEADER ===== */
+    /* Header */
     .admin-header {
       display:flex;
       justify-content:space-between;
@@ -66,11 +66,6 @@
       display:flex;align-items:center;justify-content:center;
       font-size:28px;
       box-shadow:0 8px 32px rgba(239,68,68,0.3);
-      animation:logoPulse 3s ease-in-out infinite;
-    }
-    @keyframes logoPulse{
-      0%,100%{transform:scale(1);box-shadow:0 8px 32px rgba(239,68,68,0.3);}
-      50%{transform:scale(1.05);box-shadow:0 12px 40px rgba(239,68,68,0.5);}
     }
     .admin-header-brand h1{font-size:1.6rem;font-weight:700;letter-spacing:-0.02em;}
     .admin-header-brand .subtitle{font-size:0.75rem;color:var(--admin-muted);text-transform:uppercase;letter-spacing:0.15em;font-weight:600;margin-top:4px;}
@@ -116,7 +111,7 @@
     }
     .logout-btn:hover{background:rgba(239,68,68,0.3);transform:scale(1.1);}
 
-    /* ===== REFRESH INDICATOR ===== */
+    /* Refresh Bar */
     .refresh-bar{
       display:flex;
       align-items:center;
@@ -155,7 +150,7 @@
     .refresh-now-btn:hover{background:rgba(59,130,246,0.2);}
     .refresh-now-btn:disabled{opacity:0.5;cursor:not-allowed;}
 
-    /* ===== STATS GRID ===== */
+    /* Stats Grid */
     .stats-grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
@@ -221,41 +216,7 @@
       font-weight:500;
     }
 
-    /* ===== SECTIONS ===== */
-    .admin-section{
-      background:var(--admin-card);
-      border:1px solid var(--admin-border);
-      border-radius:20px;
-      padding:28px;
-      margin-bottom:28px;
-      transition:border-color 0.3s;
-    }
-    .admin-section:hover{border-color:rgba(255,255,255,0.08);}
-    .section-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:24px;
-      flex-wrap:wrap;
-      gap:12px;
-    }
-    .section-title{
-      font-size:1.15rem;
-      font-weight:700;
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .section-title .icon{
-      width:40px;height:40px;
-      border-radius:12px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:20px;
-      background:var(--title-icon-bg);
-      box-shadow:0 4px 12px var(--title-icon-shadow);
-    }
-
-    /* ===== CHARTS ===== */
+    /* Charts Row */
     .charts-row{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
@@ -335,7 +296,7 @@
     }
     .peak-hour-card.peak .peak-hour-pct{color:#EF4444;}
 
-    /* ===== TABLES ===== */
+    /* Tables */
     .table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--admin-border);}
     .users-table{
       width:100%;
@@ -368,11 +329,7 @@
     .users-table tbody tr:last-child td:first-child{border-radius:0 0 0 14px;}
     .users-table tbody tr:last-child td:last-child{border-radius:0 0 14px 0;}
 
-    .user-cell{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
+    .user-cell{display:flex;align-items:center;gap:12px;}
     .user-avatar-sm{
       width:38px;height:38px;
       border-radius:12px;
@@ -431,7 +388,7 @@
     }
     .user-status.away .status-dot{background:var(--admin-warning);}
 
-    /* ===== SEARCH BAR ===== */
+    /* Search Bar */
     .search-bar-admin{
       display:flex;
       gap:12px;
@@ -503,7 +460,7 @@
       box-shadow:0 8px 24px rgba(16,185,129,0.35);
     }
 
-    /* ===== REPORT CARDS ===== */
+    /* Reports */
     .reports-grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
@@ -538,7 +495,41 @@
       flex-shrink:0;
     }
 
-    /* ===== MODAL ===== */
+    /* Sections */
+    .admin-section{
+      background:var(--admin-card);
+      border:1px solid var(--admin-border);
+      border-radius:20px;
+      padding:28px;
+      margin-bottom:28px;
+      transition:border-color 0.3s;
+    }
+    .admin-section:hover{border-color:rgba(255,255,255,0.08);}
+    .section-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:24px;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+    .section-title{
+      font-size:1.15rem;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .section-title .icon{
+      width:40px;height:40px;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:20px;
+      background:var(--title-icon-bg);
+      box-shadow:0 4px 12px var(--title-icon-shadow);
+    }
+
+    /* Modal */
     .admin-modal-overlay{
       position:fixed;
       inset:0;
@@ -579,7 +570,7 @@
     .admin-modal-text{color:var(--admin-muted);font-size:0.95rem;margin-bottom:28px;line-height:1.6;}
     .admin-modal-actions{display:flex;gap:12px;justify-content:center;}
 
-    /* ===== TOAST ===== */
+    /* Toast */
     .admin-toast{
       position:fixed;
       top:24px;right:24px;
@@ -611,7 +602,7 @@
       to{opacity:1;transform:translateX(0) scale(1);}
     }
 
-    /* ===== EMPTY STATE ===== */
+    /* Empty State */
     .empty-state-cell{
       text-align:center;
       padding:48px 24px;
@@ -621,13 +612,13 @@
     .empty-state-cell h4{font-size:1rem;margin-bottom:6px;color:var(--admin-text);}
     .empty-state-cell p{font-size:0.85rem;}
 
-    /* ===== SCROLLBAR ===== */
+    /* Scrollbar */
     ::-webkit-scrollbar{width:6px;height:6px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--admin-border);border-radius:9999px;}
     ::-webkit-scrollbar-thumb:hover{background:var(--admin-muted);}
 
-    /* ===== RESPONSIVE ===== */
+    /* Responsive */
     @media(max-width:768px){
       .charts-row{grid-template-columns:1fr;}
       .stats-grid{grid-template-columns:repeat(2,1fr);}
@@ -639,6 +630,19 @@
       .stats-grid{grid-template-columns:1fr;}
       .admin-header{flex-direction:column;align-items:flex-start;}
       .header-actions{width:100%;justify-content:space-between;}
+    }
+
+    /* Loading shimmer */
+    .shimmer {
+      background: linear-gradient(90deg, var(--admin-card) 25%, rgba(59,130,246,0.05) 50%, var(--admin-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+      min-height: 20px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
   </style>
 <base target="_blank">
@@ -685,7 +689,7 @@
           <div class="stat-icon">👥</div>
           <div class="stat-trend"><span>↑</span> <span id="usersTrend">+0</span></div>
         </div>
-        <div class="stat-value" id="statTotalUsers">0</div>
+        <div class="stat-value" id="statTotalUsers">--</div>
         <div class="stat-label">Total de Usuários</div>
       </div>
       <div class="stat-card-admin" style="--card-color:#10B981;--icon-bg:rgba(16,185,129,0.12);--icon-shadow:rgba(16,185,129,0.2);--trend-bg:rgba(16,185,129,0.1);--trend-color:#10B981;">
@@ -693,7 +697,7 @@
           <div class="stat-icon">🟢</div>
           <div class="stat-trend"><span class="live-dot" style="animation:none;margin:0;"></span> Ao vivo</div>
         </div>
-        <div class="stat-value" id="statOnlineNow">0</div>
+        <div class="stat-value" id="statOnlineNow">--</div>
         <div class="stat-label">Online Agora</div>
       </div>
       <div class="stat-card-admin" style="--card-color:#F59E0B;--icon-bg:rgba(245,158,11,0.12);--icon-shadow:rgba(245,158,11,0.2);--trend-bg:rgba(245,158,11,0.1);--trend-color:#F59E0B;">
@@ -701,13 +705,13 @@
           <div class="stat-icon">📝</div>
           <div class="stat-trend"><span>↑</span> <span id="notesTrend">+0</span></div>
         </div>
-        <div class="stat-value" id="statTotalNotes">0</div>
+        <div class="stat-value" id="statTotalNotes">--</div>
         <div class="stat-label">Total de Anotações</div>
       </div>
       <div class="stat-card-admin" style="--card-color:#8B5CF6;--icon-bg:rgba(139,92,246,0.12);--icon-shadow:rgba(139,92,246,0.2);--trend-bg:rgba(139,92,246,0.1);--trend-color:#8B5CF6;">
         <div class="stat-top">
           <div class="stat-icon">⏰</div>
-          <div class="stat-trend">📊 24h</div>
+          <div class="stat-trend">📊 Hoje</div>
         </div>
         <div class="stat-value" id="statPeakHour">--:--</div>
         <div class="stat-label">Pico de Acesso</div>
@@ -717,14 +721,19 @@
     <!-- Charts -->
     <div class="charts-row">
       <div class="chart-card">
-        <h3><span style="font-size:1.4rem;">📈</span> Horários Mais Acessados</h3>
+        <h3><span style="font-size:1.4rem;">📈</span> Horários Mais Acessados (Últimas 24h)</h3>
         <div class="chart-container">
           <canvas id="hoursChart"></canvas>
         </div>
       </div>
       <div class="chart-card">
-        <h3><span style="font-size:1.4rem;">🔥</span> Picos de Acesso por Hora</h3>
-        <div class="peak-hours-grid" id="peakHours"></div>
+        <h3><span style="font-size:1.4rem;">🔥</span> Picos de Acesso por Hora (Hoje)</h3>
+        <div class="peak-hours-grid" id="peakHours">
+          <div class="empty-state-cell">
+            <div class="icon">⏳</div>
+            <h4>Carregando dados...</h4>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -833,10 +842,10 @@
           </div>
           <div class="report-icon" style="--r-icon-bg:rgba(139,92,246,0.12);--r-icon-shadow:rgba(139,92,246,0.2);">📥</div>
         </div>
-        <div class="report-card" onclick="exportReport('cid')">
+        <div class="report-card" onclick="exportReport('logs')">
           <div class="report-info">
-            <h4>🔍 Buscas CID</h4>
-            <p>Termos mais buscados e diagnósticos consultados.</p>
+            <h4>📋 Logs de Acesso</h4>
+            <p>Registro completo de acessos ao sistema.</p>
           </div>
           <div class="report-icon" style="--r-icon-bg:rgba(6,182,212,0.12);--r-icon-shadow:rgba(6,182,212,0.2);">📥</div>
         </div>
@@ -861,7 +870,10 @@
   <div class="admin-toast" id="adminToast"></div>
 
   <script type="module">
-    import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile } from './supabase-config.js';
+    import { 
+      supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
+      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary
+    } from './supabase-config.js';
 
     const ADMIN_EMAIL = 'admin@wayforsystem.med';
     let selectedUsers = new Set();
@@ -894,8 +906,6 @@
 
       // Carrega dados iniciais
       await loadAllData();
-      initHoursChart();
-      loadPeakHours();
 
       // Event Listeners
       document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -905,7 +915,9 @@
       });
 
       document.getElementById('searchUserBtn').addEventListener('click', searchUsers);
-      document.getElementById('searchUserInput').addEventListener('keypress', e => { if (e.key === 'Enter') searchUsers(); });
+      document.getElementById('searchUserInput').addEventListener('keypress', e => { 
+        if (e.key === 'Enter') searchUsers(); 
+      });
 
       document.getElementById('selectAllUsers').addEventListener('change', e => {
         document.querySelectorAll('.user-checkbox').forEach(cb => {
@@ -935,7 +947,7 @@
         document.getElementById('confirmModal').classList.remove('show');
       });
 
-      // Auto-refresh: a cada 60 segundos
+      // Auto-refresh
       startAutoRefresh();
 
       document.getElementById('refreshNowBtn').addEventListener('click', async () => {
@@ -949,7 +961,6 @@
         showToast('Dados atualizados!','success');
       });
 
-      // Session check
       setInterval(async () => { await checkSingleSession(); }, 10000);
     })();
 
@@ -976,114 +987,173 @@
     }
 
     async function loadAllData() {
-      await Promise.all([loadStats(), loadOnlineUsers(), loadAllUsers()]);
+      await Promise.all([
+        loadStats(),
+        loadOnlineUsers(),
+        loadAllUsers(),
+        loadHourlyStats()
+      ]);
       resetCountdown();
     }
 
-    // ===== STATS =====
+    // ===== STATS REAIS DO BANCO =====
     async function loadStats() {
       try {
-        const [{ count: uc }, { count: nc }, { data: ou }] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('notes').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('id').gte('updated_at', new Date(Date.now()-5*60*1000).toISOString())
-        ]);
+        // Busca resumo do dashboard
+        const summary = await getAdminSummary();
+        if (summary) {
+          document.getElementById('statTotalUsers').textContent = summary.total_users || 0;
+          document.getElementById('statOnlineNow').textContent = summary.online_now || 0;
+          document.getElementById('statTotalNotes').textContent = summary.total_notes || 0;
 
-        document.getElementById('statTotalUsers').textContent = uc || 0;
-        document.getElementById('statOnlineNow').textContent = ou?.length || 0;
-        document.getElementById('statTotalNotes').textContent = nc || 0;
-        document.getElementById('statPeakHour').textContent = calculatePeakHour();
-        document.getElementById('usersTrend').textContent = `+${uc || 0}`;
-        document.getElementById('notesTrend').textContent = `+${nc || 0}`;
-      } catch (e) { console.error('Stats error:', e); }
-    }
+          const peakHour = summary.peak_hour_today;
+          document.getElementById('statPeakHour').textContent = 
+            peakHour !== null ? `${String(peakHour).padStart(2,'0')}:00` : '--:--';
 
-    function calculatePeakHour() {
-      const hrs = Array.from({length:24},(_,i)=>{let b=10;if(i>=8&&i<=12)b=45;if(i>=14&&i<=18)b=55;if(i>=19&&i<=21)b=30;return{h:i,c:b+Math.floor(Math.random()*20)}});
-      const p = hrs.reduce((a,b)=>a.c>b.c?a:b);
-      return `${String(p.h).padStart(2,'0')}:00`;
-    }
-
-    // ===== CHART =====
-    function initHoursChart() {
-      const ctx = document.getElementById('hoursChart').getContext('2d');
-      const hours = Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}h`);
-      const data = hours.map((_,i)=>{let b=5;if(i>=8&&i<=12)b=40+Math.random()*20;if(i>=13&&i<=14)b=25+Math.random()*10;if(i>=15&&i<=18)b=50+Math.random()*15;if(i>=19&&i<=21)b=25+Math.random()*10;return Math.round(b);});
-      const mx = Math.max(...data);
-
-      hoursChart = new Chart(ctx,{
-        type:'bar',
-        data:{
-          labels:hours,
-          datasets:[{
-            label:'Acessos',
-            data,
-            backgroundColor:data.map(v=>v===mx?'rgba(239,68,68,0.7)':'rgba(59,130,246,0.5)'),
-            borderColor:data.map(v=>v===mx?'rgba(239,68,68,1)':'rgba(59,130,246,0.7)'),
-            borderWidth:1,
-            borderRadius:6,
-            borderSkipped:false,
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              backgroundColor:'#151E32',
-              titleColor:'#F8FAFC',
-              bodyColor:'#94A3B8',
-              borderColor:'#1E293B',
-              borderWidth:1,
-              padding:12,
-              cornerRadius:10,
-            }
-          },
-          scales:{
-            y:{beginAtZero:true,grid:{color:'rgba(30,41,59,0.5)'},ticks:{color:'#64748B',font:{size:11}}},
-            x:{grid:{display:false},ticks:{color:'#64748B',font:{size:10},maxRotation:45}}
-          }
+          document.getElementById('usersTrend').textContent = `+${summary.total_users || 0}`;
+          document.getElementById('notesTrend').textContent = `+${summary.total_notes || 0}`;
         }
-      });
+      } catch (e) { 
+        console.error('Stats error:', e);
+        // Fallback: busca dados diretamente
+        try {
+          const [{ count: uc }, { count: nc }, { data: ou }] = await Promise.all([
+            supabase.from('profiles').select('*', { count: 'exact', head: true }),
+            supabase.from('notes').select('*', { count: 'exact', head: true }),
+            supabase.from('profiles').select('id').gte('updated_at', new Date(Date.now()-5*60*1000).toISOString())
+          ]);
+          document.getElementById('statTotalUsers').textContent = uc || 0;
+          document.getElementById('statOnlineNow').textContent = ou?.length || 0;
+          document.getElementById('statTotalNotes').textContent = nc || 0;
+          document.getElementById('usersTrend').textContent = `+${uc || 0}`;
+          document.getElementById('notesTrend').textContent = `+${nc || 0}`;
+        } catch (e2) {}
+      }
     }
 
-    // ===== PEAK HOURS =====
-    function loadPeakHours() {
-      const peaks=[{h:'08:00',p:85},{h:'09:00',p:92},{h:'10:00',p:100},{h:'11:00',p:78},{h:'14:00',p:88},{h:'15:00',p:95},{h:'16:00',p:82},{h:'17:00',p:70},{h:'20:00',p:45}];
-      const mx = Math.max(...peaks.map(x=>x.p));
-      document.getElementById('peakHours').innerHTML = peaks.map(p=>`
-        <div class="peak-hour-card ${p.p===mx?'peak':''}">
-          <div class="peak-hour-time">${p.h}</div>
-          <div class="peak-hour-bar-wrap">
-            <div class="peak-hour-bar-bg"><div class="peak-hour-bar-fill" style="width:${p.p}%"></div></div>
+    // ===== ESTATÍSTICAS POR HORA (GRÁFICO REAL) =====
+    async function loadHourlyStats() {
+      try {
+        const stats = await getAccessStatsByHour();
+
+        // Prepara dados para o gráfico (24 horas)
+        const hours = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}h`);
+        const data = new Array(24).fill(0);
+
+        stats.forEach(s => {
+          if (s.hour_of_day >= 0 && s.hour_of_day < 24) {
+            data[s.hour_of_day] = s.access_count || 0;
+          }
+        });
+
+        const mx = Math.max(...data, 1);
+
+        // Atualiza ou cria o gráfico
+        if (hoursChart) {
+          hoursChart.data.datasets[0].data = data;
+          hoursChart.data.datasets[0].backgroundColor = data.map(v => v === mx ? 'rgba(239,68,68,0.7)' : 'rgba(59,130,246,0.5)');
+          hoursChart.data.datasets[0].borderColor = data.map(v => v === mx ? 'rgba(239,68,68,1)' : 'rgba(59,130,246,0.7)');
+          hoursChart.update();
+        } else {
+          const ctx = document.getElementById('hoursChart').getContext('2d');
+          hoursChart = new Chart(ctx, {
+            type:'bar',
+            data:{
+              labels:hours,
+              datasets:[{
+                label:'Acessos',
+                data,
+                backgroundColor:data.map(v=>v===mx?'rgba(239,68,68,0.7)':'rgba(59,130,246,0.5)'),
+                borderColor:data.map(v=>v===mx?'rgba(239,68,68,1)':'rgba(59,130,246,0.7)'),
+                borderWidth:1,
+                borderRadius:6,
+                borderSkipped:false,
+              }]
+            },
+            options:{
+              responsive:true,
+              maintainAspectRatio:false,
+              plugins:{
+                legend:{display:false},
+                tooltip:{
+                  backgroundColor:'#151E32',
+                  titleColor:'#F8FAFC',
+                  bodyColor:'#94A3B8',
+                  borderColor:'#1E293B',
+                  borderWidth:1,
+                  padding:12,
+                  cornerRadius:10,
+                }
+              },
+              scales:{
+                y:{beginAtZero:true,grid:{color:'rgba(30,41,59,0.5)'},ticks:{color:'#64748B',font:{size:11}}},
+                x:{grid:{display:false},ticks:{color:'#64748B',font:{size:10},maxRotation:45}}
+              }
+            }
+          });
+        }
+
+        // Atualiza picos de acesso
+        loadPeakHours(data);
+
+      } catch (e) {
+        console.error('Hourly stats error:', e);
+        // Fallback com dados vazios
+        loadPeakHours(new Array(24).fill(0));
+      }
+    }
+
+    // ===== PEAK HOURS (REAIS) =====
+    function loadPeakHours(data) {
+      const mx = Math.max(...data, 1);
+      const total = data.reduce((a,b) => a+b, 0) || 1;
+
+      // Pega as 8 horas com mais acessos
+      const peaks = data
+        .map((count, hour) => ({ hour: `${String(hour).padStart(2,'0')}:00`, count, pct: Math.round((count/total)*100) }))
+        .filter(p => p.count > 0)
+        .sort((a,b) => b.count - a.count)
+        .slice(0, 8)
+        .sort((a,b) => a.hour.localeCompare(b.hour));
+
+      if (peaks.length === 0) {
+        document.getElementById('peakHours').innerHTML = `
+          <div class="empty-state-cell" style="grid-column:1/-1;">
+            <div class="icon">📊</div>
+            <h4>Sem dados de acesso ainda</h4>
+            <p>Os dados aparecerão quando os usuários começarem a usar o sistema.</p>
           </div>
-          <div class="peak-hour-pct">${p.p}%</div>
+        `;
+        return;
+      }
+
+      const maxCount = Math.max(...peaks.map(p => p.count), 1);
+
+      document.getElementById('peakHours').innerHTML = peaks.map(p => `
+        <div class="peak-hour-card ${p.count === maxCount ? 'peak' : ''}">
+          <div class="peak-hour-time">${p.hour}</div>
+          <div class="peak-hour-bar-wrap">
+            <div class="peak-hour-bar-bg"><div class="peak-hour-bar-fill" style="width:${(p.count/maxCount)*100}%"></div></div>
+          </div>
+          <div class="peak-hour-pct">${p.count}</div>
         </div>
       `).join('');
     }
 
-    // ===== ONLINE USERS =====
+    // ===== ONLINE USERS (REAIS) =====
     async function loadOnlineUsers() {
       try {
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('id, name, email, specialty, crm, avatar_url, updated_at')
-          .order('updated_at', { ascending: false })
-          .limit(20);
-
-        if (error) throw error;
-
-        document.getElementById('onlineCountBadge').textContent = `${profiles?.length || 0} usuários`;
+        const users = await getOnlineUsers();
+        document.getElementById('onlineCountBadge').textContent = `${users?.length || 0} usuários`;
         const tbody = document.getElementById('onlineUsersTable');
 
-        if (!profiles || !profiles.length) {
-          tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">👤</div><h4>Nenhum usuário ativo</h4></div></td></tr>`;
+        if (!users || !users.length) {
+          tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">👤</div><h4>Nenhum usuário ativo no momento</h4><p>Os usuários aparecerão aqui quando estiverem online.</p></div></td></tr>`;
           return;
         }
 
-        tbody.innerHTML = profiles.map(p => {
-          const isOnline = new Date(p.updated_at) > new Date(Date.now() - 5*60*1000);
+        tbody.innerHTML = users.map(p => {
+          const isOnline = new Date(p.last_activity) > new Date(Date.now() - 5*60*1000);
           const initials = (p.name || p.email || 'U').charAt(0).toUpperCase();
           return `
             <tr>
@@ -1097,7 +1167,7 @@
               <td>${p.specialty||'-'}</td>
               <td>${p.crm?`<span class="crm-tag">${p.crm}</span>`:'-'}</td>
               <td><span class="user-status ${isOnline?'online':'away'}"><span class="status-dot"></span>${isOnline?'Online':'Ausente'}</span></td>
-              <td style="color:var(--admin-muted);font-size:0.82rem;">${getTimeAgo(p.updated_at)}</td>
+              <td style="color:var(--admin-muted);font-size:0.82rem;">${getTimeAgo(p.last_activity)}</td>
             </tr>
           `;
         }).join('');
@@ -1131,6 +1201,7 @@
         return;
       }
 
+      // Busca contagem de notas por usuário
       const { data: notesData } = await supabase.from('notes').select('user_id');
       const notesPerUser = {};
       if (notesData) notesData.forEach(n => notesPerUser[n.user_id] = (notesPerUser[n.user_id]||0)+1);
@@ -1230,13 +1301,12 @@
           csv += data.map(m => `"${m.id}","${m.sender?.name||''}","${m.sender?.email||''}","${m.receiver?.name||''}","${m.receiver?.email||''}","${(m.content||'').replace(/"/g,'""')}","${m.read?'Sim':'Nao'}","${m.created_at}"`).join('\n');
           filename = 'relatorio_mensagens.csv';
         }
-        else if (type === 'cid') {
-          csv = 'Termo,CID,Nome,Quantidade,Data\n';
-          csv += '"Dor de cabeca","G43","Enxaqueca","45","2026-06-22"\n';
-          csv += '"Febre","R50","Febre origem desconhecida","38","2026-06-22"\n';
-          csv += '"Tosse","J18","Pneumonia","32","2026-06-21"\n';
-          csv += '"Diabetes","E11","Diabetes T2","28","2026-06-21"\n';
-          filename = 'relatorio_cid.csv';
+        else if (type === 'logs') {
+          const { data } = await supabase.from('access_logs').select('*').order('created_at', { ascending: false }).limit(5000);
+          if (!data?.length) { showToast('Sem dados','error'); return; }
+          csv = 'ID,UserID,Email,Acao,Pagina,SessionID,Data\n';
+          csv += data.map(l => `"${l.id}","${l.user_id||''}","${l.email||''}","${l.action}","${l.page_path||''}","${l.session_id||''}","${l.created_at}"`).join('\n');
+          filename = 'relatorio_logs_acesso.csv';
         }
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
