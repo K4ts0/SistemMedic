@@ -46,54 +46,7 @@ export async function checkCRMExists(crm) {
   return !!data;
 }
 
-/**
- * NOVO: Verifica se o email ja existe no auth.users (incluindo nao confirmados)
- * Usa uma tecnica alternativa: tenta fazer signIn para verificar
- */
-export async function checkEmailExistsInAuth(email) {
-  try {
-    // Use a service_role key (apenas para desenvolvimento)
-    const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
-    const SERVICE_ROLE_KEY = 'SUA_CHAVE_SERVICE_ROLE_AQUI'; // Cole a chave do Settings → API
 
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
-      method: 'GET',
-      headers: {
-        'apikey': SERVICE_ROLE_KEY,
-        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
-      }
-    });
-
-    if (!response.ok) {
-      // Se der erro, fallback para o método antigo
-      return await checkEmailExistsInAuthFallback(email);
-    }
-
-    const data = await response.json();
-    // Se retornar uma lista com pelo menos um usuário, o email existe
-    return data && data.length > 0;
-  } catch (e) {
-    console.error('Erro na verificação via Admin API:', e);
-    // Fallback para o método antigo
-    return await checkEmailExistsInAuthFallback(email);
-  }
-}
-
-/**
- * NOVO: Verifica se o email ja existe usando uma abordagem mais robusta
- * Combina verificacao em profiles + verificacao via auth
- */
-export async function checkEmailDuplicate(email) {
-  // 1. Verifica em profiles (usuarios ja confirmados)
-  const existsInProfiles = await checkEmailExists(email);
-  if (existsInProfiles) return true;
-
-  // 2. Verifica no auth (usuarios pendentes de confirmacao)
-  const existsInAuth = await checkEmailExistsInAuth(email);
-  if (existsInAuth) return true;
-
-  return false;
-}
 
 export async function signUp(email, password, name, specialty = '', crm = '') {
   // 1. Verifica CRM duplicado na tabela profiles
@@ -104,8 +57,8 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
     }
   }
 
-  // 2. Verifica email duplicado (profiles + auth)
-  const emailExists = await checkEmailDuplicate(email);
+  // 2. Verifica email duplicado na tabela profiles (usuários já confirmados)
+  const emailExists = await checkEmailExists(email);
   if (emailExists) {
     throw new Error('Email ja cadastrado. Faca login ou use outro email.');
   }
@@ -130,21 +83,20 @@ export async function signUp(email, password, name, specialty = '', crm = '') {
     }
   });
 
-  // 4. Verificacao CRUCIAL: se o usuario foi criado mas sem identidades,
-  // significa que o email ja existia (Supabase nao lanca erro nesse caso)
+  // 4. Verificação CRUCIAL - Supabase v2 comportamento:
+  // Quando email já existe, retorna user com identities vazio ([]) em vez de erro
   if (data && data.user) {
-    // Se identities esta vazio ou nao existe, o usuario ja existia
+    // identities === [] ou undefined = email já cadastrado (Supabase v2)
     if (!data.user.identities || data.user.identities.length === 0) {
       throw new Error('Email ja cadastrado. Faca login ou use outro email.');
     }
-    // Se o usuario foi criado mas nao ha sessao (confirmacao de email ativada)
-    // Verificamos se o email_confirmed_at existe (usuario ja confirmado anteriormente)
+    // Se email já confirmado anteriormente
     if (data.user.email_confirmed_at) {
       throw new Error('Email ja cadastrado e confirmado. Faca login ou use outro email.');
     }
   }
 
-  // 5. Se o Supabase retornar erro explicito de duplicata
+  // 5. Se o Supabase retornar erro explicito
   if (error) {
     const errMsg = error.message.toLowerCase();
     if (errMsg.includes('user already registered') || 
@@ -1134,97 +1086,4 @@ export async function checkSingleSession() {
     return false;
   }
   return true;
-}
-
-
-// ===== ANALYTICS / LOGS DE ACESSO (NOVO - v2.0) =====
-
-/**
- * Registra um acesso do usuário atual na página
- * Deve ser chamado em cada página carregada
- */
-export async function logAccess(action = 'page_view', pagePath = null) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const sessionId = localStorage.getItem('session_id');
-    const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
-
-    await supabase.rpc('log_access', {
-      p_action: action,
-      p_page_path: path,
-      p_session_id: sessionId
-    });
-  } catch (e) {
-    // Silencioso - não quebra a experiência do usuário
-    console.warn('Erro ao registrar log:', e);
-  }
-}
-
-/**
- * Busca estatísticas de acesso por hora (últimas 24h)
- * Apenas admin
- */
-export async function getAccessStatsByHour() {
-  const { data, error } = await supabase.rpc('get_access_stats_by_hour');
-  if (error) throw error;
-  return data || [];
-}
-
-/**
- * Busca estatísticas de hoje
- * Apenas admin
- */
-export async function getTodayStats() {
-  const { data, error } = await supabase.rpc('get_today_stats');
-  if (error) throw error;
-  return data?.[0] || null;
-}
-
-/**
- * Busca usuários online (últimos 5 minutos)
- * Apenas admin
- */
-export async function getOnlineUsers() {
-  const { data, error } = await supabase.rpc('get_online_users');
-  if (error) throw error;
-  return data || [];
-}
-
-/**
- * Busca resumo do dashboard (view)
- * Apenas admin
- */
-export async function getAdminSummary() {
-  const { data, error } = await supabase
-    .from('admin_dashboard_summary')
-    .select('*')
-    .single();
-  if (error) throw error;
-  return data;
-}
-
-/**
- * Busca logs de acesso recentes
- * Apenas admin
- */
-export async function getRecentLogs(limit = 100) {
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return data || [];
-}
-
-/**
- * Verifica se o usuário atual é admin
- */
-export async function isAdmin() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user?.email === 'admin@wayforsystem.med';
-  } catch {
-    return false;
-  }
 }
