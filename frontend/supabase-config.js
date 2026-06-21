@@ -981,25 +981,25 @@ export async function getAdminSummary() {
   if (!user) throw new Error('Usuario nao autenticado');
 
   try {
-    const [
-      { count: totalUsers },
-      { count: totalNotes },
-      { count: totalMessages },
-      { count: todayAccess }
-    ] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('notes').select('*', { count: 'exact', head: true }),
-      supabase.from('messages').select('*', { count: 'exact', head: true }),
-      supabase.from('access_logs').select('*', { count: 'exact', head: true })
-        .gte('accessed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .catch(() => ({ count: 0 }))
-    ]);
+    const todayISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
+    const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+
+    let todayAccess = 0;
+    try {
+      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', todayISO);
+      todayAccess = count || 0;
+    } catch (e) {
+      todayAccess = 0;
+    }
 
     return {
       totalUsers: totalUsers || 0,
       totalNotes: totalNotes || 0,
       totalMessages: totalMessages || 0,
-      todayAccess: todayAccess || 0
+      todayAccess: todayAccess
     };
   } catch (err) {
     console.warn('Erro em getAdminSummary:', err.message);
@@ -1335,38 +1335,36 @@ export async function getSystemStats() {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [
-      { count: totalUsers },
-      { count: totalNotes },
-      { count: totalMessages },
-      { count: totalAccess },
-      { count: todayAccess },
-      { count: weekAccess },
-      { count: monthAccess },
-      { count: newUsersToday },
-      { count: newUsersWeek },
-      { count: newUsersMonth }
-    ] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('notes').select('*', { count: 'exact', head: true }),
-      supabase.from('messages').select('*', { count: 'exact', head: true }),
-      supabase.from('access_logs').select('*', { count: 'exact', head: true }).catch(() => ({ count: 0 })),
-      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()).catch(() => ({ count: 0 })),
-      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()).catch(() => ({ count: 0 })),
-      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString()).catch(() => ({ count: 0 })),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthAgo.toISOString())
-    ]);
+    const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
+    const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+
+    let totalAccess = 0, todayAccess = 0, weekAccess = 0, monthAccess = 0;
+    try {
+      const r1 = await supabase.from('access_logs').select('*', { count: 'exact', head: true });
+      totalAccess = r1.count || 0;
+      const r2 = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString());
+      todayAccess = r2.count || 0;
+      const r3 = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString());
+      weekAccess = r3.count || 0;
+      const r4 = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString());
+      monthAccess = r4.count || 0;
+    } catch (e) {
+      // access_logs pode nao existir
+    }
+
+    const { count: newUsersToday } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString());
+    const { count: newUsersWeek } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString());
+    const { count: newUsersMonth } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthAgo.toISOString());
 
     return {
       totalUsers: totalUsers || 0,
       totalNotes: totalNotes || 0,
       totalMessages: totalMessages || 0,
-      totalAccess: totalAccess || 0,
-      todayAccess: todayAccess || 0,
-      weekAccess: weekAccess || 0,
-      monthAccess: monthAccess || 0,
+      totalAccess: totalAccess,
+      todayAccess: todayAccess,
+      weekAccess: weekAccess,
+      monthAccess: monthAccess,
       newUsersToday: newUsersToday || 0,
       newUsersWeek: newUsersWeek || 0,
       newUsersMonth: newUsersMonth || 0
