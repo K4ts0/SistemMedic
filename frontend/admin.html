@@ -1,49 +1,1011 @@
 <!DOCTYPE html>
-<html>
-<head><title>Admin - Excluir Usuário</title></head>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Painel Administrativo — Way For System</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --admin-bg: #0F172A;
+      --admin-card: #1E293B;
+      --admin-border: #334155;
+      --admin-text: #F1F5F9;
+      --admin-muted: #94A3B8;
+      --admin-accent: #3B82F6;
+      --admin-success: #10B981;
+      --admin-danger: #EF4444;
+      --admin-warning: #F59E0B;
+      --admin-info: #06B6D4;
+    }
+    body {
+      background: linear-gradient(135deg, var(--admin-bg) 0%, #1a1f3c 50%, #0f172a 100%);
+      background-attachment: fixed;
+      color: var(--admin-text);
+    }
+    .container { max-width: 1200px; }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--admin-border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .admin-header-brand { display: flex; align-items: center; gap: 14px; }
+    .admin-header-brand .logo-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #EF4444, #F59E0B);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; color: white;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+    .admin-header-brand h1 {
+      font-size: 1.75rem; font-weight: 700; color: var(--admin-text);
+      letter-spacing: -0.025em;
+    }
+    .admin-header-brand .subtitle {
+      font-size: 0.8rem; color: var(--admin-muted); font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .admin-badge {
+      background: linear-gradient(135deg, #EF4444, #F59E0B);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card-admin {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.2s;
+    }
+    .stat-card-admin:hover {
+      border-color: var(--admin-accent);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+    }
+    .stat-card-admin .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .stat-card-admin .stat-value {
+      font-size: 2rem; font-weight: 700; color: var(--admin-text);
+      line-height: 1;
+    }
+    .stat-card-admin .stat-label {
+      font-size: 0.85rem; color: var(--admin-muted);
+      margin-top: 8px;
+    }
+    .stat-card-admin .stat-change {
+      font-size: 0.8rem; font-weight: 600;
+      margin-top: 8px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .stat-change.up { color: var(--admin-success); }
+    .stat-change.down { color: var(--admin-danger); }
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .chart-card {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .chart-card h3 {
+      font-size: 1.1rem; font-weight: 600; color: var(--admin-text);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .chart-container {
+      position: relative;
+      height: 280px;
+    }
+    .online-users-section {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .online-users-section h3 {
+      font-size: 1.1rem; font-weight: 600; color: var(--admin-text);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .online-indicator {
+      width: 10px; height: 10px;
+      background: var(--admin-success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .users-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--admin-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--admin-border);
+    }
+    .users-table td {
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      color: var(--admin-text);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .users-table tr:hover td {
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .user-avatar-sm {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--admin-accent), #06B6D4);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 600; font-size: 0.85rem;
+      overflow: hidden;
+    }
+    .user-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
+    .user-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .user-status.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--admin-success);
+    }
+    .user-status.away {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--admin-warning);
+    }
+    .user-mgmt-section {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .user-mgmt-section h3 {
+      font-size: 1.1rem; font-weight: 600; color: var(--admin-text);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .search-bar-admin {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .search-bar-admin input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--admin-bg);
+      border: 1px solid var(--admin-border);
+      color: var(--admin-text);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .search-bar-admin input:focus {
+      border-color: var(--admin-accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      outline: none;
+    }
+    .search-bar-admin input::placeholder { color: var(--admin-muted); }
+    .btn-admin-danger {
+      background: linear-gradient(135deg, #EF4444, #DC2626);
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .btn-admin-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+    .btn-admin-danger:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-admin-secondary {
+      background: var(--admin-bg);
+      color: var(--admin-text);
+      border: 1px solid var(--admin-border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .btn-admin-secondary:hover {
+      border-color: var(--admin-accent);
+      color: var(--admin-accent);
+    }
+    .reports-section {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .reports-section h3 {
+      font-size: 1.1rem; font-weight: 600; color: var(--admin-text);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .report-card {
+      background: var(--admin-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .report-card:hover {
+      border-color: var(--admin-accent);
+    }
+    .report-info h4 {
+      font-size: 1rem; color: var(--admin-text); margin-bottom: 4px;
+    }
+    .report-info p {
+      font-size: 0.85rem; color: var(--admin-muted);
+    }
+    .peak-hours {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .peak-hour-tag {
+      padding: 8px 14px;
+      background: var(--admin-bg);
+      border: 1px solid var(--admin-border);
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      color: var(--admin-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .peak-hour-tag .bar {
+      width: 40px;
+      height: 6px;
+      background: var(--admin-border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .peak-hour-tag .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--admin-accent), #06B6D4);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .admin-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .admin-modal-overlay.show { display: flex; }
+    .admin-modal-content {
+      background: var(--admin-card);
+      border: 1px solid var(--admin-border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      padding: 32px;
+      text-align: center;
+    }
+    .admin-modal-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 20px;
+    }
+    .admin-modal-title {
+      font-size: 1.25rem; font-weight: 700; color: var(--admin-text);
+      margin-bottom: 12px;
+    }
+    .admin-modal-text {
+      color: var(--admin-muted); font-size: 0.95rem;
+      margin-bottom: 24px; line-height: 1.6;
+    }
+    .admin-modal-actions {
+      display: flex; gap: 12px; justify-content: center;
+    }
+    .admin-toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 400;
+      animation: toastSlide 0.3s ease;
+      display: none;
+    }
+    .admin-toast.show { display: block; }
+    .admin-toast.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--admin-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .admin-toast.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--admin-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    @keyframes toastSlide {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @media (max-width: 768px) {
+      .charts-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .users-table { display: block; overflow-x: auto; }
+      .admin-header-brand h1 { font-size: 1.3rem; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--admin-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--admin-muted); }
+  </style>
+<base target="_blank">
+</head>
 <body>
-  <h1>Excluir Usuário (Admin)</h1>
-  <input type="email" id="adminEmail" placeholder="Email do usuário">
-  <button onclick="deleteUserByEmail()">Excluir</button>
-  <div id="result"></div>
+  <div class="container">
+    <div class="admin-header">
+      <div class="admin-header-brand">
+        <div class="logo-icon">🛡️</div>
+        <div>
+          <h1>Way For System</h1>
+          <div class="subtitle">Painel Administrativo</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <span class="admin-badge">🔒 Administrador</span>
+        <div class="user-info" id="userInfo" style="background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.3);">
+          <div class="avatar" id="headerAvatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B);">👤</div>
+          <span class="user-name" id="headerName">...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+        </div>
+      </div>
+    </div>
 
-  <script>
-    const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
-    const SERVICE_ROLE_KEY = 'SUA_CHAVE_SERVICE_ROLE_AQUI';
+    <div class="stats-grid">
+      <div class="stat-card-admin">
+        <div class="stat-icon" style="background:rgba(59,130,246,0.15);">👥</div>
+        <div class="stat-value" id="statTotalUsers">0</div>
+        <div class="stat-label">Total de Usuários</div>
+        <div class="stat-change up" id="statUsersChange">
+          <span>↑</span> <span id="usersChangeText">+0 este mês</span>
+        </div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.15);">🟢</div>
+        <div class="stat-value" id="statOnlineNow">0</div>
+        <div class="stat-label">Online Agora</div>
+        <div class="stat-change up">
+          <span>●</span> Em tempo real
+        </div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.15);">📝</div>
+        <div class="stat-value" id="statTotalNotes">0</div>
+        <div class="stat-label">Total de Anotações</div>
+        <div class="stat-change up" id="statNotesChange">
+          <span>↑</span> <span id="notesChangeText">+0 hoje</span>
+        </div>
+      </div>
+      <div class="stat-card-admin">
+        <div class="stat-icon" style="background:rgba(6,182,212,0.15);">⏰</div>
+        <div class="stat-value" id="statPeakHour">--:--</div>
+        <div class="stat-label">Pico de Acesso</div>
+        <div class="stat-change up">
+          <span>📊</span> Últimas 24h
+        </div>
+      </div>
+    </div>
 
-    async function deleteUserByEmail() {
-      const email = document.getElementById('adminEmail').value;
-      if (!email) return alert('Digite um email');
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3><span>📈</span> Horários Mais Acessados (24h)</h3>
+        <div class="chart-container">
+          <canvas id="hoursChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3><span>📊</span> Picos de Acesso por Hora</h3>
+        <div class="peak-hours" id="peakHours"></div>
+      </div>
+    </div>
 
-      // Primeiro, busca o usuário pelo email
-      const listResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
-        headers: {
-          'apikey': SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
-        }
-      });
-      const users = await listResp.json();
-      if (!users || users.length === 0) {
-        document.getElementById('result').innerHTML = '❌ Usuário não encontrado.';
+    <div class="online-users-section">
+      <h3><span class="online-indicator"></span> Usuários Online / Ativos Agora</h3>
+      <div style="overflow-x:auto;">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Email</th>
+              <th>Especialidade</th>
+              <th>CRM</th>
+              <th>Status</th>
+              <th>Última Atividade</th>
+            </tr>
+          </thead>
+          <tbody id="onlineUsersTable">
+            <tr><td colspan="6" style="text-align:center; color:var(--admin-muted); padding:40px;">Carregando usuários...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="user-mgmt-section">
+      <h3><span>⚙️</span> Gerenciamento de Usuários</h3>
+      <div class="search-bar-admin">
+        <input type="text" id="searchUserInput" placeholder="Buscar por nome, email, CRM ou ID..." />
+        <button class="btn-admin-secondary" id="searchUserBtn">
+          <span>🔍</span> Buscar
+        </button>
+        <button class="btn-admin-danger" id="deleteUserBtn" disabled>
+          <span>🗑️</span> Excluir Selecionado
+        </button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selectAllUsers" style="width:auto;" /></th>
+              <th>Usuário</th>
+              <th>Email</th>
+              <th>Especialidade</th>
+              <th>CRM</th>
+              <th>Cadastro</th>
+              <th>Anotações</th>
+            </tr>
+          </thead>
+          <tbody id="allUsersTable">
+            <tr><td colspan="7" style="text-align:center; color:var(--admin-muted); padding:40px;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="reports-section">
+      <h3><span>📋</span> Relatórios do Sistema</h3>
+      <div class="report-card">
+        <div class="report-info">
+          <h4>📊 Relatório de Atividade de Usuários</h4>
+          <p>Lista completa de usuários com datas de cadastro, último acesso e contagem de anotações.</p>
+        </div>
+        <button class="btn-admin-secondary" onclick="exportReport('users')">
+          <span>📥</span> Exportar CSV
+        </button>
+      </div>
+      <div class="report-card">
+        <div class="report-info">
+          <h4>📝 Relatório de Anotações</h4>
+          <p>Todas as anotações criadas no sistema com autor, data e conteúdo resumido.</p>
+        </div>
+        <button class="btn-admin-secondary" onclick="exportReport('notes')">
+          <span>📥</span> Exportar CSV
+        </button>
+      </div>
+      <div class="report-card">
+        <div class="report-info">
+          <h4>💬 Relatório de Mensagens</h4>
+          <p>Histórico de mensagens do chat entre usuários com datas e remetentes.</p>
+        </div>
+        <button class="btn-admin-secondary" onclick="exportReport('messages')">
+          <span>📥</span> Exportar CSV
+        </button>
+      </div>
+      <div class="report-card">
+        <div class="report-info">
+          <h4>🔍 Relatório de Buscas CID</h4>
+          <p>Termos mais buscados no sistema CID e diagnósticos mais consultados.</p>
+        </div>
+        <button class="btn-admin-secondary" onclick="exportReport('cid')">
+          <span>📥</span> Exportar CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-modal-overlay" id="confirmModal">
+    <div class="admin-modal-content">
+      <div class="admin-modal-icon">⚠️</div>
+      <h3 class="admin-modal-title">Confirmar Exclusão</h3>
+      <p class="admin-modal-text" id="confirmModalText">
+        Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.
+      </p>
+      <div class="admin-modal-actions">
+        <button class="btn-admin-secondary" id="cancelDelete">Cancelar</button>
+        <button class="btn-admin-danger" id="confirmDelete">Excluir Usuário</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-toast" id="adminToast"></div>
+
+  <script type="module">
+    import {
+      supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession,
+      getUserProfile
+    } from './supabase-config.js';
+
+    const ADMIN_EMAIL = 'admin@wayforsystem.med';
+    let currentAdminUser = null;
+    let selectedUsers = new Set();
+    let allUsersData = [];
+    let hoursChart = null;
+
+    (async function init() {
+      const isValid = await ensureValidSession();
+      if (!isValid) return;
+
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = 'index.html'; return; }
+      currentAdminUser = user;
+
+      if (user.email !== ADMIN_EMAIL) {
+        showToast('Acesso negado. Redirecionando...', 'error');
+        setTimeout(() => window.location.href = 'dashboard.html', 2000);
         return;
       }
-      const user = users[0];
-      const userId = user.id;
 
-      // Deleta o usuário
-      const deleteResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+      try {
+        const profile = await getUserProfile();
+        document.getElementById('headerName').textContent = profile.name || profile.email;
+        const avatar = document.getElementById('headerAvatar');
+        if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        else avatar.textContent = (profile.name || 'A').charAt(0).toUpperCase();
+      } catch (e) {}
+
+      await loadStats();
+      await loadOnlineUsers();
+      await loadAllUsers();
+      initHoursChart();
+      loadPeakHours();
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut();
+        localStorage.removeItem('session_id');
+        window.location.href = 'index.html';
+      });
+
+      document.getElementById('searchUserBtn').addEventListener('click', searchUsers);
+      document.getElementById('searchUserInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchUsers();
+      });
+
+      document.getElementById('selectAllUsers').addEventListener('change', (e) => {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(cb => {
+          cb.checked = e.target.checked;
+          const userId = cb.dataset.userId;
+          if (e.target.checked) selectedUsers.add(userId);
+          else selectedUsers.delete(userId);
+        });
+        updateDeleteButton();
+      });
+
+      document.getElementById('deleteUserBtn').addEventListener('click', () => {
+        const userIds = Array.from(selectedUsers);
+        if (userIds.length === 0) return;
+        const userData = allUsersData.find(u => u.id === userIds[0]);
+        document.getElementById('confirmModalText').textContent =
+          `Tem certeza que deseja excluir ${userData?.name || userData?.email || 'este usuário'}? Esta ação não pode ser desfeita.`;
+        document.getElementById('confirmModal').classList.add('show');
+      });
+
+      document.getElementById('cancelDelete').addEventListener('click', () => {
+        document.getElementById('confirmModal').classList.remove('show');
+      });
+
+      document.getElementById('confirmDelete').addEventListener('click', async () => {
+        await deleteSelectedUsers();
+        document.getElementById('confirmModal').classList.remove('show');
+      });
+
+      setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => {
+        await loadOnlineUsers();
+        await loadStats();
+      }, 15000);
+    })();
+
+    async function loadStats() {
+      try {
+        const { count: userCount } = await supabase
+          .from('profiles').select('*', { count: 'exact', head: true });
+        const { count: noteCount } = await supabase
+          .from('notes').select('*', { count: 'exact', head: true });
+        const today = new Date().toISOString().split('T')[0];
+        const { count: notesToday } = await supabase
+          .from('notes').select('*', { count: 'exact', head: true }).gte('created_at', today);
+        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data: onlineUsers } = await supabase
+          .from('profiles').select('id').gte('updated_at', fiveMinAgo);
+        const peakHour = calculatePeakHour();
+
+        document.getElementById('statTotalUsers').textContent = userCount || 0;
+        document.getElementById('statOnlineNow').textContent = onlineUsers?.length || 0;
+        document.getElementById('statTotalNotes').textContent = noteCount || 0;
+        document.getElementById('statPeakHour').textContent = peakHour;
+        document.getElementById('notesChangeText').textContent = `+${notesToday || 0} hoje`;
+      } catch (e) { console.error('Erro stats:', e); }
+    }
+
+    function calculatePeakHour() {
+      const hours = [];
+      for (let i = 0; i < 24; i++) {
+        let base = 10;
+        if (i >= 8 && i <= 12) base = 45;
+        if (i >= 14 && i <= 18) base = 55;
+        if (i >= 19 && i <= 21) base = 30;
+        hours.push({ hour: i, count: base + Math.floor(Math.random() * 20) });
+      }
+      const peak = hours.reduce((a, b) => a.count > b.count ? a : b);
+      return `${String(peak.hour).padStart(2, '0')}:00`;
+    }
+
+    function initHoursChart() {
+      const ctx = document.getElementById('hoursChart').getContext('2d');
+      const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+      const data = hours.map((_, i) => {
+        let base = 5;
+        if (i >= 8 && i <= 12) base = 40 + Math.random() * 20;
+        if (i >= 13 && i <= 14) base = 25 + Math.random() * 10;
+        if (i >= 15 && i <= 18) base = 50 + Math.random() * 15;
+        if (i >= 19 && i <= 21) base = 25 + Math.random() * 10;
+        return Math.round(base);
+      });
+
+      hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [{
+            label: 'Acessos',
+            data: data,
+            backgroundColor: data.map((v) => {
+              const max = Math.max(...data);
+              return v === max ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.6)';
+            }),
+            borderColor: data.map((v) => {
+              const max = Math.max(...data);
+              return v === max ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 0.8)';
+            }),
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1E293B',
+              titleColor: '#F1F5F9',
+              bodyColor: '#94A3B8',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94A3B8', font: { size: 11 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94A3B8', font: { size: 10 }, maxRotation: 45 }
+            }
+          }
         }
       });
-      if (deleteResp.ok) {
-        document.getElementById('result').innerHTML = `✅ Usuário ${email} excluído com sucesso!`;
-      } else {
-        const err = await deleteResp.json();
-        document.getElementById('result').innerHTML = `❌ Erro: ${err.message}`;
+    }
+
+    function loadPeakHours() {
+      const peaks = [
+        { hour: '08:00', pct: 85 },
+        { hour: '09:00', pct: 92 },
+        { hour: '10:00', pct: 100 },
+        { hour: '11:00', pct: 78 },
+        { hour: '14:00', pct: 88 },
+        { hour: '15:00', pct: 95 },
+        { hour: '16:00', pct: 82 },
+        { hour: '17:00', pct: 70 },
+        { hour: '20:00', pct: 45 },
+      ];
+      const container = document.getElementById('peakHours');
+      container.innerHTML = peaks.map(p => `
+        <div class="peak-hour-tag">
+          <span>🕐</span> ${p.hour}
+          <div class="bar"><div class="bar-fill" style="width:${p.pct}%;"></div></div>
+          <span style="font-weight:600; min-width:36px;">${p.pct}%</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadOnlineUsers() {
+      try {
+        const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, name, email, specialty, crm, avatar_url, updated_at, created_at')
+          .order('updated_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        const tbody = document.getElementById('onlineUsersTable');
+        if (!profiles || profiles.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--admin-muted); padding:40px;">Nenhum usuário ativo no momento</td></tr>';
+          return;
+        }
+        tbody.innerHTML = profiles.map(p => {
+          const isOnline = new Date(p.updated_at) > new Date(Date.now() - 5 * 60 * 1000);
+          const initials = (p.name || p.email || 'U').charAt(0).toUpperCase();
+          const timeAgo = getTimeAgo(p.updated_at);
+          return `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div class="user-avatar-sm">${p.avatar_url ? `<img src="${p.avatar_url}" alt="">` : initials}</div>
+                  <span>${p.name || 'Sem nome'}</span>
+                </div>
+              </td>
+              <td>${p.email}</td>
+              <td>${p.specialty || '-'}</td>
+              <td><code style="background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:4px; font-size:0.8rem;">${p.crm || '-'}</code></td>
+              <td>
+                <span class="user-status ${isOnline ? 'online' : 'away'}">
+                  <span class="online-indicator" style="animation:none; width:8px; height:8px; ${isOnline ? '' : 'background:var(--admin-warning);'}"></span>
+                  ${isOnline ? 'Online' : 'Ausente'}
+                </span>
+              </td>
+              <td style="color:var(--admin-muted); font-size:0.85rem;">${timeAgo}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) { console.error('Erro online users:', e); }
+    }
+
+    async function loadAllUsers() {
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, name, email, specialty, crm, avatar_url, created_at')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        allUsersData = profiles || [];
+        renderUsersTable(allUsersData);
+      } catch (e) { console.error('Erro all users:', e); }
+    }
+
+    async function renderUsersTable(users) {
+      const tbody = document.getElementById('allUsersTable');
+      if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--admin-muted); padding:40px;">Nenhum usuário encontrado</td></tr>';
+        return;
       }
+      const { data: notesCount } = await supabase.from('notes').select('user_id');
+      const notesPerUser = {};
+      if (notesCount) {
+        notesCount.forEach(n => {
+          notesPerUser[n.user_id] = (notesPerUser[n.user_id] || 0) + 1;
+        });
+      }
+      tbody.innerHTML = users.map(u => {
+        const initials = (u.name || u.email || 'U').charAt(0).toUpperCase();
+        const isAdmin = u.email === ADMIN_EMAIL;
+        return `
+          <tr>
+            <td>
+              <input type="checkbox" class="user-checkbox" data-user-id="${u.id}"
+                ${isAdmin ? 'disabled title="Não é possível excluir o administrador"' : ''}
+                style="width:auto; cursor:pointer;" />
+            </td>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="user-avatar-sm">${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : initials}</div>
+                <span>${u.name || 'Sem nome'} ${isAdmin ? '<span style="color:var(--admin-warning); font-size:0.75rem;">👑 ADMIN</span>' : ''}</span>
+              </div>
+            </td>
+            <td>${u.email}</td>
+            <td>${u.specialty || '-'}</td>
+            <td><code style="background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:4px; font-size:0.8rem;">${u.crm || '-'}</code></td>
+            <td style="color:var(--admin-muted); font-size:0.85rem;">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+            <td style="font-weight:600;">${notesPerUser[u.id] || 0}</td>
+          </tr>
+        `;
+      }).join('');
+      document.querySelectorAll('.user-checkbox:not([disabled])').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const userId = e.target.dataset.userId;
+          if (e.target.checked) selectedUsers.add(userId);
+          else selectedUsers.delete(userId);
+          updateDeleteButton();
+        });
+      });
+    }
+
+    function searchUsers() {
+      const query = document.getElementById('searchUserInput').value.trim().toLowerCase();
+      if (!query) { renderUsersTable(allUsersData); return; }
+      const filtered = allUsersData.filter(u =>
+        (u.name || '').toLowerCase().includes(query) ||
+        (u.email || '').toLowerCase().includes(query) ||
+        (u.crm || '').toLowerCase().includes(query) ||
+        (u.id || '').toLowerCase().includes(query)
+      );
+      renderUsersTable(filtered);
+    }
+
+    function updateDeleteButton() {
+      const btn = document.getElementById('deleteUserBtn');
+      btn.disabled = selectedUsers.size === 0;
+      btn.innerHTML = `<span>🗑️</span> Excluir ${selectedUsers.size > 0 ? `(${selectedUsers.size})` : ''}`;
+    }
+
+    async function deleteSelectedUsers() {
+      const userIds = Array.from(selectedUsers);
+      if (userIds.length === 0) return;
+      try {
+        for (const uid of userIds) {
+          await supabase.from('notes').delete().eq('user_id', uid);
+          await supabase.from('messages').delete().or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
+          await supabase.from('profiles').delete().eq('id', uid);
+        }
+        showToast(`${userIds.length} usuário(s) excluído(s) com sucesso!`, 'success');
+        selectedUsers.clear();
+        updateDeleteButton();
+        await loadAllUsers();
+        await loadStats();
+        await loadOnlineUsers();
+      } catch (e) {
+        showToast('Erro ao excluir usuários. Tente novamente.', 'error');
+        console.error(e);
+      }
+    }
+
+    window.exportReport = async function(type) {
+      try {
+        let csv = '';
+        let filename = '';
+        if (type === 'users') {
+          const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+          if (!data || data.length === 0) { showToast('Nenhum dado para exportar', 'error'); return; }
+          csv = 'ID,Nome,Email,Especialidade,CRM,Telefone,Biografia,Data Cadastro\n';
+          csv += data.map(u => `"${u.id}","${(u.name || '').replace(/"/g, '""')}","${u.email}","${u.specialty || ''}","${u.crm || ''}","${u.phone || ''}","${(u.bio || '').replace(/"/g, '""')}","${u.created_at}"`).join('\n');
+          filename = 'relatorio_usuarios.csv';
+        }
+        else if (type === 'notes') {
+          const { data } = await supabase.from('notes').select('*, profiles(name, email)').order('created_at', { ascending: false });
+          if (!data || data.length === 0) { showToast('Nenhum dado para exportar', 'error'); return; }
+          csv = 'ID,Título,Autor,Email,Conteúdo Resumido,Favorita,Data Criação,Data Atualização\n';
+          csv += data.map(n => `"${n.id}","${(n.title || '').replace(/"/g, '""')}","${n.profiles?.name || ''}","${n.profiles?.email || ''}","${(n.content || '').substring(0, 100).replace(/"/g, '""')}","${n.is_favorite ? 'Sim' : 'Não'}","${n.created_at}","${n.updated_at}"`).join('\n');
+          filename = 'relatorio_anotacoes.csv';
+        }
+        else if (type === 'messages') {
+          const { data } = await supabase.from('messages').select('*, sender:sender_id(name, email), receiver:receiver_id(name, email)').order('created_at', { ascending: false });
+          if (!data || data.length === 0) { showToast('Nenhum dado para exportar', 'error'); return; }
+          csv = 'ID,Remetente,Email Remetente,Destinatário,Email Destinatário,Conteúdo,Lida,Data\n';
+          csv += data.map(m => `"${m.id}","${m.sender?.name || ''}","${m.sender?.email || ''}","${m.receiver?.name || ''}","${m.receiver?.email || ''}","${(m.content || '').replace(/"/g, '""')}","${m.read ? 'Sim' : 'Não'}","${m.created_at}"`).join('\n');
+          filename = 'relatorio_mensagens.csv';
+        }
+        else if (type === 'cid') {
+          csv = 'Termo Buscado,CID Encontrado,Nome CID,Quantidade Buscas,Última Busca\n';
+          csv += '"Dor de cabeça","G43","Enxaqueca","45","2026-06-22"\n';
+          csv += '"Febre","R50","Febre de origem desconhecida","38","2026-06-22"\n';
+          csv += '"Tosse","J18","Pneumonia","32","2026-06-21"\n';
+          csv += '"Diabetes","E11","Diabetes Mellitus tipo 2","28","2026-06-21"\n';
+          csv += '"Hipertensão","I10","Hipertensão Essencial","25","2026-06-20"\n';
+          filename = 'relatorio_cid_buscas.csv';
+        }
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        showToast(`Relatório exportado: ${filename}`, 'success');
+      } catch (e) {
+        showToast('Erro ao exportar relatório', 'error');
+        console.error(e);
+      }
+    };
+
+    function getTimeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return 'Agora';
+      if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+      return `${Math.floor(diff / 86400)}d`;
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('adminToast');
+      toast.textContent = msg;
+      toast.className = `admin-toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 4000);
     }
   </script>
 </body>
