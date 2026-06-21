@@ -1007,19 +1007,19 @@ export async function getAdminSummary() {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString());
+      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString());
       todayAccess = count || 0;
 
       // Calcula hora de pico
       const { data: hourlyData } = await supabase
         .from('access_logs')
-        .select('created_at')
-        .gte('created_at', today.toISOString());
+        .select('accessed_at')
+        .gte('accessed_at', today.toISOString());
 
       if (hourlyData && hourlyData.length > 0) {
         const hourCounts = {};
         hourlyData.forEach(log => {
-          const hour = new Date(log.created_at).getHours();
+          const hour = new Date(log.accessed_at).getHours();
           hourCounts[hour] = (hourCounts[hour] || 0) + 1;
         });
         let maxCount = 0;
@@ -1622,9 +1622,9 @@ export async function getAccessStatsByHour() {
 
     const { data, error } = await supabase
       .from('access_logs')
-      .select('created_at')
-      .gte('created_at', twentyFourHoursAgo)
-      .order('created_at', { ascending: true });
+      .select('accessed_at')
+      .gte('accessed_at', twentyFourHoursAgo)
+      .order('accessed_at', { ascending: true });
 
     if (error) {
       if (error.message.includes('does not exist') || error.code === '42P01') {
@@ -1641,7 +1641,7 @@ export async function getAccessStatsByHour() {
     }
 
     (data || []).forEach(log => {
-      const hour = new Date(log.created_at).getHours();
+      const hour = new Date(log.accessed_at).getHours();
       hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
     });
 
@@ -1957,11 +1957,18 @@ export async function logAccess(page) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Se nao ha usuario logado, nao tenta inserir (evita erro de RLS)
+    if (!user?.id) {
+      return;
+    }
+
     const { error } = await supabase
       .from('access_logs')
       .insert([{
-        user_id: user?.id || null,
+        user_id: user.id,
         action: page || 'page_view',
+        page: page || 'page_view',
+        accessed_at: new Date().toISOString(),
         created_at: new Date().toISOString()
       }]);
 
