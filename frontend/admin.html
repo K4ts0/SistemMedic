@@ -646,6 +646,7 @@
     }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="admin-wrapper">
@@ -904,6 +905,9 @@
         else avatar.textContent = (profile.name || 'A').charAt(0).toUpperCase();
       } catch (e) {}
 
+      // Registra acesso do admin
+      try { await logAccess('admin'); } catch(e) {}
+
       // Carrega dados iniciais
       await loadAllData();
 
@@ -999,7 +1003,7 @@
     // ===== STATS REAIS DO BANCO =====
     async function loadStats() {
       try {
-        // Busca resumo do dashboard
+        // Busca resumo do dashboard (agora retorna formato correto)
         const summary = await getAdminSummary();
         if (summary) {
           document.getElementById('statTotalUsers').textContent = summary.total_users || 0;
@@ -1027,7 +1031,9 @@
           document.getElementById('statTotalNotes').textContent = nc || 0;
           document.getElementById('usersTrend').textContent = `+${uc || 0}`;
           document.getElementById('notesTrend').textContent = `+${nc || 0}`;
-        } catch (e2) {}
+          // Peak hour não disponível no fallback
+          document.getElementById('statPeakHour').textContent = '--:--';
+        } catch (e2) { console.error('Fallback error:', e2); }
       }
     }
 
@@ -1304,8 +1310,8 @@
         else if (type === 'logs') {
           const { data } = await supabase.from('access_logs').select('*').order('created_at', { ascending: false }).limit(5000);
           if (!data?.length) { showToast('Sem dados','error'); return; }
-          csv = 'ID,UserID,Email,Acao,Pagina,SessionID,Data\n';
-          csv += data.map(l => `"${l.id}","${l.user_id||''}","${l.email||''}","${l.action}","${l.page_path||''}","${l.session_id||''}","${l.created_at}"`).join('\n');
+          csv = 'ID,UserID,Acao,Data\n';
+          csv += data.map(l => `"${l.id}","${l.user_id||''}","${l.action||''}","${l.created_at}"`).join('\n');
           filename = 'relatorio_logs_acesso.csv';
         }
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
