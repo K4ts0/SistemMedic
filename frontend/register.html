@@ -73,7 +73,7 @@
   </div>
 
   <script type="module">
-    import { signUp, getCurrentUser, checkEmailExists, checkCRMExists, checkEmailDuplicate } from './supabase-config.js';
+    import { signUp, getCurrentUser, checkCRMExists } from './supabase-config.js';
 
     (async function init() {
       // Verifica se já está logado
@@ -104,7 +104,7 @@
         btn.disabled = true;
         btn.innerHTML = '<span>⏳</span> Verificando...';
 
-        // Verifica CRM duplicado
+        // Verifica CRM duplicado (permanece)
         try {
           const crmExists = await checkCRMExists(crm);
           if (crmExists) {
@@ -117,22 +117,10 @@
           console.error('Erro ao verificar CRM:', e);
         }
 
-        // Verifica email duplicado (profiles + auth)
-        try {
-          const emailExists = await checkEmailDuplicate(email);
-          if (emailExists) {
-            showMessage('Email já cadastrado. Faça login ou use outro email.', 'erro');
-            btn.disabled = false;
-            btn.innerHTML = '<span>✨</span> Cadastrar';
-            return;
-          }
-        } catch (e) {
-          console.error('Erro ao verificar email:', e);
-        }
-
         btn.innerHTML = '<span>⏳</span> Cadastrando...';
 
         try {
+          // Chamada única para signUp – o Supabase já verifica se o email existe
           const { user, session } = await signUp(email, password, name, specialty, crm);
 
           // Se o cadastro retornou sessão (confirmação de email desativada), loga direto
@@ -154,7 +142,6 @@
               btn.innerHTML = '<span>⏳</span> Reenviando...';
               try {
                 const { supabase } = await import('./supabase-config.js');
-                // CORRIGIDO: emailRedirectTo agora aponta para auth-confirm.html
                 const { error } = await supabase.auth.resend({
                   type: 'signup',
                   email: email,
