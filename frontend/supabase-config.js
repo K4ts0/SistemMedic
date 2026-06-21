@@ -980,25 +980,31 @@ export async function getAdminSummary() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const [
-    { count: totalUsers },
-    { count: totalNotes },
-    { count: totalMessages },
-    { count: todayAccess }
-  ] = await Promise.all([
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('notes').select('*', { count: 'exact', head: true }),
-    supabase.from('messages').select('*', { count: 'exact', head: true }),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true })
-      .gte('accessed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-  ]);
+  try {
+    const [
+      { count: totalUsers },
+      { count: totalNotes },
+      { count: totalMessages },
+      { count: todayAccess }
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('notes').select('*', { count: 'exact', head: true }),
+      supabase.from('messages').select('*', { count: 'exact', head: true }),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true })
+        .gte('accessed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .catch(() => ({ count: 0 }))
+    ]);
 
-  return {
-    totalUsers: totalUsers || 0,
-    totalNotes: totalNotes || 0,
-    totalMessages: totalMessages || 0,
-    todayAccess: todayAccess || 0
-  };
+    return {
+      totalUsers: totalUsers || 0,
+      totalNotes: totalNotes || 0,
+      totalMessages: totalMessages || 0,
+      todayAccess: todayAccess || 0
+    };
+  } catch (err) {
+    console.warn('Erro em getAdminSummary:', err.message);
+    return { totalUsers: 0, totalNotes: 0, totalMessages: 0, todayAccess: 0 };
+  }
 }
 
 /**
@@ -1026,11 +1032,30 @@ export async function getAllNotes() {
 
   const { data, error } = await supabase
     .from('notes')
-    .select('*, profiles(name, email)')
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+
+  // Busca perfis separadamente
+  const userIds = [...new Set((data || []).map(note => note.user_id).filter(Boolean))];
+  let profilesMap = new Map();
+
+  if (userIds.length > 0) {
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, email')
+      .in('id', userIds);
+
+    if (!profileError && profiles) {
+      profiles.forEach(p => profilesMap.set(p.id, p));
+    }
+  }
+
+  return (data || []).map(note => ({
+    ...note,
+    user: profilesMap.get(note.user_id) || { name: 'Usuario', email: '' }
+  }));
 }
 
 /**
@@ -1078,18 +1103,43 @@ export async function getRecentActivity(limit = 20) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('*, profiles(name, email)')
-    .order('accessed_at', { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('id, user_id, page, accessed_at')
+      .order('accessed_at', { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error('Erro ao buscar atividade recente:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    // Busca perfis dos usuarios em query SEPARADA
+    const userIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))];
+    let profilesMap = new Map();
+
+    if (userIds.length > 0) {
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name, email, avatar_url')
+        .in('id', userIds);
+
+      if (!profileError && profiles) {
+        profiles.forEach(p => profilesMap.set(p.id, p));
+      }
+    }
+
+    return (data || []).map(log => ({
+      ...log,
+      user: profilesMap.get(log.user_id) || { name: 'Usuario', email: '', avatar_url: null }
+    }));
+  } catch (err) {
+    console.warn('Erro em getRecentActivity:', err.message);
     return [];
   }
-
-  return data || [];
 }
 
 /**
@@ -1129,35 +1179,54 @@ export async function getOnlineUsers() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  try {
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('user_id, profiles(id, name, email, avatar_url, specialty, crm)')
-    .gte('accessed_at', fifteenMinutesAgo)
-    .not('user_id', 'is', null)
-    .order('accessed_at', { ascending: false });
+    // Busca apenas os user_ids dos acessos recentes (SEM join!)
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('user_id, accessed_at')
+      .gte('accessed_at', fifteenMinutesAgo)
+      .not('user_id', 'is', null)
+      .order('accessed_at', { ascending: false });
 
-  if (error) {
-    console.error('Erro ao buscar usuarios online:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    // Remove duplicados - pega apenas o acesso mais recente de cada usuario
+    const uniqueUserIds = [...new Set((data || []).map(log => log.user_id).filter(Boolean))];
+
+    if (uniqueUserIds.length === 0) return [];
+
+    // Busca perfis em query SEPARADA (SEM join!)
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, email, avatar_url, specialty, crm')
+      .in('id', uniqueUserIds);
+
+    if (profileError) {
+      console.error('Erro ao buscar perfis:', profileError.message);
+      return uniqueUserIds.map(id => ({ id, name: 'Usuario', email: '', avatar_url: null, specialty: '', crm: '' }));
+    }
+
+    const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    return uniqueUserIds.map(id => profilesMap.get(id) || { 
+      id, 
+      name: 'Usuario', 
+      email: '', 
+      avatar_url: null, 
+      specialty: '', 
+      crm: '' 
+    });
+  } catch (err) {
+    console.warn('Erro em getOnlineUsers:', err.message);
     return [];
   }
-
-  // Remove duplicados (usuario pode ter multiplos acessos)
-  const uniqueUsers = [];
-  const seen = new Set();
-
-  (data || []).forEach(log => {
-    if (log.user_id && !seen.has(log.user_id)) {
-      seen.add(log.user_id);
-      uniqueUsers.push({
-        id: log.user_id,
-        ...log.profiles
-      });
-    }
-  });
-
-  return uniqueUsers;
 }
 
 /**
@@ -1259,48 +1328,57 @@ export async function getSystemStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const [
-    { count: totalUsers },
-    { count: totalNotes },
-    { count: totalMessages },
-    { count: totalAccess },
-    { count: todayAccess },
-    { count: weekAccess },
-    { count: monthAccess },
-    { count: newUsersToday },
-    { count: newUsersWeek },
-    { count: newUsersMonth }
-  ] = await Promise.all([
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('notes').select('*', { count: 'exact', head: true }),
-    supabase.from('messages').select('*', { count: 'exact', head: true }),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString()),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthAgo.toISOString())
-  ]);
+    const [
+      { count: totalUsers },
+      { count: totalNotes },
+      { count: totalMessages },
+      { count: totalAccess },
+      { count: todayAccess },
+      { count: weekAccess },
+      { count: monthAccess },
+      { count: newUsersToday },
+      { count: newUsersWeek },
+      { count: newUsersMonth }
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('notes').select('*', { count: 'exact', head: true }),
+      supabase.from('messages').select('*', { count: 'exact', head: true }),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).catch(() => ({ count: 0 })),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()).catch(() => ({ count: 0 })),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()).catch(() => ({ count: 0 })),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString()).catch(() => ({ count: 0 })),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthAgo.toISOString())
+    ]);
 
-  return {
-    totalUsers: totalUsers || 0,
-    totalNotes: totalNotes || 0,
-    totalMessages: totalMessages || 0,
-    totalAccess: totalAccess || 0,
-    todayAccess: todayAccess || 0,
-    weekAccess: weekAccess || 0,
-    monthAccess: monthAccess || 0,
-    newUsersToday: newUsersToday || 0,
-    newUsersWeek: newUsersWeek || 0,
-    newUsersMonth: newUsersMonth || 0
-  };
+    return {
+      totalUsers: totalUsers || 0,
+      totalNotes: totalNotes || 0,
+      totalMessages: totalMessages || 0,
+      totalAccess: totalAccess || 0,
+      todayAccess: todayAccess || 0,
+      weekAccess: weekAccess || 0,
+      monthAccess: monthAccess || 0,
+      newUsersToday: newUsersToday || 0,
+      newUsersWeek: newUsersWeek || 0,
+      newUsersMonth: newUsersMonth || 0
+    };
+  } catch (err) {
+    console.warn('Erro em getSystemStats:', err.message);
+    return {
+      totalUsers: 0, totalNotes: 0, totalMessages: 0,
+      totalAccess: 0, todayAccess: 0, weekAccess: 0, monthAccess: 0,
+      newUsersToday: 0, newUsersWeek: 0, newUsersMonth: 0
+    };
+  }
 }
 
 /**
@@ -1310,37 +1388,57 @@ export async function getActiveSessions() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  try {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('user_id, page, accessed_at, profiles(id, name, email, avatar_url)')
-    .gte('accessed_at', thirtyMinutesAgo)
-    .not('user_id', 'is', null)
-    .order('accessed_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('user_id, page, accessed_at')
+      .gte('accessed_at', thirtyMinutesAgo)
+      .not('user_id', 'is', null)
+      .order('accessed_at', { ascending: false });
 
-  if (error) {
-    console.error('Erro ao buscar sessoes ativas:', error.message);
-    return [];
-  }
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
 
-  // Agrupa por usuario (pega o acesso mais recente de cada um)
-  const sessions = [];
-  const seen = new Set();
+    // Agrupa por usuario (pega o acesso mais recente de cada um)
+    const sessions = [];
+    const seen = new Set();
 
-  (data || []).forEach(log => {
-    if (log.user_id && !seen.has(log.user_id)) {
-      seen.add(log.user_id);
-      sessions.push({
-        user_id: log.user_id,
-        page: log.page,
-        last_access: log.accessed_at,
-        user: log.profiles
+    (data || []).forEach(log => {
+      if (log.user_id && !seen.has(log.user_id)) {
+        seen.add(log.user_id);
+        sessions.push({
+          user_id: log.user_id,
+          page: log.page,
+          last_access: log.accessed_at
+        });
+      }
+    });
+
+    // Busca perfis separadamente (SEM join!)
+    if (sessions.length > 0) {
+      const userIds = sessions.map(s => s.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, email, avatar_url')
+        .in('id', userIds);
+
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+      sessions.forEach(s => {
+        s.user = profilesMap.get(s.user_id) || { name: 'Usuario', email: '', avatar_url: null };
       });
     }
-  });
 
-  return sessions;
+    return sessions;
+  } catch (err) {
+    console.warn('Erro em getActiveSessions:', err.message);
+    return [];
+  }
 }
 
 /**
@@ -1350,15 +1448,26 @@ export async function getUserActivity(userId, limit = 50) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .order('accessed_at', { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('accessed_at', { ascending: false })
+      .limit(limit);
 
-  if (error) throw error;
-  return data || [];
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.warn('Erro em getUserActivity:', err.message);
+    return [];
+  }
 }
 
 /**
@@ -1368,27 +1477,33 @@ export async function getPageViews(days = 7) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('page, accessed_at')
-    .gte('accessed_at', daysAgo);
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('page, accessed_at')
+      .gte('accessed_at', daysAgo);
 
-  if (error) {
-    console.error('Erro ao buscar page views:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    const pageViews = {};
+    (data || []).forEach(log => {
+      pageViews[log.page] = (pageViews[log.page] || 0) + 1;
+    });
+
+    return Object.entries(pageViews)
+      .map(([page, views]) => ({ page, views }))
+      .sort((a, b) => b.views - a.views);
+  } catch (err) {
+    console.warn('Erro em getPageViews:', err.message);
     return [];
   }
-
-  // Agrupa por pagina
-  const pageViews = {};
-  (data || []).forEach(log => {
-    pageViews[log.page] = (pageViews[log.page] || 0) + 1;
-  });
-
-  return Object.entries(pageViews)
-    .map(([page, views]) => ({ page, views }))
-    .sort((a, b) => b.views - a.views);
 }
 
 /**
@@ -1444,34 +1559,43 @@ export async function getAccessStatsByHour() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('accessed_at')
-    .gte('accessed_at', twentyFourHoursAgo)
-    .order('accessed_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('accessed_at')
+      .gte('accessed_at', twentyFourHoursAgo)
+      .order('accessed_at', { ascending: true });
 
-  if (error) {
-    console.error('Erro ao buscar stats por hora:', error.message);
-    return [];
+    if (error) {
+      // Se a tabela nao existir, retorna dados vazios
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        console.warn('Tabela access_logs nao existe. Retornando dados vazios.');
+        return Array.from({length: 24}, (_, i) => ({ hour: i, count: 0 }));
+      }
+      throw error;
+    }
+
+    // Agrupa por hora
+    const hourlyStats = {};
+    for (let i = 0; i < 24; i++) {
+      hourlyStats[i] = 0;
+    }
+
+    (data || []).forEach(log => {
+      const hour = new Date(log.accessed_at).getHours();
+      hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
+    });
+
+    return Object.entries(hourlyStats).map(([hour, count]) => ({
+      hour: parseInt(hour),
+      count
+    }));
+  } catch (err) {
+    console.warn('Erro em getAccessStatsByHour:', err.message);
+    return Array.from({length: 24}, (_, i) => ({ hour: i, count: 0 }));
   }
-
-  // Agrupa por hora
-  const hourlyStats = {};
-  for (let i = 0; i < 24; i++) {
-    hourlyStats[i] = 0;
-  }
-
-  (data || []).forEach(log => {
-    const hour = new Date(log.accessed_at).getHours();
-    hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
-  });
-
-  return Object.entries(hourlyStats).map(([hour, count]) => ({
-    hour: parseInt(hour),
-    count
-  }));
 }
 
 /**
@@ -1481,26 +1605,33 @@ export async function getTodayStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString();
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('*', { count: 'exact' })
-    .gte('accessed_at', todayISO);
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('*', { count: 'exact' })
+      .gte('accessed_at', todayISO);
 
-  if (error) {
-    console.error('Erro ao buscar stats de hoje:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return { total: 0, uniqueUsers: 0 };
+      }
+      throw error;
+    }
+
+    const uniqueUsers = new Set((data || []).map(log => log.user_id)).size;
+
+    return {
+      total: data?.length || 0,
+      uniqueUsers
+    };
+  } catch (err) {
+    console.warn('Erro em getTodayStats:', err.message);
     return { total: 0, uniqueUsers: 0 };
   }
-
-  const uniqueUsers = new Set((data || []).map(log => log.user_id)).size;
-
-  return {
-    total: data?.length || 0,
-    uniqueUsers
-  };
 }
 
 /**
@@ -1510,33 +1641,30 @@ export async function getAccessStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data: totalAccess, error: totalError } = await supabase
-    .from('access_logs')
-    .select('*', { count: 'exact', head: true });
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  if (totalError) {
-    console.error('Erro ao buscar stats:', totalError.message);
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [{ count: totalCount }, { count: todayCount }, { count: weekCount }, { count: monthCount }] = await Promise.all([
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()),
+      supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString())
+    ]);
+
+    return {
+      total: totalCount || 0,
+      today: todayCount || 0,
+      week: weekCount || 0,
+      month: monthCount || 0
+    };
+  } catch (err) {
+    console.warn('Erro em getAccessStats:', err.message);
     return { total: 0, today: 0, week: 0, month: 0 };
   }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-  const [{ count: todayCount }, { count: weekCount }, { count: monthCount }] = await Promise.all([
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()),
-    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString())
-  ]);
-
-  return {
-    total: totalAccess || 0,
-    today: todayCount || 0,
-    week: weekCount || 0,
-    month: monthCount || 0
-  };
 }
 
 /**
@@ -1546,35 +1674,46 @@ export async function getDailyStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('accessed_at')
-    .gte('accessed_at', sevenDaysAgo)
-    .order('accessed_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('accessed_at')
+      .gte('accessed_at', sevenDaysAgo)
+      .order('accessed_at', { ascending: true });
 
-  if (error) {
-    console.error('Erro ao buscar stats diarios:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return Array.from({length: 7}, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return { date: d.toISOString().split('T')[0], count: 0 };
+        });
+      }
+      throw error;
+    }
+
+    const dailyStats = {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      dailyStats[key] = 0;
+    }
+
+    (data || []).forEach(log => {
+      const date = new Date(log.accessed_at).toISOString().split('T')[0];
+      dailyStats[date] = (dailyStats[date] || 0) + 1;
+    });
+
+    return Object.entries(dailyStats)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  } catch (err) {
+    console.warn('Erro em getDailyStats:', err.message);
     return [];
   }
-
-  const dailyStats = {};
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    dailyStats[key] = 0;
-  }
-
-  (data || []).forEach(log => {
-    const date = new Date(log.accessed_at).toISOString().split('T')[0];
-    dailyStats[date] = (dailyStats[date] || 0) + 1;
-  });
-
-  return Object.entries(dailyStats)
-    .map(([date, count]) => ({ date, count }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /**
@@ -1584,30 +1723,37 @@ export async function getWeeklyStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('accessed_at')
-    .gte('accessed_at', fourWeeksAgo);
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('accessed_at')
+      .gte('accessed_at', fourWeeksAgo);
 
-  if (error) {
-    console.error('Erro ao buscar stats semanais:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    const weeklyStats = {};
+    (data || []).forEach(log => {
+      const date = new Date(log.accessed_at);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      weeklyStats[key] = (weeklyStats[key] || 0) + 1;
+    });
+
+    return Object.entries(weeklyStats)
+      .map(([week, count]) => ({ week, count }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+  } catch (err) {
+    console.warn('Erro em getWeeklyStats:', err.message);
     return [];
   }
-
-  const weeklyStats = {};
-  (data || []).forEach(log => {
-    const date = new Date(log.accessed_at);
-    const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay());
-    const key = weekStart.toISOString().split('T')[0];
-    weeklyStats[key] = (weeklyStats[key] || 0) + 1;
-  });
-
-  return Object.entries(weeklyStats)
-    .map(([week, count]) => ({ week, count }))
-    .sort((a, b) => a.week.localeCompare(b.week));
 }
 
 /**
@@ -1617,29 +1763,36 @@ export async function getMonthlyStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const twelveMonthsAgo = new Date();
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  try {
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('accessed_at')
-    .gte('accessed_at', twelveMonthsAgo.toISOString());
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('accessed_at')
+      .gte('accessed_at', twelveMonthsAgo.toISOString());
 
-  if (error) {
-    console.error('Erro ao buscar stats mensais:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    const monthlyStats = {};
+    (data || []).forEach(log => {
+      const date = new Date(log.accessed_at);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthlyStats[key] = (monthlyStats[key] || 0) + 1;
+    });
+
+    return Object.entries(monthlyStats)
+      .map(([month, count]) => ({ month, count }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  } catch (err) {
+    console.warn('Erro em getMonthlyStats:', err.message);
     return [];
   }
-
-  const monthlyStats = {};
-  (data || []).forEach(log => {
-    const date = new Date(log.accessed_at);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    monthlyStats[key] = (monthlyStats[key] || 0) + 1;
-  });
-
-  return Object.entries(monthlyStats)
-    .map(([month, count]) => ({ month, count }))
-    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
 /**
@@ -1669,35 +1822,42 @@ export async function getLoginStats() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('accessed_at, page')
-    .gte('accessed_at', sevenDaysAgo)
-    .eq('page', 'login');
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('accessed_at, page')
+      .gte('accessed_at', sevenDaysAgo)
+      .eq('page', 'login');
 
-  if (error) {
-    console.error('Erro ao buscar stats de login:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    const loginStats = {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      loginStats[key] = 0;
+    }
+
+    (data || []).forEach(log => {
+      const date = new Date(log.accessed_at).toISOString().split('T')[0];
+      loginStats[date] = (loginStats[date] || 0) + 1;
+    });
+
+    return Object.entries(loginStats)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  } catch (err) {
+    console.warn('Erro em getLoginStats:', err.message);
     return [];
   }
-
-  const loginStats = {};
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    loginStats[key] = 0;
-  }
-
-  (data || []).forEach(log => {
-    const date = new Date(log.accessed_at).toISOString().split('T')[0];
-    loginStats[date] = (loginStats[date] || 0) + 1;
-  });
-
-  return Object.entries(loginStats)
-    .map(([date, count]) => ({ date, count }))
-    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /**
@@ -1707,42 +1867,56 @@ export async function getTopPages(limit = 10) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  const { data, error } = await supabase
-    .from('access_logs')
-    .select('page');
+  try {
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select('page');
 
-  if (error) {
-    console.error('Erro ao buscar top pages:', error.message);
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return [];
+      }
+      throw error;
+    }
+
+    const pageCounts = {};
+    (data || []).forEach(log => {
+      pageCounts[log.page] = (pageCounts[log.page] || 0) + 1;
+    });
+
+    return Object.entries(pageCounts)
+      .map(([page, count]) => ({ page, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  } catch (err) {
+    console.warn('Erro em getTopPages:', err.message);
     return [];
   }
-
-  const pageCounts = {};
-  (data || []).forEach(log => {
-    pageCounts[log.page] = (pageCounts[log.page] || 0) + 1;
-  });
-
-  return Object.entries(pageCounts)
-    .map(([page, count]) => ({ page, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
 }
 
 /**
  * Registra um acesso na tabela access_logs
  */
 export async function logAccess(page) {
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const { error } = await supabase
-    .from('access_logs')
-    .insert([{
-      user_id: user?.id || null,
-      page: page,
-      accessed_at: new Date().toISOString()
-    }]);
+    const { error } = await supabase
+      .from('access_logs')
+      .insert([{
+        user_id: user?.id || null,
+        page: page,
+        accessed_at: new Date().toISOString()
+      }]);
 
-  if (error) {
-    console.error('Erro ao registrar acesso:', error.message);
+    if (error) {
+      // Silenciosamente ignora erro se tabela nao existir
+      if (!error.message.includes('does not exist') && error.code !== '42P01') {
+        console.warn('Erro ao registrar acesso:', error.message);
+      }
+    }
+  } catch (err) {
+    // Silenciosamente ignora
   }
 }
 
