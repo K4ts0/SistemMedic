@@ -1117,6 +1117,322 @@ export async function getNotesStats() {
   };
 }
 
+
+// ============================================================
+// ===== ADMIN / FUNCOES ADICIONAIS DO PAINEL =====
+// ============================================================
+
+/**
+ * Retorna usuarios online (baseado em acessos nos ultimos 15 minutos)
+ */
+export async function getOnlineUsers() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('access_logs')
+    .select('user_id, profiles(id, name, email, avatar_url, specialty, crm)')
+    .gte('accessed_at', fifteenMinutesAgo)
+    .not('user_id', 'is', null)
+    .order('accessed_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar usuarios online:', error.message);
+    return [];
+  }
+
+  // Remove duplicados (usuario pode ter multiplos acessos)
+  const uniqueUsers = [];
+  const seen = new Set();
+
+  (data || []).forEach(log => {
+    if (log.user_id && !seen.has(log.user_id)) {
+      seen.add(log.user_id);
+      uniqueUsers.push({
+        id: log.user_id,
+        ...log.profiles
+      });
+    }
+  });
+
+  return uniqueUsers;
+}
+
+/**
+ * Retorna usuarios banidos
+ */
+export async function getBannedUsers() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, specialty, crm, banned_at, ban_reason')
+    .not('banned_at', 'is', null)
+    .order('banned_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar usuarios banidos:', error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Bane um usuario
+ */
+export async function banUser(userId, reason = '') {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      banned_at: new Date().toISOString(),
+      ban_reason: reason,
+      banned_by: user.id
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+  return true;
+}
+
+/**
+ * Desbane um usuario
+ */
+export async function unbanUser(userId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      banned_at: null,
+      ban_reason: null,
+      banned_by: null
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+  return true;
+}
+
+/**
+ * Deleta um usuario (admin only)
+ */
+export async function deleteUser(userId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  // Deleta notas do usuario
+  await supabase.from('notes').delete().eq('user_id', userId);
+
+  // Deleta mensagens do usuario
+  await supabase.from('messages').delete().eq('sender_id', userId);
+  await supabase.from('messages').delete().eq('receiver_id', userId);
+
+  // Deleta access logs
+  await supabase.from('access_logs').delete().eq('user_id', userId);
+
+  // Deleta perfil
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', userId);
+
+  if (profileError) throw profileError;
+
+  // Nota: Para deletar da auth.users, precisa de service role key
+  // ou chamar uma Edge Function. Aqui removemos apenas os dados.
+
+  return true;
+}
+
+/**
+ * Retorna estatisticas completas do sistema
+ */
+export async function getSystemStats() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    { count: totalUsers },
+    { count: totalNotes },
+    { count: totalMessages },
+    { count: totalAccess },
+    { count: todayAccess },
+    { count: weekAccess },
+    { count: monthAccess },
+    { count: newUsersToday },
+    { count: newUsersWeek },
+    { count: newUsersMonth }
+  ] = await Promise.all([
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('notes').select('*', { count: 'exact', head: true }),
+    supabase.from('messages').select('*', { count: 'exact', head: true }),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString()),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', weekAgo.toISOString()),
+    supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', monthAgo.toISOString()),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthAgo.toISOString())
+  ]);
+
+  return {
+    totalUsers: totalUsers || 0,
+    totalNotes: totalNotes || 0,
+    totalMessages: totalMessages || 0,
+    totalAccess: totalAccess || 0,
+    todayAccess: todayAccess || 0,
+    weekAccess: weekAccess || 0,
+    monthAccess: monthAccess || 0,
+    newUsersToday: newUsersToday || 0,
+    newUsersWeek: newUsersWeek || 0,
+    newUsersMonth: newUsersMonth || 0
+  };
+}
+
+/**
+ * Retorna sessoes ativas (usuarios com acesso nos ultimos 30 min)
+ */
+export async function getActiveSessions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('access_logs')
+    .select('user_id, page, accessed_at, profiles(id, name, email, avatar_url)')
+    .gte('accessed_at', thirtyMinutesAgo)
+    .not('user_id', 'is', null)
+    .order('accessed_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar sessoes ativas:', error.message);
+    return [];
+  }
+
+  // Agrupa por usuario (pega o acesso mais recente de cada um)
+  const sessions = [];
+  const seen = new Set();
+
+  (data || []).forEach(log => {
+    if (log.user_id && !seen.has(log.user_id)) {
+      seen.add(log.user_id);
+      sessions.push({
+        user_id: log.user_id,
+        page: log.page,
+        last_access: log.accessed_at,
+        user: log.profiles
+      });
+    }
+  });
+
+  return sessions;
+}
+
+/**
+ * Retorna atividade de um usuario especifico
+ */
+export async function getUserActivity(userId, limit = 50) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('access_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('accessed_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Retorna visualizacoes de paginas
+ */
+export async function getPageViews(days = 7) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const daysAgo = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('access_logs')
+    .select('page, accessed_at')
+    .gte('accessed_at', daysAgo);
+
+  if (error) {
+    console.error('Erro ao buscar page views:', error.message);
+    return [];
+  }
+
+  // Agrupa por pagina
+  const pageViews = {};
+  (data || []).forEach(log => {
+    pageViews[log.page] = (pageViews[log.page] || 0) + 1;
+  });
+
+  return Object.entries(pageViews)
+    .map(([page, views]) => ({ page, views }))
+    .sort((a, b) => b.views - a.views);
+}
+
+/**
+ * Retorna logs de erro (se houver tabela error_logs)
+ */
+export async function getErrorLogs(limit = 50) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('error_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    // Se a tabela nao existir, retorna array vazio
+    if (error.message.includes('does not exist')) {
+      return [];
+    }
+    console.error('Erro ao buscar logs:', error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Verifica se o usuario atual eh admin
+ */
+export async function isAdmin() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !data) return false;
+  return data.role === 'admin' || data.role === 'superadmin';
+}
+
 // ===== ANALYTICS / ESTATISTICAS DO ADMIN =====
 // ============================================================
 
