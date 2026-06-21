@@ -127,8 +127,6 @@
     /* Chat header - CRM */
     #chatUserCrm { margin-top: 2px; }
   </style>
-<base target="_blank">
-<base target="_blank">
 </head>
 <body>
   <div class="container container-chat">
@@ -304,7 +302,10 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
+            currentUserId = user.id;
+
+      // Registra acesso
+      try { await logAccess('chat'); } catch(e) {}
 
       // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
