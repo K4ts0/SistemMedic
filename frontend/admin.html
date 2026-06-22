@@ -870,7 +870,10 @@
 
   <script type="module">
     import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
-      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary } from './supabase-config.js'; from './supabase-config.js';
+      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary } from './supabase-config.js';
+
+    // Define a URL do Supabase (caso não seja exportada)
+    const SUPABASE_URL = supabase.supabaseUrl || 'https://zqwuzytzeytpypbpiads.supabase.co';
 
     const ADMIN_EMAIL = 'admin@wayforsystem.med';
     let selectedUsers = new Set();
@@ -999,7 +1002,6 @@
     // ===== STATS REAIS DO BANCO =====
     async function loadStats() {
       try {
-        // Busca resumo do dashboard (agora retorna formato correto)
         const summary = await getAdminSummary();
         if (summary) {
           document.getElementById('statTotalUsers').textContent = summary.total_users || 0;
@@ -1015,7 +1017,7 @@
         }
       } catch (e) { 
         console.error('Stats error:', e);
-        // Fallback: busca dados diretamente
+        // Fallback
         try {
           const [{ count: uc }, { count: nc }, { data: ou }] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
@@ -1027,7 +1029,6 @@
           document.getElementById('statTotalNotes').textContent = nc || 0;
           document.getElementById('usersTrend').textContent = `+${uc || 0}`;
           document.getElementById('notesTrend').textContent = `+${nc || 0}`;
-          // Peak hour não disponível no fallback
           document.getElementById('statPeakHour').textContent = '--:--';
         } catch (e2) { console.error('Fallback error:', e2); }
       }
@@ -1037,8 +1038,6 @@
     async function loadHourlyStats() {
       try {
         const stats = await getAccessStatsByHour();
-
-        // Prepara dados para o gráfico (24 horas)
         const hours = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}h`);
         const data = new Array(24).fill(0);
 
@@ -1050,7 +1049,6 @@
 
         const mx = Math.max(...data, 1);
 
-        // Atualiza ou cria o gráfico
         if (hoursChart) {
           hoursChart.data.datasets[0].data = data;
           hoursChart.data.datasets[0].backgroundColor = data.map(v => v === mx ? 'rgba(239,68,68,0.7)' : 'rgba(59,130,246,0.5)');
@@ -1095,12 +1093,9 @@
           });
         }
 
-        // Atualiza picos de acesso
         loadPeakHours(data);
-
       } catch (e) {
         console.error('Hourly stats error:', e);
-        // Fallback com dados vazios
         loadPeakHours(new Array(24).fill(0));
       }
     }
@@ -1110,7 +1105,6 @@
       const mx = Math.max(...data, 1);
       const total = data.reduce((a,b) => a+b, 0) || 1;
 
-      // Pega as 8 horas com mais acessos
       const peaks = data
         .map((count, hour) => ({ hour: `${String(hour).padStart(2,'0')}:00`, count, pct: Math.round((count/total)*100) }))
         .filter(p => p.count > 0)
@@ -1203,7 +1197,6 @@
         return;
       }
 
-      // Busca contagem de notas por usuário
       const { data: notesData } = await supabase.from('notes').select('user_id');
       const notesPerUser = {};
       if (notesData) notesData.forEach(n => notesPerUser[n.user_id] = (notesPerUser[n.user_id]||0)+1);
@@ -1258,22 +1251,22 @@
       btn.innerHTML = `<span>🗑️</span> Excluir ${selectedUsers.size?`(${selectedUsers.size})`:''}`;
     }
 
+    // ===== EXCLUSÃO CORRIGIDA =====
     async function deleteSelectedUsers() {
       const uids = Array.from(selectedUsers);
       if (!uids.length) return;
-    
+
       const btn = document.getElementById('deleteUserBtn');
       btn.disabled = true;
       btn.innerHTML = '<span>⏳</span> Excluindo...';
-    
+
       try {
-        // Obtém a sessão atual para pegar o token de acesso
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw new Error('Erro ao obter sessão: ' + sessionError.message);
         if (!session) throw new Error('Sessão não encontrada. Faça login novamente.');
-    
+
         const accessToken = session.access_token;
-    
+
         for (const uid of uids) {
           const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
             method: 'POST',
@@ -1283,40 +1276,19 @@
             },
             body: JSON.stringify({ userId: uid }),
           });
-    
+
           const result = await response.json();
           if (!response.ok) {
             throw new Error(result.error || 'Erro na exclusão do usuário');
           }
           console.log(`Usuário ${uid} excluído com sucesso.`);
         }
-    
+
         showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
         selectedUsers.clear();
         updateDeleteButton();
         document.getElementById('selectAllUsers').checked = false;
-        await loadAllData(); // recarrega a lista
-      } catch (error) {
-        showToast('Erro ao excluir: ' + error.message, 'error');
-        console.error(error);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>🗑️</span> Excluir Selecionado';
-      }
-    }
-    
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.error || 'Erro na exclusão');
-          }
-          console.log(`Usuário ${uid} excluído com sucesso.`);
-        }
-    
-        showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
-        selectedUsers.clear();
-        updateDeleteButton();
-        document.getElementById('selectAllUsers').checked = false;
-        await loadAllData(); // recarrega a lista
+        await loadAllData();
       } catch (error) {
         showToast('Erro ao excluir: ' + error.message, 'error');
         console.error(error);
