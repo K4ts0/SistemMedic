@@ -869,10 +869,8 @@
   <div class="admin-toast" id="adminToast"></div>
 
   <script type="module">
-    import { 
-      supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
-      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary
-    } from './supabase-config.js';
+    import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
+      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary } from './supabase-config.js'; from './supabase-config.js';
 
     const ADMIN_EMAIL = 'admin@wayforsystem.med';
     let selectedUsers = new Set();
