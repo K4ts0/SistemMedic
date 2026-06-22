@@ -1263,20 +1263,44 @@
     async function deleteSelectedUsers() {
       const uids = Array.from(selectedUsers);
       if (!uids.length) return;
+    
+      const btn = document.getElementById('deleteUserBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Excluindo...';
+    
       try {
+        // Obtém o token de autenticação atual
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Sessão não encontrada');
+    
         for (const uid of uids) {
-          await supabase.from('notes').delete().eq('user_id', uid);
-          await supabase.from('messages').delete().or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
-          await supabase.from('profiles').delete().eq('id', uid);
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: uid }),
+          });
+    
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Erro na exclusão');
+          }
+          console.log(`Usuário ${uid} excluído com sucesso.`);
         }
-        showToast(`${uids.length} usuário(s) excluído(s)!`, 'success');
+    
+        showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
         selectedUsers.clear();
         updateDeleteButton();
         document.getElementById('selectAllUsers').checked = false;
-        await loadAllData();
-      } catch (e) {
-        showToast('Erro ao excluir. Tente novamente.', 'error');
-        console.error(e);
+        await loadAllData(); // recarrega a lista
+      } catch (error) {
+        showToast('Erro ao excluir: ' + error.message, 'error');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🗑️</span> Excluir Selecionado';
       }
     }
 
