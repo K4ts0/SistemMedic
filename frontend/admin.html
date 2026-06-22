@@ -1267,19 +1267,43 @@
       btn.innerHTML = '<span>⏳</span> Excluindo...';
     
       try {
-        // Obtém o token de autenticação atual
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Sessão não encontrada');
+        // Obtém a sessão atual para pegar o token de acesso
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw new Error('Erro ao obter sessão: ' + sessionError.message);
+        if (!session) throw new Error('Sessão não encontrada. Faça login novamente.');
+    
+        const accessToken = session.access_token;
     
         for (const uid of uids) {
-          const SUPABASE_URL = supabase.supabaseUrl || 'https://zqwuzytzeytpypbpiads.supabase.co';, {
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${session.access_token}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ userId: uid }),
           });
+    
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Erro na exclusão do usuário');
+          }
+          console.log(`Usuário ${uid} excluído com sucesso.`);
+        }
+    
+        showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
+        selectedUsers.clear();
+        updateDeleteButton();
+        document.getElementById('selectAllUsers').checked = false;
+        await loadAllData(); // recarrega a lista
+      } catch (error) {
+        showToast('Erro ao excluir: ' + error.message, 'error');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🗑️</span> Excluir Selecionado';
+      }
+    }
     
           const result = await response.json();
           if (!response.ok) {
