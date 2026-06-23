@@ -991,30 +991,25 @@ export async function getAdminSummary() {
     const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
     const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
 
-    // Calcula usuarios online baseado em updated_at recente (fallback quando access_logs nao existe)
-    let onlineNow = 0;
-    try {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', fiveMinutesAgo);
-      onlineNow = count || 0;
-    } catch (e) {
-      onlineNow = 0;
-    }
-
     // Tenta buscar de access_logs para dados mais precisos
+    let onlineNow = 0;
     let todayAccess = 0;
     let peakHourToday = null;
+
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', today.toISOString());
+      const todayISO = today.toISOString();
+
+      // Conta acessos de hoje
+      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', todayISO);
       todayAccess = count || 0;
 
-      // Calcula hora de pico
+      // Calcula hora de pico de hoje
       const { data: hourlyData } = await supabase
         .from('access_logs')
         .select('accessed_at')
-        .gte('accessed_at', today.toISOString());
+        .gte('accessed_at', todayISO);
 
       if (hourlyData && hourlyData.length > 0) {
         const hourCounts = {};
@@ -1030,8 +1025,28 @@ export async function getAdminSummary() {
           }
         }
       }
+
+      // Usuarios online (últimos 15 min via access_logs)
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: recentLogs } = await supabase
+        .from('access_logs')
+        .select('user_id')
+        .gte('accessed_at', fifteenMinutesAgo)
+        .not('user_id', 'is', null);
+
+      if (recentLogs) {
+        onlineNow = new Set(recentLogs.map(l => l.user_id)).size;
+      }
     } catch (e) {
-      // access_logs pode nao existir, ignora silenciosamente
+      // access_logs pode estar vazia ou não existir
+      // Fallback: usa profiles.updated_at como indicador de atividade
+      try {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', fiveMinutesAgo);
+        onlineNow = count || 0;
+      } catch (e2) {
+        onlineNow = 0;
+      }
     }
 
     return {
@@ -1234,17 +1249,26 @@ export async function getOnlineUsers() {
   try {
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-    // Tenta buscar de access_logs primeiro
+    // TENTATIVA 1: Buscar de access_logs (mais preciso)
     try {
-      const { data, error } = await supabase
+      const { data: logs, error: logsError } = await supabase
         .from('access_logs')
         .select('user_id, accessed_at')
         .gte('accessed_at', fifteenMinutesAgo)
         .not('user_id', 'is', null)
         .order('accessed_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const uniqueUserIds = [...new Set(data.map(log => log.user_id).filter(Boolean))];
+      if (!logsError && logs && logs.length > 0) {
+        // Pega o acesso mais recente de cada usuário
+        const latestByUser = {};
+        logs.forEach(log => {
+          if (!latestByUser[log.user_id] || new Date(log.accessed_at) > new Date(latestByUser[log.user_id].accessed_at)) {
+            latestByUser[log.user_id] = log;
+          }
+        });
+
+        const uniqueUserIds = Object.keys(latestByUser);
+
         if (uniqueUserIds.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
@@ -1252,17 +1276,27 @@ export async function getOnlineUsers() {
             .in('id', uniqueUserIds);
 
           const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
           return uniqueUserIds.map(id => {
             const p = profilesMap.get(id);
-            const lastLog = data.find(l => l.user_id === id);
-            return p ? { ...p, last_activity: lastLog?.accessed_at || p.updated_at } : { 
-              id, name: 'Usuario', email: '', avatar_url: null, specialty: '', crm: '', last_activity: new Date().toISOString()
+            const lastLog = latestByUser[id];
+            return p ? { 
+              ...p, 
+              last_activity: lastLog?.accessed_at || p.updated_at 
+            } : { 
+              id, 
+              name: 'Usuario', 
+              email: '', 
+              avatar_url: null, 
+              specialty: '', 
+              crm: '', 
+              last_activity: lastLog?.accessed_at || new Date().toISOString()
             };
-          });
+          }).sort((a, b) => new Date(b.last_activity) - new Date(a.last_activity));
         }
       }
     } catch (e) {
-      // access_logs pode nao existir, continua para fallback
+      console.log('access_logs não disponível, usando fallback');
     }
 
     // FALLBACK: Usa profiles.updated_at como indicador de atividade
@@ -1966,7 +2000,6 @@ export async function logAccess(page) {
       .from('access_logs')
       .insert([{
         user_id: user.id,
-        action: page || 'page_view',
         page: page || 'page_view',
         accessed_at: new Date().toISOString(),
         created_at: new Date().toISOString()
