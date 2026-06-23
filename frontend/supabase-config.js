@@ -1674,10 +1674,16 @@ export async function getAccessStatsByHour() {
       hourlyStats[i] = 0;
     }
 
+    // Count unique users per hour, not total logs (prevents inflation from polling)
+    const hourUsers = {};
     (data || []).forEach(log => {
       const hour = new Date(log.accessed_at).getHours();
-      hourlyStats[hour] = (hourlyStats[hour] || 0) + 1;
+      if (!hourUsers[hour]) hourUsers[hour] = new Set();
+      hourUsers[hour].add(log.user_id);
     });
+    for (let i = 0; i < 24; i++) {
+      hourlyStats[i] = hourUsers[i] ? hourUsers[i].size : 0;
+    }
 
     return Object.entries(hourlyStats).map(([hour, count]) => ({
       hour_of_day: parseInt(hour),
@@ -1987,6 +1993,9 @@ export async function getTopPages(limit = 10) {
 /**
  * Registra um acesso na tabela access_logs
  */
+// Deduplication cache for logAccess (per page, per session)
+const _logAccessCache = new Map();
+
 export async function logAccess(page) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -1995,6 +2004,16 @@ export async function logAccess(page) {
     if (!user?.id) {
       return { success: false, reason: 'no_user' };
     }
+
+    const cacheKey = `${user.id}:${page}`;
+    const now = Date.now();
+    const lastLogged = _logAccessCache.get(cacheKey);
+
+    // Deduplicate: only log same page once per 5 minutes per user
+    if (lastLogged && (now - lastLogged) < 5 * 60 * 1000) {
+      return { success: true, reason: 'deduplicated' };
+    }
+    _logAccessCache.set(cacheKey, now);
 
     const { error } = await supabase
       .from('access_logs')
