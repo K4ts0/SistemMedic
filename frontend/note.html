@@ -17,7 +17,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-brand">
-        <div class="logo-icon">??</div>
+        <div class="logo-icon">📝</div>
         <div>
           <h1>Way For System</h1>
           <div class="subtitle">Nova Anotação</div>
@@ -26,36 +26,36 @@
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="position:relative;">
           <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span class="bell-icon">??</span>
+            <span class="bell-icon">🔔</span>
             <span class="notification-badge hidden" id="notificationBadge">0</span>
           </button>
           <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-dropdown-header">
-              <h3>?? Notificações</h3>
+              <h3>🔔 Notificações</h3>
               <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
             </div>
             <div class="notification-list" id="notificationList">
               <div class="notification-empty">
-                <div class="empty-icon">??</div>
+                <div class="empty-icon">📭</div>
                 <p>Sem notificações</p>
               </div>
             </div>
           </div>
         </div>
         <div class="user-info" id="userInfo">
-          <div class="avatar" id="headerAvatar">??</div>
+          <div class="avatar" id="headerAvatar">👤</div>
           <span class="user-name" id="headerName">...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">??</button>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
         </div>
       </div>
     </div>
 
     <a href="#" class="back-link" id="backLink">
-      <span>?</span> Voltar
+      <span>⬅️</span> Voltar
     </a>
 
     <div class="card">
-      <h1 id="formTitle" style="margin-bottom:8px;">?? Nova Anotação</h1>
+      <h1 id="formTitle" style="margin-bottom:8px;">✏️ Nova Anotação</h1>
       <p id="formDesc" style="color:var(--gray-400); margin-bottom:24px; font-size:0.95rem;">
         Use o editor abaixo para formatar sua anotação médica.
       </p>
@@ -92,10 +92,10 @@
               <button type="button" data-cmd="underline" title="Sublinhado (Ctrl+U)"><u>U</u></button>
               <button type="button" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
               <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda">??</button>
-              <button type="button" data-cmd="justifyCenter" title="Centralizar">??</button>
-              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">?</button>
-              <button type="button" data-cmd="justifyFull" title="Justificar">??</button>
+              <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda">⏪</button>
+              <button type="button" data-cmd="justifyCenter" title="Centralizar">⏺</button>
+              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">⏩</button>
+              <button type="button" data-cmd="justifyFull" title="Justificar">⏹</button>
               <div class="toolbar-separator"></div>
               <button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores">• Lista</button>
               <button type="button" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
@@ -110,9 +110,9 @@
               <button type="button" data-cmd="formatBlock" data-value="H2" title="Título 2">H2</button>
               <button type="button" data-cmd="formatBlock" data-value="P" title="Parágrafo">P</button>
               <div class="toolbar-separator"></div>
-              <button type="button" data-cmd="removeFormat" title="Remover formatação">??</button>
-              <button type="button" data-cmd="undo" title="Desfazer">??</button>
-              <button type="button" data-cmd="redo" title="Refazer">?</button>
+              <button type="button" data-cmd="removeFormat" title="Remover formatação">🧹</button>
+              <button type="button" data-cmd="undo" title="Desfazer">↩️</button>
+              <button type="button" data-cmd="redo" title="Refazer">↪️</button>
             </div>
             <div class="rich-editor" id="richEditor" contenteditable="true" data-placeholder="Digite sua anotação aqui... Use o toolbar acima para formatar o texto."></div>
           </div>
@@ -120,10 +120,10 @@
         </div>
         <div class="buttons-row" style="margin-top:8px;">
           <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
-            <span>??</span> Salvar
+            <span>💾</span> Salvar
           </button>
           <button type="button" class="btn btn-secondary" id="cancelBtn">
-            <span>?</span> Cancelar
+            <span>❌</span> Cancelar
           </button>
         </div>
       </form>
@@ -134,14 +134,14 @@
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3><span>?</span> Nova Mensagem</h3>
-        <button class="modal-close" id="modalClose">?</button>
+        <h3><span>📩</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
       </div>
       <div class="modal-body">
         <div class="modal-message-text" id="modalMessageText"></div>
         <div class="modal-message-meta">
           <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">??</div>
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
             <span id="modalSenderName">...</span>
           </div>
           <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
@@ -177,7 +177,7 @@
 
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
-            currentUserId = user.id;
+      currentUserId = user.id;
 
       // Registra acesso
       try { await logAccess('note'); } catch(e) {}
@@ -232,7 +232,7 @@
       editor.addEventListener('input', () => { hiddenContent.value = editor.innerHTML; });
 
       if (isEditing) {
-        document.getElementById('formTitle').textContent = '? Editar Anotação';
+        document.getElementById('formTitle').textContent = '✏️ Editar Anotação';
         document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
         document.getElementById('formDesc').textContent = 'Atualize sua anotação usando o editor abaixo.';
         try {
@@ -259,7 +259,7 @@
 
         const saveBtn = document.getElementById('saveBtn');
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span>?</span> Salvando...';
+        saveBtn.innerHTML = '<span>⏳</span> Salvando...';
 
         try {
           if (isEditing) await updateNote(noteId, title, content);
@@ -269,7 +269,7 @@
         } catch (error) {
           showMessage(error.message || 'Erro ao salvar.', 'erro');
           saveBtn.disabled = false;
-          saveBtn.innerHTML = '<span>??</span> Salvar';
+          saveBtn.innerHTML = '<span>💾</span> Salvar';
         }
       });
 
@@ -316,7 +316,7 @@
         try {
           const messages = await getUnreadMessages();
           const list = document.getElementById('notificationList');
-          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">??</div><p>Sem notificações</p></div>`; return; }
+          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`; return; }
           list.innerHTML = messages.map(msg => {
             const sender = msg.sender || {};
             const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
