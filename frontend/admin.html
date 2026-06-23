@@ -651,19 +651,19 @@
     <!-- Header -->
     <div class="admin-header">
       <div class="admin-header-brand">
-        <div class="logo-icon">🛡️</div>
+        <div class="logo-icon">???</div>
         <div>
           <h1>Way For System</h1>
           <div class="subtitle">Painel Administrativo</div>
         </div>
       </div>
       <div class="header-actions">
-        <span class="admin-badge">🔒 Administrador</span>
+        <span class="admin-badge">?? Administrador</span>
         <div class="admin-user-info">
-          <div class="avatar" id="headerAvatar">👤</div>
+          <div class="avatar" id="headerAvatar">??</div>
           <span class="user-name" id="headerName">...</span>
         </div>
-        <button class="logout-btn" id="logoutBtn" title="Sair">🚪</button>
+        <button class="logout-btn" id="logoutBtn" title="Sair">??</button>
       </div>
     </div>
 
@@ -677,7 +677,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <span>Próxima atualização em <span class="countdown" id="countdown">60</span>s</span>
-        <button class="refresh-now-btn" id="refreshNowBtn">🔄 Atualizar agora</button>
+        <button class="refresh-now-btn" id="refreshNowBtn">?? Atualizar agora</button>
       </div>
     </div>
 
@@ -685,15 +685,15 @@
     <div class="stats-grid">
       <div class="stat-card-admin" style="--card-color:#3B82F6;--icon-bg:rgba(59,130,246,0.12);--icon-shadow:rgba(59,130,246,0.2);--trend-bg:rgba(16,185,129,0.1);--trend-color:#10B981;">
         <div class="stat-top">
-          <div class="stat-icon">👥</div>
-          <div class="stat-trend"><span>↑</span> <span id="usersTrend">+0</span></div>
+          <div class="stat-icon">??</div>
+          <div class="stat-trend"><span>?</span> <span id="usersTrend">+0</span></div>
         </div>
         <div class="stat-value" id="statTotalUsers">--</div>
         <div class="stat-label">Total de Usuários</div>
       </div>
       <div class="stat-card-admin" style="--card-color:#10B981;--icon-bg:rgba(16,185,129,0.12);--icon-shadow:rgba(16,185,129,0.2);--trend-bg:rgba(16,185,129,0.1);--trend-color:#10B981;">
         <div class="stat-top">
-          <div class="stat-icon">🟢</div>
+          <div class="stat-icon">??</div>
           <div class="stat-trend"><span class="live-dot" style="animation:none;margin:0;"></span> Ao vivo</div>
         </div>
         <div class="stat-value" id="statOnlineNow">--</div>
@@ -701,16 +701,16 @@
       </div>
       <div class="stat-card-admin" style="--card-color:#F59E0B;--icon-bg:rgba(245,158,11,0.12);--icon-shadow:rgba(245,158,11,0.2);--trend-bg:rgba(245,158,11,0.1);--trend-color:#F59E0B;">
         <div class="stat-top">
-          <div class="stat-icon">📝</div>
-          <div class="stat-trend"><span>↑</span> <span id="notesTrend">+0</span></div>
+          <div class="stat-icon">??</div>
+          <div class="stat-trend"><span>?</span> <span id="notesTrend">+0</span></div>
         </div>
         <div class="stat-value" id="statTotalNotes">--</div>
         <div class="stat-label">Total de Anotações</div>
       </div>
       <div class="stat-card-admin" style="--card-color:#8B5CF6;--icon-bg:rgba(139,92,246,0.12);--icon-shadow:rgba(139,92,246,0.2);--trend-bg:rgba(139,92,246,0.1);--trend-color:#8B5CF6;">
         <div class="stat-top">
-          <div class="stat-icon">⏰</div>
-          <div class="stat-trend">📊 Hoje</div>
+          <div class="stat-icon">?</div>
+          <div class="stat-trend">?? Hoje</div>
         </div>
         <div class="stat-value" id="statPeakHour">--:--</div>
         <div class="stat-label">Pico de Acesso</div>
@@ -720,16 +720,16 @@
     <!-- Charts -->
     <div class="charts-row">
       <div class="chart-card">
-        <h3><span style="font-size:1.4rem;">📈</span> Horários Mais Acessados (Últimas 24h)</h3>
+        <h3><span style="font-size:1.4rem;">??</span> Horários Mais Acessados (Últimas 24h)</h3>
         <div class="chart-container">
           <canvas id="hoursChart"></canvas>
         </div>
       </div>
       <div class="chart-card">
-        <h3><span style="font-size:1.4rem;">🔥</span> Picos de Acesso por Hora (Hoje)</h3>
+        <h3><span style="font-size:1.4rem;">??</span> Picos de Acesso por Hora (Hoje)</h3>
         <div class="peak-hours-grid" id="peakHours">
           <div class="empty-state-cell">
-            <div class="icon">⏳</div>
+            <div class="icon">?</div>
             <h4>Carregando dados...</h4>
           </div>
         </div>
@@ -740,7 +740,7 @@
     <div class="admin-section">
       <div class="section-header">
         <div class="section-title">
-          <div class="icon" style="--title-icon-bg:rgba(16,185,129,0.12);--title-icon-shadow:rgba(16,185,129,0.2);">🟢</div>
+          <div class="icon" style="--title-icon-bg:rgba(16,185,129,0.12);--title-icon-shadow:rgba(16,185,129,0.2);">??</div>
           <span>Usuários Online / Ativos Agora</span>
         </div>
         <span style="font-size:0.8rem;color:var(--admin-muted);" id="onlineCountBadge">0 usuários</span>
@@ -760,7 +760,7 @@
           <tbody id="onlineUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">⏳</div>
+                <div class="icon">?</div>
                 <h4>Carregando usuários...</h4>
                 <p>Aguarde enquanto buscamos os dados</p>
               </div>
@@ -774,17 +774,17 @@
     <div class="admin-section">
       <div class="section-header">
         <div class="section-title">
-          <div class="icon" style="--title-icon-bg:rgba(59,130,246,0.12);--title-icon-shadow:rgba(59,130,246,0.2);">⚙️</div>
+          <div class="icon" style="--title-icon-bg:rgba(59,130,246,0.12);--title-icon-shadow:rgba(59,130,246,0.2);">??</div>
           <span>Gerenciamento de Usuários</span>
         </div>
       </div>
       <div class="search-bar-admin">
         <input type="text" id="searchUserInput" placeholder="Buscar por nome, email, CRM ou ID..." />
         <button class="btn-admin btn-admin-secondary" id="searchUserBtn">
-          <span>🔍</span> Buscar
+          <span>??</span> Buscar
         </button>
         <button class="btn-admin btn-admin-danger" id="deleteUserBtn" disabled>
-          <span>🗑️</span> Excluir Selecionado
+          <span>???</span> Excluir Selecionado
         </button>
       </div>
       <div class="table-wrap">
@@ -802,7 +802,7 @@
           <tbody id="allUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">⏳</div>
+                <div class="icon">?</div>
                 <h4>Carregando usuários...</h4>
               </div>
             </td></tr>
@@ -815,38 +815,38 @@
     <div class="admin-section">
       <div class="section-header">
         <div class="section-title">
-          <div class="icon" style="--title-icon-bg:rgba(16,185,129,0.12);--title-icon-shadow:rgba(16,185,129,0.2);">📋</div>
+          <div class="icon" style="--title-icon-bg:rgba(16,185,129,0.12);--title-icon-shadow:rgba(16,185,129,0.2);">??</div>
           <span>Relatórios do Sistema</span>
         </div>
       </div>
       <div class="reports-grid">
         <div class="report-card" onclick="exportReport('users')">
           <div class="report-info">
-            <h4>📊 Atividade de Usuários</h4>
+            <h4>?? Atividade de Usuários</h4>
             <p>Lista completa com cadastro, acesso e anotações.</p>
           </div>
-          <div class="report-icon" style="--r-icon-bg:rgba(59,130,246,0.12);--r-icon-shadow:rgba(59,130,246,0.2);">📥</div>
+          <div class="report-icon" style="--r-icon-bg:rgba(59,130,246,0.12);--r-icon-shadow:rgba(59,130,246,0.2);">??</div>
         </div>
         <div class="report-card" onclick="exportReport('notes')">
           <div class="report-info">
-            <h4>📝 Anotações</h4>
+            <h4>?? Anotações</h4>
             <p>Todas as anotações com autor, data e conteúdo.</p>
           </div>
-          <div class="report-icon" style="--r-icon-bg:rgba(245,158,11,0.12);--r-icon-shadow:rgba(245,158,11,0.2);">📥</div>
+          <div class="report-icon" style="--r-icon-bg:rgba(245,158,11,0.12);--r-icon-shadow:rgba(245,158,11,0.2);">??</div>
         </div>
         <div class="report-card" onclick="exportReport('messages')">
           <div class="report-info">
-            <h4>💬 Mensagens</h4>
+            <h4>?? Mensagens</h4>
             <p>Histórico de chat com datas e participantes.</p>
           </div>
-          <div class="report-icon" style="--r-icon-bg:rgba(139,92,246,0.12);--r-icon-shadow:rgba(139,92,246,0.2);">📥</div>
+          <div class="report-icon" style="--r-icon-bg:rgba(139,92,246,0.12);--r-icon-shadow:rgba(139,92,246,0.2);">??</div>
         </div>
         <div class="report-card" onclick="exportReport('logs')">
           <div class="report-info">
-            <h4>📋 Logs de Acesso</h4>
+            <h4>?? Logs de Acesso</h4>
             <p>Registro completo de acessos ao sistema.</p>
           </div>
-          <div class="report-icon" style="--r-icon-bg:rgba(6,182,212,0.12);--r-icon-shadow:rgba(6,182,212,0.2);">📥</div>
+          <div class="report-icon" style="--r-icon-bg:rgba(6,182,212,0.12);--r-icon-shadow:rgba(6,182,212,0.2);">??</div>
         </div>
       </div>
     </div>
@@ -855,7 +855,7 @@
   <!-- Modal -->
   <div class="admin-modal-overlay" id="confirmModal">
     <div class="admin-modal-content">
-      <div class="admin-modal-icon">⚠️</div>
+      <div class="admin-modal-icon">??</div>
       <h3 class="admin-modal-title">Confirmar Exclusão</h3>
       <p class="admin-modal-text" id="confirmModalText">Tem certeza?</p>
       <div class="admin-modal-actions">
@@ -956,11 +956,11 @@
       document.getElementById('refreshNowBtn').addEventListener('click', async () => {
         const btn = document.getElementById('refreshNowBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Atualizando...';
+        btn.textContent = '? Atualizando...';
         await loadAllData();
         resetCountdown();
         btn.disabled = false;
-        btn.textContent = '🔄 Atualizar agora';
+        btn.textContent = '?? Atualizar agora';
         showToast('Dados atualizados!','success');
       });
 
@@ -1115,7 +1115,7 @@
       if (peaks.length === 0) {
         document.getElementById('peakHours').innerHTML = `
           <div class="empty-state-cell" style="grid-column:1/-1;">
-            <div class="icon">📊</div>
+            <div class="icon">??</div>
             <h4>Sem dados de acesso ainda</h4>
             <p>Os dados aparecerão quando os usuários começarem a usar o sistema.</p>
           </div>
@@ -1144,7 +1144,7 @@
         const tbody = document.getElementById('onlineUsersTable');
 
         if (!users || !users.length) {
-          tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">👤</div><h4>Nenhum usuário ativo no momento</h4><p>Os usuários aparecerão aqui quando estiverem online.</p></div></td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Nenhum usuário ativo no momento</h4><p>Os usuários aparecerão aqui quando estiverem online.</p></div></td></tr>`;
           return;
         }
 
@@ -1169,7 +1169,7 @@
         }).join('');
       } catch (e) {
         console.error('Online users error:', e);
-        document.getElementById('onlineUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">⚠️</div><h4>Erro ao carregar</h4><p>${e.message||'Tente novamente'}</p></div></td></tr>`;
+        document.getElementById('onlineUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Erro ao carregar</h4><p>${e.message||'Tente novamente'}</p></div></td></tr>`;
       }
     }
 
@@ -1186,14 +1186,14 @@
         await renderUsersTable(allUsersData);
       } catch (e) {
         console.error('All users error:', e);
-        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">⚠️</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
+        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
       }
     }
 
     async function renderUsersTable(users) {
       const tbody = document.getElementById('allUsersTable');
       if (!users || !users.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">📭</div><h4>Nenhum usuário encontrado</h4></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Nenhum usuário encontrado</h4></div></td></tr>`;
         return;
       }
 
@@ -1211,7 +1211,7 @@
               <div class="user-cell">
                 <div class="user-avatar-sm">${u.avatar_url?`<img src="${u.avatar_url}" alt="">`:initials}</div>
                 <div>
-                  <div class="user-name">${u.name||'Sem nome'}${isAdmin?'<span class="admin-tag">👑 ADMIN</span>':''}</div>
+                  <div class="user-name">${u.name||'Sem nome'}${isAdmin?'<span class="admin-tag">?? ADMIN</span>':''}</div>
                   <div class="user-email">${u.email}</div>
                 </div>
               </div>
@@ -1248,7 +1248,7 @@
     function updateDeleteButton() {
       const btn = document.getElementById('deleteUserBtn');
       btn.disabled = !selectedUsers.size;
-      btn.innerHTML = `<span>🗑️</span> Excluir ${selectedUsers.size?`(${selectedUsers.size})`:''}`;
+      btn.innerHTML = `<span>???</span> Excluir ${selectedUsers.size?`(${selectedUsers.size})`:''}`;
     }
 
     // ===== EXCLUSÃO CORRIGIDA =====
@@ -1258,7 +1258,7 @@
     
       const btn = document.getElementById('deleteUserBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Excluindo...';
+      btn.innerHTML = '<span>?</span> Excluindo...';
     
       try {
         // Pega a sessão atual para o token JWT
@@ -1300,7 +1300,7 @@
         console.error(error);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>🗑️</span> Excluir Selecionado';
+        btn.innerHTML = '<span>???</span> Excluir Selecionado';
       }
     }
 
