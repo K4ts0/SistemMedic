@@ -872,9 +872,6 @@
     import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
       getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary, logAccess } from './supabase-config.js';
 
-    // Define a URL do Supabase (caso não seja exportada)
-    const SUPABASE_URL = supabase.supabaseUrl || 'https://zqwuzytzeytpypbpiads.supabase.co';
-
     const ADMIN_EMAIL = 'admin@wayforsystem.med';
     let selectedUsers = new Set();
     let allUsersData = [];
@@ -883,28 +880,96 @@
     let countdownInterval = null;
     let countdownValue = 60;
 
-    (async function init() {
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
+    // ============================================================
+    // 🔐 VERIFICAÇÃO DE ADMIN - EXECUTADA PRIMEIRO
+    // ============================================================
+    (async function checkAdminAndInit() {
+      try {
+        // 1. Pega o usuário atual SEM redirecionamentos
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.warn('Usuário não autenticado, redirecionando para login...');
+          window.location.href = 'index.html';
+          return;
+        }
 
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
+        // 2. Verifica se é o ADMIN
+        if (user.email !== ADMIN_EMAIL) {
+          showToast('Acesso negado. Redirecionando para o dashboard...', 'error');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1500);
+          return;
+        }
 
-      if (user.email !== ADMIN_EMAIL) {
-        showToast('Acesso negado. Redirecionando...','error');
-        setTimeout(() => window.location.href = 'dashboard.html', 2000);
-        return;
+        // 3. É ADMIN! Agora valida a sessão (mas NÃO redireciona se falhar)
+        const isValid = await validateAdminSession();
+        if (!isValid) {
+          // Se a sessão for inválida, faz logout e redireciona para login
+          await signOut();
+          localStorage.removeItem('session_id');
+          window.location.href = 'index.html';
+          return;
+        }
+
+        // 4. Inicializa o painel admin
+        await initAdmin();
+
+      } catch (error) {
+        console.error('Erro na verificação de admin:', error);
+        showToast('Erro ao verificar permissões. Redirecionando...', 'error');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 2000);
       }
+    })();
 
+    // ============================================================
+    // 🔐 VALIDAÇÃO DE SESSÃO ESPECÍFICA PARA ADMIN
+    // ============================================================
+    async function validateAdminSession() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        // Verifica se o email do admin bate
+        if (user.email !== ADMIN_EMAIL) return false;
+
+        // Verifica sessão única
+        const storedSession = localStorage.getItem('session_id');
+        const serverSession = user.user_metadata?.session_id;
+        
+        if (serverSession && storedSession && serverSession !== storedSession) {
+          // Sessão inválida - foi feito login em outro dispositivo
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Erro ao validar sessão admin:', error);
+        return false;
+      }
+    }
+
+    // ============================================================
+    // 🚀 INICIALIZAÇÃO DO PAINEL ADMIN
+    // ============================================================
+    async function initAdmin() {
       try {
         const profile = await getUserProfile();
         document.getElementById('headerName').textContent = profile.name || profile.email;
         const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        else avatar.textContent = (profile.name || 'A').charAt(0).toUpperCase();
-      } catch (e) {}
+        if (profile.avatar_url) {
+          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        } else {
+          avatar.textContent = (profile.name || 'A').charAt(0).toUpperCase();
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar perfil:', e);
+      }
 
-      // Registra acesso do admin — AGORA COM TRY/CATCH ROBUSTO
+      // Registra acesso do admin (tabela access_logs pode não existir ainda)
       try { 
         await logAccess('admin'); 
       } catch(e) {
@@ -965,13 +1030,23 @@
         resetCountdown();
         btn.disabled = false;
         btn.textContent = '🔄 Atualizar agora';
-        showToast('Dados atualizados!','success');
+        showToast('Dados atualizados!', 'success');
       });
 
-      setInterval(async () => { await checkSingleSession(); }, 10000);
-    })();
+      // Verificação periódica de sessão única
+      setInterval(async () => { 
+        const isValid = await validateAdminSession();
+        if (!isValid) {
+          await signOut();
+          localStorage.removeItem('session_id');
+          window.location.href = 'index.html';
+        }
+      }, 10000);
+    }
 
-    // ===== AUTO REFRESH =====
+    // ============================================================
+    // 📊 AUTO REFRESH
+    // ============================================================
     function startAutoRefresh() {
       refreshInterval = setInterval(async () => {
         await loadAllData();
@@ -1003,7 +1078,9 @@
       resetCountdown();
     }
 
-    // ===== STATS REAIS DO BANCO =====
+    // ============================================================
+    // 📈 STATS
+    // ============================================================
     async function loadStats() {
       try {
         const summary = await getAdminSummary();
@@ -1038,7 +1115,9 @@
       }
     }
 
-    // ===== ESTATÍSTICAS POR HORA (GRÁFICO REAL) =====
+    // ============================================================
+    // 📊 ESTATÍSTICAS POR HORA (GRÁFICO)
+    // ============================================================
     async function loadHourlyStats() {
       try {
         const stats = await getAccessStatsByHour();
@@ -1100,14 +1179,14 @@
         loadPeakHours(data);
       } catch (e) {
         console.error('Hourly stats error:', e);
-        // Mostrar gráfico vazio mas funcional
         loadPeakHours(new Array(24).fill(0));
       }
     }
 
-    // ===== PEAK HOURS (REAIS) =====
+    // ============================================================
+    // 🔥 PEAK HOURS
+    // ============================================================
     function loadPeakHours(data) {
-      const mx = Math.max(...data, 1);
       const total = data.reduce((a,b) => a+b, 0) || 1;
 
       const peaks = data
@@ -1141,7 +1220,9 @@
       `).join('');
     }
 
-    // ===== ONLINE USERS (REAIS) =====
+    // ============================================================
+    // 🟢 ONLINE USERS
+    // ============================================================
     async function loadOnlineUsers() {
       try {
         const users = await getOnlineUsers();
@@ -1178,7 +1259,9 @@
       }
     }
 
-    // ===== ALL USERS =====
+    // ============================================================
+    // 👥 ALL USERS
+    // ============================================================
     async function loadAllUsers() {
       try {
         const { data: profiles, error } = await supabase
@@ -1256,8 +1339,10 @@
       btn.innerHTML = `<span>🗑️</span> Excluir ${selectedUsers.size?`(${selectedUsers.size})`:''}`;
     }
 
-    // ===== EXCLUSÃO CORRIGIDA =====
-   async function deleteSelectedUsers() {
+    // ============================================================
+    // 🗑️ DELETE USERS
+    // ============================================================
+    async function deleteSelectedUsers() {
       const uids = Array.from(selectedUsers);
       if (!uids.length) return;
 
@@ -1266,7 +1351,6 @@
       btn.innerHTML = '<span>⏳</span> Excluindo...';
 
       try {
-        // Pega a sessão atual para o token JWT
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error("Sessão expirada. Faça login novamente.");
@@ -1309,7 +1393,9 @@
       }
     }
 
-    // ===== REPORTS =====
+    // ============================================================
+    // 📋 REPORTS
+    // ============================================================
     window.exportReport = async function(type) {
       try {
         let csv = '', filename = '';
@@ -1353,6 +1439,9 @@
       }
     };
 
+    // ============================================================
+    // 🕐 UTILITÁRIOS
+    // ============================================================
     function getTimeAgo(d) {
       const s = Math.floor((new Date() - new Date(d)) / 1000);
       if (s < 60) return 'Agora';
