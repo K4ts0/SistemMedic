@@ -523,7 +523,7 @@
     }
     .prescription-box li:last-child { border-bottom: none; }
     .prescription-box li::before {
-      content: "??";
+      content: "?";
       position: absolute;
       left: 0;
       top: 6px;
@@ -1039,7 +1039,7 @@
 
     <!-- Popular CIDs -->
     <div class="card popular-section">
-      <div class="popular-title">?? CIDs Mais Consultados</div>
+      <div class="popular-title">? CIDs Mais Consultados</div>
       <div class="popular-tags">
         <span class="popular-tag" data-code="A09">A09 — Gastroenterite</span>
         <span class="popular-tag" data-code="E11">E11 — Diabetes T2</span>
@@ -1261,7 +1261,7 @@
           ).join('');
 
           const matchLabel = r.score >= 80 ? '? Melhor' : 
-                            r.score >= 50 ? '?? Alta' : 
+                            r.score >= 50 ? '? Alta' : 
                             r.score >= 20 ? '? Boa' : 'Relacionado';
 
           return `
@@ -1277,7 +1277,7 @@
               <div class="result-symptoms">${symptomsHtml}</div>
               <div class="result-details" id="details-${index}">
                 <div class="prescription-box">
-                  <h4>?? Prescrição Sugerida</h4>
+                  <h4>? Prescrição Sugerida</h4>
                   <ul>${r.prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>
                   <div class="prescription-warning">
                     ?? Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere contraindicações do paciente.
