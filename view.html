@@ -2,42 +2,247 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualizar Anotação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Visualizar Anotação — Way For System</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
-    <a href="dashboard.html" class="voltar">← Voltar</a>
-    <h1 id="noteTitle"></h1>
-    <div id="noteContent" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;"></div>
-    <div style="margin-top: 20px;">
-      <button onclick="window.location.href='note.html?id=' + getNoteId()">Editar</button>
+    <!-- Header -->
+    <div class="header">
+      <div class="header-brand">
+        <div class="logo-icon">??</div>
+        <div>
+          <h1>Way For System</h1>
+          <div class="subtitle">Visualizar Anotação</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <span class="bell-icon">??</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>?? Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty">
+                <div class="empty-icon">??</div>
+                <p>Sem notificações</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="user-info" id="userInfo">
+          <div class="avatar" id="headerAvatar">??</div>
+          <span class="user-name" id="headerName">...</span>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">??</button>
+        </div>
+      </div>
+    </div>
+
+    <a href="#" class="back-link" id="backLink">
+      <span>??</span> Voltar
+    </a>
+
+    <div class="note-view">
+      <h1 id="noteTitle">Carregando...</h1>
+      <div class="note-meta-bar">
+        <span class="badge badge-primary" id="noteBadge">?? Anotação</span>
+        <span class="note-date" id="noteDate">?? Carregando...</span>
+      </div>
+      <div class="note-body" id="noteContent"></div>
+      <div class="buttons-row" style="margin-top:32px; padding-top:24px; border-top:1px solid var(--gray-100);">
+        <button class="btn btn-primary" id="btnEditar">
+          <span>??</span> Editar
+        </button>
+        <button class="btn btn-secondary" id="btnVoltar">
+          <span>??</span> Voltar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Mensagem -->
+  <div class="modal-overlay" id="messageModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><span>??</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">?</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message-text" id="modalMessageText"></div>
+        <div class="modal-message-meta">
+          <div class="sender-info">
+            <div class="sender-avatar" id="modalSenderAvatar">??</div>
+            <span id="modalSenderName">...</span>
+          </div>
+          <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
+        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
-    import { getNote, getCurrentUser } from './supabase-config.js';
+    import { getNote, getCurrentUser, getUserProfile, signOut, ensureValidSession, checkSingleSession,
+      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, logAccess } from './supabase-config.js';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const noteId = urlParams.get('id');
+    let currentUserId = null;
+    let lastMessageId = null;
 
-    if (!noteId) {
-      window.location.href = 'dashboard.html';
+    (async function init() {
+      document.getElementById('backLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'dashboard.html';
+      });
+      document.getElementById('btnVoltar').addEventListener('click', () => {
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'dashboard.html';
+      });
+
+      const isValid = await ensureValidSession();
+      if (!isValid) return;
+
+      const user = await getCurrentUser();
+      if (!user) { window.location.href = 'index.html'; return; }
+      currentUserId = user.id;
+
+      // Registra acesso
+      try { await logAccess('view'); } catch(e) {}
+
+      // Header
+      try {
+        const profile = await getUserProfile();
+        document.getElementById('headerName').textContent = profile.name || profile.email;
+        const avatar = document.getElementById('headerAvatar');
+        if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        else avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+      } catch (e) {}
+
+      // Notificações
+      setupNotifications();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const noteId = urlParams.get('id');
+      if (!noteId) { window.location.href = 'dashboard.html'; }
+
+      try {
+        const note = await getNote(noteId);
+        document.getElementById('noteTitle').textContent = note.title;
+        document.getElementById('noteContent').innerHTML = note.content || '';
+        const badge = document.getElementById('noteBadge');
+        if (note.is_favorite) { badge.textContent = '? Favorita'; badge.className = 'badge badge-success'; }
+        document.getElementById('noteDate').innerHTML = `<span>??</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}`;
+        document.getElementById('btnEditar').addEventListener('click', () => { window.location.href = `note.html?id=${noteId}`; });
+      } catch (error) { alert('Erro ao carregar nota.'); window.location.href = 'dashboard.html'; }
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await signOut(); localStorage.removeItem('session_id'); window.location.href = 'index.html';
+      });
+
+      setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkNewMessages(); }, 8000);
+      await checkNewMessages();
+    })();
+
+    function setupNotifications() {
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const badge = document.getElementById('notificationBadge');
+
+      bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) loadNotifications();
+      });
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+      });
+      document.getElementById('markAllRead').addEventListener('click', async () => {
+        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
+      });
+
+      async function loadNotifications() {
+        try {
+          const messages = await getUnreadMessages();
+          const list = document.getElementById('notificationList');
+          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">??</div><p>Sem notificações</p></div>`; return; }
+          list.innerHTML = messages.map(msg => {
+            const sender = msg.sender || {};
+            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+            return `<div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}"><div class="notif-avatar">${avatar}</div><div class="notif-content"><div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div><div class="notif-text">${escapeHtml(msg.content)}</div><div class="notif-time">${time}</div></div></div>`;
+          }).join('');
+          document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              const msgId = item.dataset.msgId;
+              const msg = messages.find(m => m.id === msgId);
+              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+            });
+          });
+        } catch(e) { console.error(e); }
+      }
+
+      async function checkNewMessages() {
+        try {
+          const count = await getUnreadCount();
+          updateBellState(count);
+          if (count > 0) {
+            const messages = await getUnreadMessages();
+            if (messages.length > 0 && messages[0].id !== lastMessageId) {
+              lastMessageId = messages[0].id;
+              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
+            }
+          }
+        } catch(e) {}
+      }
+
+      function updateBellState(count) {
+        badge.textContent = count;
+        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
+        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
+      }
+
+      const modal = document.getElementById('messageModal');
+      window.showMessageModal = function(msg) {
+        const sender = msg.sender || {};
+        document.getElementById('modalMessageText').textContent = msg.content;
+        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+        const avatar = document.getElementById('modalSenderAvatar');
+        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+        modal.dataset.senderId = msg.sender_id;
+        modal.classList.add('show');
+      };
+      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
+      document.getElementById('modalGoToChat').addEventListener('click', () => {
+        const senderId = modal.dataset.senderId;
+        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
+        window.location.href = 'chat.html';
+      });
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
     }
 
-    const user = await getCurrentUser();
-    if (!user) window.location.href = 'index.html';
-
-    try {
-      const note = await getNote(noteId);
-      document.getElementById('noteTitle').textContent = note.title;
-      document.getElementById('noteContent').textContent = note.content;
-      window.getNoteId = () => noteId;
-    } catch (error) {
-      alert('Erro ao carregar nota.');
-      window.location.href = 'dashboard.html';
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
   </script>
 </body>
