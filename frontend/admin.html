@@ -720,7 +720,7 @@
     <!-- Charts -->
     <div class="charts-row">
       <div class="chart-card">
-        <h3><span style="font-size:1.4rem;">??</span> Horários Mais Acessados (Últimas 24h)</h3>
+        <h3><span style="font-size:1.4rem;">F</span> Horários Mais Acessados (Últimas 24h)</h3>
         <div class="chart-container">
           <canvas id="hoursChart"></canvas>
         </div>
@@ -729,7 +729,7 @@
         <h3><span style="font-size:1.4rem;">??</span> Picos de Acesso por Hora (Hoje)</h3>
         <div class="peak-hours-grid" id="peakHours">
           <div class="empty-state-cell">
-            <div class="icon">??</div>
+            <div class="icon">?</div>
             <h4>Carregando dados...</h4>
           </div>
         </div>
@@ -760,7 +760,7 @@
           <tbody id="onlineUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">??</div>
+                <div class="icon">?</div>
                 <h4>Carregando usuários...</h4>
                 <p>Aguarde enquanto buscamos os dados</p>
               </div>
@@ -784,7 +784,7 @@
           <span>??</span> Buscar
         </button>
         <button class="btn-admin btn-admin-danger" id="deleteUserBtn" disabled>
-          <span>???</span> Excluir Selecionado
+          <span>????</span> Excluir Selecionado
         </button>
       </div>
       <div class="table-wrap">
@@ -802,7 +802,7 @@
           <tbody id="allUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">??</div>
+                <div class="icon">?</div>
                 <h4>Carregando usuários...</h4>
               </div>
             </td></tr>
@@ -1120,7 +1120,7 @@
       if (peaks.length === 0) {
         document.getElementById('peakHours').innerHTML = `
           <div class="empty-state-cell" style="grid-column:1/-1;">
-            <div class="icon">??</div>
+            <div class="icon">?</div>
             <h4>Sem dados de acesso ainda</h4>
             <p>Os dados aparecerão quando os usuários começarem a usar o sistema.</p>
           </div>
@@ -1305,7 +1305,7 @@
         console.error(error);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>???</span> Excluir Selecionado';
+        btn.innerHTML = '<span>????</span> Excluir Selecionado';
       }
     }
 
