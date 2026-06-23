@@ -188,7 +188,7 @@
     <!-- Resultado da Busca -->
     <div class="chat-search-result" id="searchResult">
       <div class="result-header">
-        <div class="result-avatar" id="resultAvatar">??</div>
+        <div class="result-avatar" id="resultAvatar">?????</div>
         <div class="result-info">
           <h4 id="resultName">...</h4>
           <div class="result-id" id="resultId">...</div>
@@ -208,7 +208,7 @@
 
     <!-- Contador de Médicos Cadastrados -->
     <div class="doctors-counter" id="doctorsCounter">
-      <div class="counter-icon">?????</div>
+      <div class="counter-icon">????</div>
       <div class="counter-info">
         <div class="counter-number" id="doctorsCount">0</div>
         <div class="counter-label">Médicos Cadastrados</div>
@@ -247,7 +247,7 @@
       <div class="chat-input-area">
         <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" />
         <button class="btn btn-primary" id="sendBtn" style="border-radius:50%; width:50px; height:50px; padding:0; font-size:1.3rem;">
-          ??
+          ?
         </button>
       </div>
     </div>
@@ -484,7 +484,7 @@
           const messages = await getUnreadMessages();
           const list = document.getElementById('notificationList');
           if (messages.length === 0) {
-            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">??</div><p>Sem notificações</p></div>`;
+            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">?</div><p>Sem notificações</p></div>`;
             return;
           }
           list.innerHTML = messages.map(msg => {
