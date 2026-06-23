@@ -17,7 +17,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-brand">
-        <div class="logo-icon">📝</div>
+        <div class="logo-icon">??</div>
         <div>
           <h1>Way For System</h1>
           <div class="subtitle">Minhas Anotações</div>
@@ -27,37 +27,37 @@
         <!-- Sino de Notificações -->
         <div style="position:relative;">
           <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span class="bell-icon">🔔</span>
+            <span class="bell-icon">??</span>
             <span class="notification-badge hidden" id="notificationBadge">0</span>
           </button>
           <!-- Dropdown de Notificações -->
           <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-dropdown-header">
-              <h3>🔔 Notificações</h3>
+              <h3>?? Notificações</h3>
               <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
             </div>
             <div class="notification-list" id="notificationList">
               <div class="notification-empty">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon">??</div>
                 <p>Sem notificações</p>
               </div>
             </div>
           </div>
         </div>
         <div class="user-info" id="userInfo" title="Ver perfil">
-          <div class="avatar" id="userAvatar">👤</div>
+          <div class="avatar" id="userAvatar">??</div>
           <span class="user-name" id="userName">Carregando...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">??</button>
         </div>
       </div>
     </div>
 
     <!-- Navigation -->
     <div class="nav-menu">
-      <button class="nav-item active" data-page="dashboard"><span>📋</span> Anotações</button>
-      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
-      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
+      <button class="nav-item active" data-page="dashboard"><span>??</span> Anotações</button>
+      <button class="nav-item" data-page="profile"><span>??</span> Perfil</button>
+      <button class="nav-item" data-page="chat"><span>??</span> Chat</button>
+      <button class="nav-item" data-page="cid"><span>??</span> CID</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -65,20 +65,20 @@
     <!-- Search Bar -->
     <div class="search-bar-wrapper" style="margin-bottom:20px;">
       <div class="search-bar" style="display:flex; gap:10px; align-items:center; background:var(--white); border:2px solid var(--gray-200); border-radius:var(--radius); padding:4px 4px 4px 16px; transition:all var(--transition-fast);">
-        <span style="font-size:1.2rem; color:var(--gray-400);">🔍</span>
+        <span style="font-size:1.2rem; color:var(--gray-400);">??</span>
         <input type="text" id="searchNotes" placeholder="Pesquisar anotações por título ou conteúdo..." 
                style="flex:1; border:none; padding:10px 0; background:transparent; outline:none; font-size:0.95rem;" />
         <button id="clearSearch" class="btn btn-ghost btn-sm" style="display:none; padding:8px 12px;">
-          <span>✕</span> Limpar
+          <span>?</span> Limpar
         </button>
       </div>
     </div>
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <div class="toolbar-title">📋 Suas anotações</div>
+      <div class="toolbar-title">?? Suas anotações</div>
       <button id="novaNotaBtn" class="btn btn-primary desktop-only">
-        <span>➕</span> Nova Anotação
+        <span>?</span> Nova Anotação
       </button>
     </div>
 
@@ -92,27 +92,27 @@
 
     <!-- Empty search result -->
     <div id="searchEmpty" class="empty-state" style="display:none;">
-      <div class="empty-icon">🔍</div>
+      <div class="empty-icon">??</div>
       <h3>Nenhuma anotação encontrada</h3>
       <p>Tente buscar com outros termos ou crie uma nova anotação.</p>
     </div>
   </div>
 
   <!-- FAB Mobile -->
-  <button class="fab" id="fabNovaNota" title="Nova Anotação">➕</button>
+  <button class="fab" id="fabNovaNota" title="Nova Anotação">?</button>
 
   <!-- Modal de Mensagem -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3><span>💬</span> Nova Mensagem</h3>
-        <button class="modal-close" id="modalClose">✕</button>
+        <h3><span>??</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">?</button>
       </div>
       <div class="modal-body">
         <div class="modal-message-text" id="modalMessageText"></div>
         <div class="modal-message-meta">
           <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+            <div class="sender-avatar" id="modalSenderAvatar">??</div>
             <span id="modalSenderName">...</span>
           </div>
           <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
@@ -252,7 +252,7 @@
           if (messages.length === 0) {
             list.innerHTML = `
               <div class="notification-empty">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon">??</div>
                 <p>Sem notificações</p>
               </div>
             `;
@@ -421,7 +421,7 @@
           if (allNotes.length === 0) {
             container.innerHTML = `
               <div class="empty-state">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon">??</div>
                 <h3>Nenhuma anotação ainda</h3>
                 <p>Clique em "Nova Anotação" para começar a registrar suas anotações médicas.</p>
               </div>
@@ -437,16 +437,16 @@
             <div class="note-header">
               <a href="view.html?id=${note.id}" class="note-title">
                 ${note.title}
-                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">⭐</span>' : ''}
+                ${note.is_favorite ? '<span style="margin-left:6px; font-size:0.9em;">?</span>' : ''}
               </a>
               <span class="badge ${note.is_favorite ? 'badge-success' : 'badge-primary'}">
-                ${note.is_favorite ? '⭐ Favorita' : '📄 Nota'}
+                ${note.is_favorite ? '? Favorita' : '?? Nota'}
               </span>
             </div>
             <div class="note-content">${stripHtml(note.content || '')}</div>
             <div class="note-meta">
               <div class="note-date">
-                <span>🕐</span>
+                <span>??</span>
                 ${new Date(note.updated_at).toLocaleString('pt-BR', { 
                   day: '2-digit', month: 'short', year: 'numeric',
                   hour: '2-digit', minute: '2-digit'
@@ -456,16 +456,16 @@
                 <button class="btn-favorite ${note.is_favorite ? 'active' : ''}" 
                         onclick="toggleFavorito('${note.id}', ${note.is_favorite}, event)"
                         title="${note.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
-                  ${note.is_favorite ? '⭐' : '☆'}
+                  ${note.is_favorite ? '?' : '?'}
                 </button>
                 <button class="btn btn-secondary btn-sm" onclick="visualizarNota('${note.id}')">
-                  <span>👁️</span> Visualizar
+                  <span>???</span> Visualizar
                 </button>
                 <button class="btn btn-primary btn-sm" onclick="editarNota('${note.id}')">
-                  <span>✏️</span> Editar
+                  <span>??</span> Editar
                 </button>
                 <button class="btn btn-danger btn-sm" onclick="excluirNota('${note.id}')">
-                  <span>🗑️</span> Excluir
+                  <span>???</span> Excluir
                 </button>
               </div>
             </div>
