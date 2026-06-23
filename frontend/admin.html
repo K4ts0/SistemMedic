@@ -651,7 +651,7 @@
     <!-- Header -->
     <div class="admin-header">
       <div class="admin-header-brand">
-        <div class="logo-icon">???</div>
+        <div class="logo-icon">?</div>
         <div>
           <h1>Way For System</h1>
           <div class="subtitle">Painel Administrativo</div>
@@ -686,7 +686,7 @@
       <div class="stat-card-admin" style="--card-color:#3B82F6;--icon-bg:rgba(59,130,246,0.12);--icon-shadow:rgba(59,130,246,0.2);--trend-bg:rgba(16,185,129,0.1);--trend-color:#10B981;">
         <div class="stat-top">
           <div class="stat-icon">??</div>
-          <div class="stat-trend"><span>?</span> <span id="usersTrend">+0</span></div>
+          <div class="stat-trend"><span>??</span> <span id="usersTrend">+0</span></div>
         </div>
         <div class="stat-value" id="statTotalUsers">--</div>
         <div class="stat-label">Total de Usuários</div>
@@ -702,7 +702,7 @@
       <div class="stat-card-admin" style="--card-color:#F59E0B;--icon-bg:rgba(245,158,11,0.12);--icon-shadow:rgba(245,158,11,0.2);--trend-bg:rgba(245,158,11,0.1);--trend-color:#F59E0B;">
         <div class="stat-top">
           <div class="stat-icon">??</div>
-          <div class="stat-trend"><span>?</span> <span id="notesTrend">+0</span></div>
+          <div class="stat-trend"><span>??</span> <span id="notesTrend">+0</span></div>
         </div>
         <div class="stat-value" id="statTotalNotes">--</div>
         <div class="stat-label">Total de Anotações</div>
@@ -729,7 +729,7 @@
         <h3><span style="font-size:1.4rem;">??</span> Picos de Acesso por Hora (Hoje)</h3>
         <div class="peak-hours-grid" id="peakHours">
           <div class="empty-state-cell">
-            <div class="icon">?</div>
+            <div class="icon">??</div>
             <h4>Carregando dados...</h4>
           </div>
         </div>
@@ -760,7 +760,7 @@
           <tbody id="onlineUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">?</div>
+                <div class="icon">??</div>
                 <h4>Carregando usuários...</h4>
                 <p>Aguarde enquanto buscamos os dados</p>
               </div>
@@ -802,7 +802,7 @@
           <tbody id="allUsersTable">
             <tr><td colspan="6">
               <div class="empty-state-cell">
-                <div class="icon">?</div>
+                <div class="icon">??</div>
                 <h4>Carregando usuários...</h4>
               </div>
             </td></tr>
@@ -870,7 +870,7 @@
 
   <script type="module">
     import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
-      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary } from './supabase-config.js';
+      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary, logAccess } from './supabase-config.js';
 
     // Define a URL do Supabase (caso não seja exportada)
     const SUPABASE_URL = supabase.supabaseUrl || 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -904,8 +904,12 @@
         else avatar.textContent = (profile.name || 'A').charAt(0).toUpperCase();
       } catch (e) {}
 
-      // Registra acesso do admin
-      try { await logAccess('admin'); } catch(e) {}
+      // Registra acesso do admin — AGORA COM TRY/CATCH ROBUSTO
+      try { 
+        await logAccess('admin'); 
+      } catch(e) {
+        console.warn('logAccess admin falhou (tabela access_logs pode não existir):', e.message);
+      }
 
       // Carrega dados iniciais
       await loadAllData();
@@ -1017,7 +1021,7 @@
         }
       } catch (e) { 
         console.error('Stats error:', e);
-        // Fallback
+        // Fallback direto ao banco
         try {
           const [{ count: uc }, { count: nc }, { data: ou }] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
@@ -1096,6 +1100,7 @@
         loadPeakHours(data);
       } catch (e) {
         console.error('Hourly stats error:', e);
+        // Mostrar gráfico vazio mas funcional
         loadPeakHours(new Array(24).fill(0));
       }
     }
@@ -1169,7 +1174,7 @@
         }).join('');
       } catch (e) {
         console.error('Online users error:', e);
-        document.getElementById('onlineUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Erro ao carregar</h4><p>${e.message||'Tente novamente'}</p></div></td></tr>`;
+        document.getElementById('onlineUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">?</div><h4>Erro ao carregar</h4><p>${e.message||'Tente novamente'}</p></div></td></tr>`;
       }
     }
 
@@ -1186,7 +1191,7 @@
         await renderUsersTable(allUsersData);
       } catch (e) {
         console.error('All users error:', e);
-        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">??</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
+        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">?</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
       }
     }
 
@@ -1211,7 +1216,7 @@
               <div class="user-cell">
                 <div class="user-avatar-sm">${u.avatar_url?`<img src="${u.avatar_url}" alt="">`:initials}</div>
                 <div>
-                  <div class="user-name">${u.name||'Sem nome'}${isAdmin?'<span class="admin-tag">?? ADMIN</span>':''}</div>
+                  <div class="user-name">${u.name||'Sem nome'}${isAdmin?'<span class="admin-tag">? ADMIN</span>':''}</div>
                   <div class="user-email">${u.email}</div>
                 </div>
               </div>
@@ -1255,21 +1260,21 @@
    async function deleteSelectedUsers() {
       const uids = Array.from(selectedUsers);
       if (!uids.length) return;
-    
+
       const btn = document.getElementById('deleteUserBtn');
       btn.disabled = true;
       btn.innerHTML = '<span>?</span> Excluindo...';
-    
+
       try {
         // Pega a sessão atual para o token JWT
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error("Sessão expirada. Faça login novamente.");
         }
-    
+
         const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
         const functionUrl = `${SUPABASE_URL}/functions/v1/smooth-function`;
-    
+
         for (const uid of uids) {
           const response = await fetch(functionUrl, {
             method: 'POST',
@@ -1279,22 +1284,22 @@
             },
             body: JSON.stringify({ userId: uid })
           });
-    
+
           const result = await response.json();
-    
+
           if (!response.ok) {
             throw new Error(result.error || `Erro HTTP ${response.status}`);
           }
-    
+
           console.log(`Usuário ${uid} deletado:`, result);
         }
-    
+
         showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
         selectedUsers.clear();
         updateDeleteButton();
         document.getElementById('selectAllUsers').checked = false;
         await loadAllData();
-    
+
       } catch (error) {
         showToast('Erro ao excluir: ' + error.message, 'error');
         console.error(error);
