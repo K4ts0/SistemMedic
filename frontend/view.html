@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Visualizar Anota&#231;&#227;o — Way For System</title>
+  <title>Visualizar Anotação — Way For System</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,24 +20,24 @@
         <div class="logo-icon">&#128196;</div> <!-- ?? -->
         <div>
           <h1>Way For System</h1>
-          <div class="subtitle">Visualizar Anota&#231;&#227;o</div>
+          <div class="subtitle">Visualizar Anotação</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="position:relative;">
-          <button class="notification-bell" id="notificationBell" title="Notifica&#231;&#245;es">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
             <span class="bell-icon">&#128276;</span> <!-- ?? -->
             <span class="notification-badge hidden" id="notificationBadge">0</span>
           </button>
           <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-dropdown-header">
-              <h3>&#128276; Notifica&#231;&#245;es</h3> <!-- ?? -->
+              <h3>&#128276; Notificações</h3> <!-- ?? -->
               <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
             </div>
             <div class="notification-list" id="notificationList">
               <div class="notification-empty">
                 <div class="empty-icon">&#128229;</div> <!-- ?? -->
-                <p>Sem notifica&#231;&#245;es</p>
+                <p>Sem notificações</p>
               </div>
             </div>
           </div>
@@ -57,7 +57,7 @@
     <div class="note-view">
       <h1 id="noteTitle">Carregando...</h1>
       <div class="note-meta-bar">
-        <span class="badge badge-primary" id="noteBadge">&#128203; Anota&#231;&#227;o</span> <!-- ?? -->
+        <span class="badge badge-primary" id="noteBadge">&#128203; Anotação</span> <!-- ?? -->
         <span class="note-date" id="noteDate">&#128197; Carregando...</span> <!-- ?? -->
       </div>
       <div class="note-body" id="noteContent"></div>
@@ -180,7 +180,7 @@
         try {
           const messages = await getUnreadMessages();
           const list = document.getElementById('notificationList');
-          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">&#128229;</div><p>Sem notifica&#231;&#245;es</p></div>`; return; }
+          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">&#128229;</div><p>Sem notificações</p></div>`; return; }
           list.innerHTML = messages.map(msg => {
             const sender = msg.sender || {};
             const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
