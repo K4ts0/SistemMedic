@@ -17,7 +17,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-brand">
-        <div class="logo-icon">&#128196;</div> <!-- ?? -->
+        <div class="logo-icon">📄</div>
         <div>
           <h1>Way For System</h1>
           <div class="subtitle">Visualizar Anotação</div>
@@ -26,47 +26,47 @@
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="position:relative;">
           <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span class="bell-icon">&#128276;</span> <!-- ?? -->
+            <span class="bell-icon">🔔</span>
             <span class="notification-badge hidden" id="notificationBadge">0</span>
           </button>
           <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-dropdown-header">
-              <h3>&#128276; Notificações</h3> <!-- ?? -->
+              <h3>🔔 Notificações</h3>
               <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
             </div>
             <div class="notification-list" id="notificationList">
               <div class="notification-empty">
-                <div class="empty-icon">&#128229;</div> <!-- ?? -->
+                <div class="empty-icon">📭</div>
                 <p>Sem notificações</p>
               </div>
             </div>
           </div>
         </div>
         <div class="user-info" id="userInfo">
-          <div class="avatar" id="headerAvatar">&#128100;</div> <!-- ?? -->
+          <div class="avatar" id="headerAvatar">👤</div>
           <span class="user-name" id="headerName">...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">&#128682;</button> <!-- ?? -->
+          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
         </div>
       </div>
     </div>
 
     <a href="#" class="back-link" id="backLink">
-      <span>&#11013;&#65039;</span> Voltar <!-- ?? -->
+      <span>⬅️</span> Voltar
     </a>
 
     <div class="note-view">
       <h1 id="noteTitle">Carregando...</h1>
       <div class="note-meta-bar">
-        <span class="badge badge-primary" id="noteBadge">&#128203; Anotação</span> <!-- ?? -->
-        <span class="note-date" id="noteDate">&#128197; Carregando...</span> <!-- ?? -->
+        <span class="badge badge-primary" id="noteBadge">📝 Anotação</span>
+        <span class="note-date" id="noteDate">📅 Carregando...</span>
       </div>
       <div class="note-body" id="noteContent"></div>
       <div class="buttons-row" style="margin-top:32px; padding-top:24px; border-top:1px solid var(--gray-100);">
         <button class="btn btn-primary" id="btnEditar">
-          <span>&#9999;&#65039;</span> Editar <!-- ?? -->
+          <span>✏️</span> Editar
         </button>
         <button class="btn btn-secondary" id="btnVoltar">
-          <span>&#11013;&#65039;</span> Voltar <!-- ?? -->
+          <span>⬅️</span> Voltar
         </button>
       </div>
     </div>
@@ -76,14 +76,14 @@
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3><span>&#128233;</span> Nova Mensagem</h3> <!-- ?? -->
-        <button class="modal-close" id="modalClose">&#10005;</button> <!-- ? -->
+        <h3><span>📩</span> Nova Mensagem</h3>
+        <button class="modal-close" id="modalClose">✕</button>
       </div>
       <div class="modal-body">
         <div class="modal-message-text" id="modalMessageText"></div>
         <div class="modal-message-meta">
           <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">&#128100;</div> <!-- ?? -->
+            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
             <span id="modalSenderName">...</span>
           </div>
           <span style="color:var(--gray-400); font-size:0.85rem;" id="modalMessageTime"></span>
@@ -145,8 +145,8 @@
         document.getElementById('noteTitle').textContent = note.title;
         document.getElementById('noteContent').innerHTML = note.content || '';
         const badge = document.getElementById('noteBadge');
-        if (note.is_favorite) { badge.textContent = '&#11088; Favorita'; badge.className = 'badge badge-success'; } <!-- ? -->
-        document.getElementById('noteDate').innerHTML = `<span>&#128197;</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}`;
+        if (note.is_favorite) { badge.textContent = '⭐ Favorita'; badge.className = 'badge badge-success'; }
+        document.getElementById('noteDate').innerHTML = `<span>📅</span> Atualizado em ${new Date(note.updated_at).toLocaleString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}`;
         document.getElementById('btnEditar').addEventListener('click', () => { window.location.href = `note.html?id=${noteId}`; });
       } catch (error) { alert('Erro ao carregar nota.'); window.location.href = 'dashboard.html'; }
 
@@ -180,7 +180,7 @@
         try {
           const messages = await getUnreadMessages();
           const list = document.getElementById('notificationList');
-          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">&#128229;</div><p>Sem notificações</p></div>`; return; }
+          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`; return; }
           list.innerHTML = messages.map(msg => {
             const sender = msg.sender || {};
             const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
