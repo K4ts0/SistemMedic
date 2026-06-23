@@ -793,10 +793,10 @@
             <tr>
               <th style="width:40px;"><input type="checkbox" id="selectAllUsers" style="width:auto;cursor:pointer;" /></th>
               <th>Usuário</th>
+              <th>Email</th>
               <th>Especialidade</th>
               <th>CRM</th>
               <th>Anotações</th>
-              <th>Cadastro</th>
             </tr>
           </thead>
           <tbody id="allUsersTable">
@@ -870,7 +870,7 @@
 
   <script type="module">
     import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
-      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary, getAllUsers, logAccess } from './supabase-config.js';
+      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary } from './supabase-config.js';
 
     // Define a URL do Supabase (caso não seja exportada)
     const SUPABASE_URL = supabase.supabaseUrl || 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -905,7 +905,7 @@
       } catch (e) {}
 
       // Registra acesso do admin
-      try { await logAccess('/admin.html'); } catch(e) {}
+      try { await logAccess('admin'); } catch(e) {}
 
       // Carrega dados iniciais
       await loadAllData();
@@ -1034,49 +1034,25 @@
       }
     }
 
-    // ===== ESTATÍSTICAS POR HORA (GRÁFICO REAL - ÚLTIMAS 24H) =====
+    // ===== ESTATÍSTICAS POR HORA (GRÁFICO REAL) =====
     async function loadHourlyStats() {
       try {
-        // Busca dados brutos das últimas 24h para o gráfico
-        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { data: rawLogs24h, error: err24h } = await supabase
-          .from('access_logs')
-          .select('accessed_at')
-          .gte('accessed_at', twentyFourHoursAgo);
-
-        // Dados de hoje (meia-noite até agora) para o painel de picos
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const { data: rawLogsToday, error: errToday } = await supabase
-          .from('access_logs')
-          .select('accessed_at')
-          .gte('accessed_at', todayStart.toISOString());
-
-        // Monta array 24h agrupado por hora do dia (0-23)
-        const data24h = new Array(24).fill(0);
-        if (!err24h && rawLogs24h) {
-          rawLogs24h.forEach(log => {
-            const h = new Date(log.accessed_at).getHours();
-            data24h[h] = (data24h[h] || 0) + 1;
-          });
-        }
-
-        // Monta array de hoje agrupado por hora
-        const dataToday = new Array(24).fill(0);
-        if (!errToday && rawLogsToday) {
-          rawLogsToday.forEach(log => {
-            const h = new Date(log.accessed_at).getHours();
-            dataToday[h] = (dataToday[h] || 0) + 1;
-          });
-        }
-
+        const stats = await getAccessStatsByHour();
         const hours = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}h`);
-        const mx = Math.max(...data24h, 1);
+        const data = new Array(24).fill(0);
+
+        stats.forEach(s => {
+          if (s.hour_of_day >= 0 && s.hour_of_day < 24) {
+            data[s.hour_of_day] = s.access_count || 0;
+          }
+        });
+
+        const mx = Math.max(...data, 1);
 
         if (hoursChart) {
-          hoursChart.data.datasets[0].data = data24h;
-          hoursChart.data.datasets[0].backgroundColor = data24h.map(v => v === mx ? 'rgba(239,68,68,0.7)' : 'rgba(59,130,246,0.5)');
-          hoursChart.data.datasets[0].borderColor = data24h.map(v => v === mx ? 'rgba(239,68,68,1)' : 'rgba(59,130,246,0.7)');
+          hoursChart.data.datasets[0].data = data;
+          hoursChart.data.datasets[0].backgroundColor = data.map(v => v === mx ? 'rgba(239,68,68,0.7)' : 'rgba(59,130,246,0.5)');
+          hoursChart.data.datasets[0].borderColor = data.map(v => v === mx ? 'rgba(239,68,68,1)' : 'rgba(59,130,246,0.7)');
           hoursChart.update();
         } else {
           const ctx = document.getElementById('hoursChart').getContext('2d');
@@ -1086,9 +1062,9 @@
               labels:hours,
               datasets:[{
                 label:'Acessos',
-                data: data24h,
-                backgroundColor: data24h.map(v=>v===mx?'rgba(239,68,68,0.7)':'rgba(59,130,246,0.5)'),
-                borderColor: data24h.map(v=>v===mx?'rgba(239,68,68,1)':'rgba(59,130,246,0.7)'),
+                data,
+                backgroundColor:data.map(v=>v===mx?'rgba(239,68,68,0.7)':'rgba(59,130,246,0.5)'),
+                borderColor:data.map(v=>v===mx?'rgba(239,68,68,1)':'rgba(59,130,246,0.7)'),
                 borderWidth:1,
                 borderRadius:6,
                 borderSkipped:false,
@@ -1107,9 +1083,6 @@
                   borderWidth:1,
                   padding:12,
                   cornerRadius:10,
-                  callbacks:{
-                    label: ctx => ` ${ctx.parsed.y} acesso${ctx.parsed.y !== 1 ? 's' : ''}`
-                  }
                 }
               },
               scales:{
@@ -1120,16 +1093,7 @@
           });
         }
 
-        // Painel de picos usa dados de HOJE
-        loadPeakHours(dataToday);
-
-        // Atualiza stat de pico de acesso
-        const peakIdx = dataToday.indexOf(Math.max(...dataToday));
-        const peakVal = Math.max(...dataToday);
-        if (peakVal > 0) {
-          document.getElementById('statPeakHour').textContent = `${String(peakIdx).padStart(2,'0')}:00`;
-        }
-
+        loadPeakHours(data);
       } catch (e) {
         console.error('Hourly stats error:', e);
         loadPeakHours(new Array(24).fill(0));
@@ -1212,52 +1176,34 @@
     // ===== ALL USERS =====
     async function loadAllUsers() {
       try {
-        // Tenta usar getAllUsers (que ordena por created_at)
-        let profiles = [];
-        try {
-          profiles = await getAllUsers();
-        } catch(e1) {
-          // Fallback direto para supabase se getAllUsers falhar
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, name, email, specialty, crm, avatar_url, updated_at, created_at')
-            .order('updated_at', { ascending: false });
-          if (error) throw error;
-          profiles = data || [];
-        }
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, name, email, specialty, crm, avatar_url, updated_at')
+          .order('updated_at', { ascending: false });
 
-        allUsersData = profiles;
-        document.querySelector('.section-header .section-title span').textContent = 
-          `Gerenciamento de Usuários (${profiles.length})`;
+        if (error) throw error;
+        allUsersData = profiles || [];
         await renderUsersTable(allUsersData);
       } catch (e) {
         console.error('All users error:', e);
-        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">⚠️</div><h4>Erro ao carregar usuários</h4><p>${e.message||'Verifique as permissões RLS da tabela profiles'}</p></div></td></tr>`;
+        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">⚠️</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
       }
     }
 
     async function renderUsersTable(users) {
       const tbody = document.getElementById('allUsersTable');
       if (!users || !users.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">📭</div><h4>Nenhum usuário encontrado</h4><p>Verifique se há usuários cadastrados no sistema.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">📭</div><h4>Nenhum usuário encontrado</h4></div></td></tr>`;
         return;
       }
 
-      // Busca contagem de notas por usuário
-      let notesPerUser = {};
-      try {
-        const { data: notesData } = await supabase.from('notes').select('user_id');
-        if (notesData) notesData.forEach(n => notesPerUser[n.user_id] = (notesPerUser[n.user_id]||0)+1);
-      } catch(e) { console.warn('Erro ao buscar notas:', e.message); }
+      const { data: notesData } = await supabase.from('notes').select('user_id');
+      const notesPerUser = {};
+      if (notesData) notesData.forEach(n => notesPerUser[n.user_id] = (notesPerUser[n.user_id]||0)+1);
 
       tbody.innerHTML = users.map(u => {
         const initials = (u.name || u.email || 'U').charAt(0).toUpperCase();
         const isAdmin = u.email === ADMIN_EMAIL;
-        // Usa created_at se disponível, senão updated_at
-        const dateLabel = u.created_at || u.updated_at;
-        const dateStr = dateLabel 
-          ? new Date(dateLabel).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' })
-          : '-';
         return `
           <tr>
             <td><input type="checkbox" class="user-checkbox" data-user-id="${u.id}" ${isAdmin?'disabled title="Admin protegido"':''} style="width:auto;cursor:pointer;" /></td>
@@ -1266,14 +1212,14 @@
                 <div class="user-avatar-sm">${u.avatar_url?`<img src="${u.avatar_url}" alt="">`:initials}</div>
                 <div>
                   <div class="user-name">${u.name||'Sem nome'}${isAdmin?'<span class="admin-tag">👑 ADMIN</span>':''}</div>
-                  <div class="user-email">${u.email||'-'}</div>
+                  <div class="user-email">${u.email}</div>
                 </div>
               </div>
             </td>
-            <td style="color:var(--admin-muted);font-size:0.85rem;">${u.specialty||'-'}</td>
+            <td style="color:var(--admin-muted);font-size:0.85rem;">${u.email}</td>
+            <td>${u.specialty||'-'}</td>
             <td>${u.crm?`<span class="crm-tag">${u.crm}</span>`:'-'}</td>
             <td style="font-weight:700;font-size:0.95rem;">${notesPerUser[u.id]||0}</td>
-            <td style="color:var(--admin-muted);font-size:0.82rem;">${dateStr}</td>
           </tr>
         `;
       }).join('');
