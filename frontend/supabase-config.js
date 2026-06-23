@@ -1957,7 +1957,7 @@ export async function logAccess(page) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Se nao ha usuario logado, nao tenta inserir (evita erro de RLS)
+    // Se não há usuário logado, não tenta inserir
     if (!user?.id) {
       return;
     }
@@ -1973,7 +1973,7 @@ export async function logAccess(page) {
       }]);
 
     if (error) {
-      // Silenciosamente ignora erro se tabela nao existir
+      // Silenciosamente ignora erro se tabela não existir
       if (!error.message.includes('does not exist') && error.code !== '42P01') {
         console.warn('Erro ao registrar acesso:', error.message);
       }
