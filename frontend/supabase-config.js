@@ -1026,7 +1026,7 @@ export async function getAdminSummary() {
         }
       }
 
-      // Usuarios online (últimos 15 min via access_logs)
+      // Usuarios online (ultimos 15 min via access_logs)
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { data: recentLogs } = await supabase
         .from('access_logs')
@@ -1038,7 +1038,7 @@ export async function getAdminSummary() {
         onlineNow = new Set(recentLogs.map(l => l.user_id)).size;
       }
     } catch (e) {
-      // access_logs pode estar vazia ou não existir
+      // access_logs pode estar vazia ou nao existir
       // Fallback: usa profiles.updated_at como indicador de atividade
       try {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
@@ -1259,7 +1259,7 @@ export async function getOnlineUsers() {
         .order('accessed_at', { ascending: false });
 
       if (!logsError && logs && logs.length > 0) {
-        // Pega o acesso mais recente de cada usuário
+        // Pega o acesso mais recente de cada usuario
         const latestByUser = {};
         logs.forEach(log => {
           if (!latestByUser[log.user_id] || new Date(log.accessed_at) > new Date(latestByUser[log.user_id].accessed_at)) {
@@ -1296,7 +1296,7 @@ export async function getOnlineUsers() {
         }
       }
     } catch (e) {
-      console.log('access_logs não disponível, usando fallback');
+      console.log('access_logs nao disponivel, usando fallback');
     }
 
     // FALLBACK: Usa profiles.updated_at como indicador de atividade
