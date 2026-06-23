@@ -94,7 +94,7 @@
               <div class="toolbar-separator"></div>
               <button type="button" data-cmd="justifyLeft" title="Alinhar à esquerda">??</button>
               <button type="button" data-cmd="justifyCenter" title="Centralizar">??</button>
-              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">??</button>
+              <button type="button" data-cmd="justifyRight" title="Alinhar à direita">?</button>
               <button type="button" data-cmd="justifyFull" title="Justificar">??</button>
               <div class="toolbar-separator"></div>
               <button type="button" data-cmd="insertUnorderedList" title="Lista com marcadores">• Lista</button>
@@ -112,7 +112,7 @@
               <div class="toolbar-separator"></div>
               <button type="button" data-cmd="removeFormat" title="Remover formatação">??</button>
               <button type="button" data-cmd="undo" title="Desfazer">??</button>
-              <button type="button" data-cmd="redo" title="Refazer">??</button>
+              <button type="button" data-cmd="redo" title="Refazer">?</button>
             </div>
             <div class="rich-editor" id="richEditor" contenteditable="true" data-placeholder="Digite sua anotação aqui... Use o toolbar acima para formatar o texto."></div>
           </div>
@@ -134,7 +134,7 @@
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3><span>??</span> Nova Mensagem</h3>
+        <h3><span>?</span> Nova Mensagem</h3>
         <button class="modal-close" id="modalClose">?</button>
       </div>
       <div class="modal-body">
@@ -232,7 +232,7 @@
       editor.addEventListener('input', () => { hiddenContent.value = editor.innerHTML; });
 
       if (isEditing) {
-        document.getElementById('formTitle').textContent = '?? Editar Anotação';
+        document.getElementById('formTitle').textContent = '? Editar Anotação';
         document.getElementById('pageTitle').textContent = 'Editar Anotação — NoteMed for Unisystem';
         document.getElementById('formDesc').textContent = 'Atualize sua anotação usando o editor abaixo.';
         try {
