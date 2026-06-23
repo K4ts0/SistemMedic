@@ -1252,7 +1252,7 @@
     }
 
     // ===== EXCLUSÃO CORRIGIDA =====
-    async function deleteSelectedUsers() {
+   async function deleteSelectedUsers() {
       const uids = Array.from(selectedUsers);
       if (!uids.length) return;
     
@@ -1262,15 +1262,14 @@
     
       try {
         for (const uid of uids) {
-          // Chama a função RPC no banco
-          const { error } = await supabase.rpc('admin_delete_user_data', { user_id: uid });
+          const { error } = await supabase.rpc('admin_delete_user_data', { target_user_id: uid });
           if (error) throw new Error(error.message);
         }
         showToast(`${uids.length} usuário(s) excluído(s) com sucesso!`, 'success');
         selectedUsers.clear();
         updateDeleteButton();
         document.getElementById('selectAllUsers').checked = false;
-        await loadAllData(); // recarrega a lista
+        await loadAllData();
       } catch (error) {
         showToast('Erro ao excluir: ' + error.message, 'error');
         console.error(error);
