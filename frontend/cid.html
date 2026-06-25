@@ -342,12 +342,21 @@
       logAccess, createNote
     } from './supabase-config.js';
 
+    // ===== PRESCRIÇÕES DETALHADAS (com entrada para I20) =====
     const prescricaoDetalhada = {
       'A09': [
         { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
         { nome: 'Loperamida', dosagem: '2 mg', posologia: 'Tomar 2 comprimidos (4 mg) inicialmente, seguido de 1 comprimido (2 mg) após cada evacuação diarreica. Máximo: 8 mg/dia.', via: 'VO', duracao: 'até cessação da diarreia (máx. 2 dias)' },
         { nome: 'Saccharomyces boulardii', dosagem: '200 mg', posologia: 'Tomar 1 cápsula VO a cada 12 horas.', via: 'VO', duracao: '5 dias' },
         { nome: 'Sulfato de Zinco', dosagem: '20 mg', posologia: 'Tomar 1 comprimido VO 1 vez ao dia.', via: 'VO', duracao: '10 dias' }
+      ],
+      'I20': [
+        { nome: 'Nitroglicerina', dosagem: '0,5 mg', posologia: 'Tomar 1 comprimido sublingual a cada 5 min (máx 3 doses).', via: 'SL', duracao: 'crise' },
+        { nome: 'AAS', dosagem: '100 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+        { nome: 'Atorvastatina', dosagem: '40 mg', posologia: 'Tomar 1 comprimido 1x/noite.', via: 'VO', duracao: 'contínuo' },
+        { nome: 'Metoprolol', dosagem: '50 mg', posologia: 'Tomar 1 comprimido 2x ao dia.', via: 'VO', duracao: 'contínuo' },
+        { nome: 'Clopidogrel', dosagem: '75 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+        { nome: 'Cinecoronariografia', dosagem: '', posologia: 'Se alto risco ou angina instável.', via: '', duracao: '' }
       ],
       'E11': [
         { nome: 'Metformina', dosagem: '500 mg', posologia: 'Tomar 1 comprimido 2x ao dia, após as refeições.', via: 'VO', duracao: 'contínuo' },
@@ -549,41 +558,45 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== FUNÇÃO GERAR PDF CORRIGIDA =====
+      // ===== GERAR PDF CORRIGIDO (TEXTO REAL, SEM NUMERAÇÃO DUPLICADA) =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
 
-        // Build preview HTML
+        // Tenta obter prescrição detalhada, senão usa as strings do banco (removendo numeração inicial)
         let prescDetalhada = getPrescricaoDetalhada(code);
-        let prescHtml = '';
+        let prescItems = [];
         if (prescDetalhada) {
-          prescHtml = prescDetalhada.map((item, idx) => `
-            <div class="pdf-item">
-              <div>
-                <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
-                ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
-              </div>
-              ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
-              <div class="pdf-med-meta">
-                ${item.via ? `<span>Via: ${item.via}</span>` : ''}
-                ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
-              </div>
-            </div>
-          `).join('');
+          prescItems = prescDetalhada.map(item => ({ ...item }));
         } else {
-          prescHtml = (result.prescriptions || []).map((p, idx) => `
-            <div class="pdf-item">
-              <div><span class="pdf-med-nome">${idx+1}. ${p}</span></div>
-            </div>
-          `).join('');
+          // Usa prescrições antigas (strings) e remove numeração inicial
+          const raw = result.prescriptions || [];
+          prescItems = raw.map(p => {
+            // Remove numeração inicial como "1. ", "2. " etc.
+            const clean = p.replace(/^\d+\.\s*/, '');
+            return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' };
+          });
         }
+
+        // Monta preview HTML
+        let prescHtml = prescItems.map((item, idx) => `
+          <div class="pdf-item">
+            <div>
+              <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
+              ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
+            </div>
+            ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
+            <div class="pdf-med-meta">
+              ${item.via ? `<span>Via: ${item.via}</span>` : ''}
+              ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
 
         const previewContainer = document.getElementById('pdfPreviewContainer');
         previewContainer.innerHTML = `
           <div class="pdf-header">
             <h2>📄 Receituário Médico</h2>
-            <p>Way For System — Busca CID & Prescrição</p>
             <p>Gerado em ${new Date().toLocaleString('pt-BR')}</p>
           </div>
           <div class="pdf-diagnostico">
@@ -599,59 +612,50 @@
           </div>
           <div class="pdf-footer">
             ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.
-            <br>Way For System — Busca CID & Prescrição
           </div>
         `;
 
         pdfModal.classList.add('show');
 
-        // ===== GERAR PDF REAL COM jsPDF + autoTable =====
+        // ===== GERAR PDF COM jsPDF + autoTable (UMA COLUNA) =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
           const pageW = 210;
           const margin = 20;
-          const contentW = pageW - margin * 2;
+          const contentW = pageW - 2 * margin;
           let y = 20;
 
-          // Helper: add wrapped text
+          // Helper para texto com quebra
           function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
             const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, yPos, { align: align || 'left' });
             return yPos + lines.length * lineHeight;
           }
 
-          // ===== CABEÇALHO COM NOME DO SISTEMA =====
+          // Header
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(18);
           doc.setTextColor(30, 41, 59);
           doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
           y += 8;
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          doc.setTextColor(59, 130, 246);
-          doc.text('Way For System — Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
-          y += 6;
           doc.setFontSize(9);
           doc.setTextColor(148, 163, 184);
           doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
           y += 12;
 
-          // Line
+          // Linha
           doc.setDrawColor(226, 232, 240);
           doc.setLineWidth(0.3);
           doc.line(margin, y, pageW - margin, y);
           y += 10;
 
-          // Diagnostico box
-          const descLines = doc.splitTextToSize(result.desc, contentW - 8);
-          const symptomsLines = (result.symptoms || []).length > 0 ? 1 : 0;
-          const boxHeight = 32 + descLines.length * 4 + symptomsLines * 5;
-
+          // Diagnóstico
           doc.setFillColor(239, 246, 255);
           doc.setDrawColor(219, 234, 254);
-          doc.roundedRect(margin, y - 4, contentW, boxHeight, 3, 3, 'FD');
+          doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
 
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
@@ -664,7 +668,6 @@
           y = addWrappedText(result.desc, margin + 4, y + 12, contentW - 8, 4, 'left');
           y += 4;
 
-          // Symptoms
           if (result.symptoms && result.symptoms.length > 0) {
             const symptomsText = result.symptoms.join('   ');
             doc.setFontSize(8);
@@ -673,32 +676,23 @@
           }
           y += 12;
 
-          // Prescrição title
+          // Título "Prescrição"
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
           doc.setTextColor(30, 41, 59);
           doc.text('Prescricao', margin, y);
           y += 8;
 
-          // ===== TABELA DE MEDICAMENTOS CORRIGIDA =====
-          const prescItems = prescDetalhada || (result.prescriptions || []).map((p, idx) => ({ 
-            nome: `${idx + 1}. ${p}`, 
-            dosagem: '', 
-            posologia: '', 
-            via: '', 
-            duracao: '' 
-          }));
-          
+          // Monta dados para tabela única
           const tableBody = prescItems.map((item, idx) => {
-            const nome = item.dosagem 
-              ? `${idx + 1}. ${item.nome} — ${item.dosagem}` 
-              : `${idx + 1}. ${item.nome}`;
-            const pos = item.posologia || '';
+            let text = `${idx+1}. ${item.nome}`;
+            if (item.dosagem) text += ` — ${item.dosagem}`;
+            if (item.posologia) text += `\n${item.posologia}`;
             const meta = [];
             if (item.via) meta.push('Via: ' + item.via);
             if (item.duracao) meta.push('Duracao: ' + item.duracao);
-            const metaStr = meta.join('    ');
-            return [nome, pos, metaStr];
+            if (meta.length > 0) text += '\n' + meta.join('    ');
+            return [text];
           });
 
           doc.autoTable({
@@ -708,43 +702,39 @@
             margin: { left: margin, right: margin },
             styles: {
               fontSize: 9,
-              cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+              cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
               lineColor: [226, 232, 240],
               lineWidth: 0.2,
             },
             columnStyles: {
-              0: { fontStyle: 'bold', textColor: [30, 41, 59], cellWidth: contentW },
-              1: { textColor: [51, 65, 85], cellWidth: contentW },
-              2: { textColor: [100, 116, 139], fontSize: 8, cellWidth: contentW }
+              0: { cellWidth: contentW, textColor: [51, 65, 85] }
             },
-            didDrawCell: function(data) {
-              if (data.row.index % 3 === 0 && data.column.index === 0) {
-                doc.setFillColor(248, 250, 252);
-                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+            didParseCell: function(data) {
+              // Destaca a primeira linha de cada medicamento
+              if (data.row.index % 2 === 0) {
+                data.cell.styles.fillColor = [248, 250, 252];
               }
             }
           });
 
           y = doc.lastAutoTable.finalY + 10;
 
-          // ===== RODAPÉ CORRIGIDO =====
+          // Aviso (texto completo, centralizado)
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
           const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
           y = addWrappedText(warningText, margin, y, contentW, 4, 'center');
 
-          // Line
+          // Linha final
           y += 6;
           doc.setDrawColor(226, 232, 240);
           doc.line(margin, y, pageW - margin, y);
           y += 6;
-          
-          // Nome do sistema no rodapé
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(180, 180, 180);
-          doc.text('Way For System — Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
+          doc.text('Way For System - Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
 
           doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
         };
@@ -791,11 +781,15 @@
               </div>
             `).join('');
           } else {
-            prescHtml = (r.prescriptions || []).map((p, idx) => `
-              <div class="prescricao-item">
-                <div><span class="med-numero">${idx+1}</span><span class="med-nome">${p}</span></div>
-              </div>
-            `).join('');
+            const raw = r.prescriptions || [];
+            prescHtml = raw.map(p => {
+              const clean = p.replace(/^\d+\.\s*/, '');
+              return `
+                <div class="prescricao-item">
+                  <div><span class="med-nome">${clean}</span></div>
+                </div>
+              `;
+            }).join('');
           }
 
           return `
