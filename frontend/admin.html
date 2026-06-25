@@ -969,12 +969,9 @@
         console.warn('Erro ao carregar perfil:', e);
       }
 
-      // Registra acesso do admin (tabela access_logs pode não existir ainda)
-      try { 
-        await logAccess('admin'); 
-      } catch(e) {
-        console.warn('logAccess admin falhou (tabela access_logs pode não existir):', e.message);
-      }
+      // CORREÇÃO: Não registra acesso do admin em access_logs
+      // O admin não deve aparecer nos gráficos de usuários comuns
+      console.log('[Admin] Acesso administrativo não registrado em analytics');
 
       // Carrega dados iniciais
       await loadAllData();
