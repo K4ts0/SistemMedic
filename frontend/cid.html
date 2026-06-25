@@ -384,11 +384,6 @@
       'R52': [
         { nome: 'Dipirona', dosagem: '500 mg', posologia: 'Tomar 1 comprimido a cada 6 horas, se dor.', via: 'VO', duracao: 'até 3 dias' },
         { nome: 'Ibuprofeno', dosagem: '400 mg', posologia: 'Tomar 1 comprimido a cada 8 horas, se dor.', via: 'VO', duracao: 'até 5 dias' }
-      ],
-      'R50': [
-        { nome: 'Paracetamol', dosagem: '750 mg', posologia: 'Tomar 1 comprimido de 8 em 8 horas, se febre.', via: 'VO', duracao: 'até 3 dias' },
-        { nome: 'Investigação diagnóstica completa', dosagem: '', posologia: 'Hemograma completo, PCR, Urocultura, Raio-X de tórax, exames de imagem conforme indicação clínica.', via: '', duracao: 'conforme resultado' },
-        { nome: 'TC de abdome', dosagem: '', posologia: 'Solicitar se necessário após avaliação clínica.', via: '', duracao: 'único' }
       ]
     };
 
@@ -554,7 +549,7 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF COM jsPDF NATIVO (TEXTO REAL, NÃO IMAGEM) =====
+      // ===== FUNÇÃO GERAR PDF CORRIGIDA =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
@@ -610,7 +605,7 @@
 
         pdfModal.classList.add('show');
 
-        // ===== GERAR PDF REAL COM jsPDF + autoTable (SEM ABRIR PÁGINA) =====
+        // ===== GERAR PDF REAL COM jsPDF + autoTable =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
@@ -620,31 +615,24 @@
           const contentW = pageW - margin * 2;
           let y = 20;
 
-          // Helper: add wrapped text with UTF-8 support via normalize
+          // Helper: add wrapped text
           function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
-            const normalizedText = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const lines = doc.splitTextToSize(normalizedText, maxWidth);
+            const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, yPos, { align: align || 'left' });
             return yPos + lines.length * lineHeight;
           }
 
           // ===== CABEÇALHO COM NOME DO SISTEMA =====
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(16);
+          doc.setFontSize(18);
           doc.setTextColor(30, 41, 59);
-          doc.text('Way For System', pageW / 2, y, { align: 'center' });
-          y += 6;
+          doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
+          y += 8;
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(10);
           doc.setTextColor(59, 130, 246);
-          doc.text('Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
-          y += 8;
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(14);
-          doc.setTextColor(30, 41, 59);
-          doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
+          doc.text('Way For System — Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
           y += 6;
-          doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(148, 163, 184);
           doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
@@ -657,14 +645,18 @@
           y += 10;
 
           // Diagnostico box
+          const descLines = doc.splitTextToSize(result.desc, contentW - 8);
+          const symptomsLines = (result.symptoms || []).length > 0 ? 1 : 0;
+          const boxHeight = 32 + descLines.length * 4 + symptomsLines * 5;
+
           doc.setFillColor(239, 246, 255);
           doc.setDrawColor(219, 234, 254);
-          doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
+          doc.roundedRect(margin, y - 4, contentW, boxHeight, 3, 3, 'FD');
 
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
           doc.setTextColor(59, 130, 246);
-          doc.text('CID ' + code + ' — ' + name.normalize('NFD').replace(/[\u0300-\u036f]/g, ''), margin + 4, y + 5);
+          doc.text('CID ' + code + ' — ' + name, margin + 4, y + 5);
 
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
@@ -688,10 +680,19 @@
           doc.text('Prescricao', margin, y);
           y += 8;
 
-          // Medications table - sequential numbering guaranteed
-          const prescItems = prescDetalhada || (result.prescriptions || []).map(p => ({ nome: p, dosagem: '', posologia: '', via: '', duracao: '' }));
+          // ===== TABELA DE MEDICAMENTOS CORRIGIDA =====
+          const prescItems = prescDetalhada || (result.prescriptions || []).map((p, idx) => ({ 
+            nome: `${idx + 1}. ${p}`, 
+            dosagem: '', 
+            posologia: '', 
+            via: '', 
+            duracao: '' 
+          }));
+          
           const tableBody = prescItems.map((item, idx) => {
-            const nome = item.dosagem ? `${idx + 1}. ${item.nome} — ${item.dosagem}` : `${idx + 1}. ${item.nome}`;
+            const nome = item.dosagem 
+              ? `${idx + 1}. ${item.nome} — ${item.dosagem}` 
+              : `${idx + 1}. ${item.nome}`;
             const pos = item.posologia || '';
             const meta = [];
             if (item.via) meta.push('Via: ' + item.via);
@@ -726,7 +727,7 @@
 
           y = doc.lastAutoTable.finalY + 10;
 
-          // Warning footer
+          // ===== RODAPÉ CORRIGIDO =====
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
@@ -738,12 +739,14 @@
           doc.setDrawColor(226, 232, 240);
           doc.line(margin, y, pageW - margin, y);
           y += 6;
+          
+          // Nome do sistema no rodapé
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(180, 180, 180);
-          doc.text('Way For System - Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
+          doc.text('Way For System — Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
 
-          doc.save('CID_' + code + '_' + name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s/g, '_') + '.pdf');
+          doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
         };
       };
 
@@ -814,10 +817,10 @@
                   </div>
                 </div>
                 <div class="result-actions">
-                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
+                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
                     <span>📝</span> Criar Nota
                   </button>
-                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
+                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\'")}')">
                     <span>📄</span> Gerar PDF
                   </button>
                 </div>
@@ -867,4 +870,25 @@
 
       document.querySelectorAll('.popular-tag').forEach(tag => {
         tag.addEventListener('click', () => {
-          const
+          const code = tag.dataset.code;
+          document.getElementById('cidInput').value = code;
+          doSearch();
+        });
+      });
+
+      setInterval(async () => { await checkSingleSession(); }, 10000);
+      setInterval(async () => { await checkNewMessages(); }, 8000);
+
+      window.showMessage = (msg, type = 'erro') => {
+        const el = document.getElementById('mensagem');
+        el.textContent = msg;
+        el.className = `mensagem ${type}`;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 5000);
+      };
+
+      await checkNewMessages();
+    })();
+  </script>
+</body>
+</html>
