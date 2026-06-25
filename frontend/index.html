@@ -183,16 +183,15 @@
         const warningEl = document.getElementById('attemptsWarning');
         const textEl = document.getElementById('attemptsText');
         const forgotLink = document.getElementById('forgotPasswordLink');
-
+      
         if (failedAttempts >= MAX_ATTEMPTS) {
-          // Mostra link de recuperação
           forgotLink.classList.add('show');
           warningEl.classList.add('show', 'danger');
           textEl.textContent = `Você excedeu ${MAX_ATTEMPTS} tentativas. Use "Esqueceu a senha?" para recuperar seu acesso.`;
         } else if (failedAttempts > 0) {
           warningEl.classList.add('show');
           warningEl.classList.remove('danger');
-          const remaining = MAX_ATTENTTS - failedAttempts;
+          const remaining = MAX_ATTEMPTS - failedAttempts;   // ← corrigido
           textEl.textContent = `Tentativa ${failedAttempts} de ${MAX_ATTEMPTS}. Mais ${remaining} tentativa(s) antes de bloquear.`;
         } else {
           warningEl.classList.remove('show', 'danger');
