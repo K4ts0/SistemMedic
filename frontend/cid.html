@@ -169,6 +169,7 @@
     @supports (padding-top: env(safe-area-inset-top)) { body { padding-top: env(safe-area-inset-top); } }
     @supports (padding-bottom: env(safe-area-inset-bottom)) { .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); } }
 
+    /* ===== PDF PREVIEW (single scroll area) ===== */
     .pdf-preview-modal-body { padding: 0; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .pdf-preview-content { background: #fff; padding: 24px; font-family: 'Inter', sans-serif; }
     .pdf-preview-content .pdf-header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 20px; }
@@ -188,6 +189,7 @@
     .pdf-preview-content .pdf-item .pdf-med-meta span { background: #F1F5F9; padding: 3px 10px; border-radius: 9999px; }
     .pdf-preview-content .pdf-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.75rem; color: #94A3B8; font-style: italic; line-height: 1.5; }
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -340,6 +342,7 @@
       logAccess, createNote
     } from './supabase-config.js';
 
+    // ===== PRESCRIÇÕES DETALHADAS =====
     const prescricaoDetalhada = {
       'A09': [
         { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
@@ -555,11 +558,12 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF CORRIGIDO =====
+      // ===== NOVA FUNÇÃO GERAR PDF (com texto livre, sem autoTable) =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
 
+        // Prepara lista de prescrições (detalhada ou fallback)
         let prescDetalhada = getPrescricaoDetalhada(code);
         let prescItems = [];
         if (prescDetalhada) {
@@ -572,7 +576,21 @@
           });
         }
 
-        // Preview
+        // Preview HTML (mesmo de antes)
+        let prescHtml = prescItems.map((item, idx) => `
+          <div class="pdf-item">
+            <div>
+              <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
+              ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
+            </div>
+            ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
+            <div class="pdf-med-meta">
+              ${item.via ? `<span>Via: ${item.via}</span>` : ''}
+              ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+
         const previewContainer = document.getElementById('pdfPreviewContainer');
         previewContainer.innerHTML = `
           <div class="pdf-header">
@@ -589,19 +607,7 @@
           </div>
           <div class="pdf-prescricao">
             <h4>💊 Prescrição</h4>
-            ${prescItems.map((item, idx) => `
-              <div class="pdf-item">
-                <div>
-                  <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
-                  ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
-                </div>
-                ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
-                <div class="pdf-med-meta">
-                  ${item.via ? `<span>Via: ${item.via}</span>` : ''}
-                  ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
-                </div>
-              </div>
-            `).join('')}
+            ${prescHtml}
           </div>
           <div class="pdf-footer">
             ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.
@@ -610,6 +616,7 @@
 
         pdfModal.classList.add('show');
 
+        // ===== GERADOR DE PDF COM TEXTO LIVRE (sem autoTable) =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
@@ -619,20 +626,21 @@
           const contentW = pageW - 2 * margin;
           let y = 20;
 
+          // Helper para texto com quebra
           function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
             const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, yPos, { align: align || 'left' });
             return yPos + lines.length * lineHeight;
           }
 
-          // Cabeçalho
+          // ===== CABEÇALHO =====
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(20);
+          doc.setFontSize(22);
           doc.setTextColor(30, 41, 59);
           doc.text('Way For System', pageW / 2, y, { align: 'center' });
-          y += 8;
+          y += 9;
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(12);
+          doc.setFontSize(13);
           doc.setTextColor(59, 130, 246);
           doc.text('Busca CID & Prescrição', pageW / 2, y, { align: 'center' });
           y += 8;
@@ -647,10 +655,11 @@
           doc.line(margin, y, pageW - margin, y);
           y += 10;
 
-          // Diagnóstico
+          // ===== DIAGNÓSTICO =====
+          const diagBoxHeight = 30 + (result.symptoms || []).length * 4;
           doc.setFillColor(239, 246, 255);
           doc.setDrawColor(219, 234, 254);
-          doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
+          doc.roundedRect(margin, y - 4, contentW, diagBoxHeight, 3, 3, 'FD');
 
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
@@ -671,57 +680,63 @@
           }
           y += 12;
 
-          // Título
+          // ===== TÍTULO PRESCRIÇÃO =====
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
           doc.setTextColor(30, 41, 59);
           doc.text('Prescrição', margin, y);
           y += 8;
 
-          // Tabela com quebras de linha
-          const tableBody = prescItems.map((item, idx) => {
-            let lines = [];
-            let nomeLinha = `${idx+1}. ${item.nome}`;
-            if (item.dosagem) nomeLinha += ` — ${item.dosagem}`;
-            lines.push(nomeLinha);
-            if (item.posologia) lines.push(item.posologia);
-            const meta = [];
-            if (item.via) meta.push('Via: ' + item.via);
-            if (item.duracao) meta.push('Duração: ' + item.duracao);
-            if (meta.length > 0) lines.push(meta.join('    '));
-            return [lines.join('\n')];
-          });
+          // ===== ITENS DA PRESCRIÇÃO (texto livre) =====
+          prescItems.forEach((item, idx) => {
+            // Linha 1: Número + Nome + Dosagem
+            let line1 = `${idx+1}. ${item.nome}`;
+            if (item.dosagem) line1 += ` — ${item.dosagem}`;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+            y = addWrappedText(line1, margin + 2, y, contentW - 4, 5, 'left');
 
-          doc.autoTable({
-            startY: y,
-            body: tableBody,
-            theme: 'plain',
-            margin: { left: margin, right: margin },
-            styles: {
-              fontSize: 9,
-              cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
-              lineColor: [226, 232, 240],
-              lineWidth: 0.2,
-            },
-            columnStyles: {
-              0: { cellWidth: contentW, textColor: [51, 65, 85] }
-            },
-            didParseCell: function(data) {
-              if (data.row.index % 2 === 0) {
-                data.cell.styles.fillColor = [248, 250, 252];
-              }
+            // Linha 2: Posologia (se houver)
+            if (item.posologia) {
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(9);
+              doc.setTextColor(51, 65, 85);
+              y = addWrappedText(item.posologia, margin + 6, y, contentW - 10, 4.5, 'left');
+            }
+
+            // Linha 3: Metadados (Via e Duração)
+            const metaParts = [];
+            if (item.via) metaParts.push('Via: ' + item.via);
+            if (item.duracao) metaParts.push('Duração: ' + item.duracao);
+            if (metaParts.length > 0) {
+              doc.setFont('helvetica', 'italic');
+              doc.setFontSize(8);
+              doc.setTextColor(100, 116, 139);
+              y = addWrappedText(metaParts.join('    '), margin + 6, y, contentW - 10, 4, 'left');
+            }
+
+            // Espaço entre itens
+            y += 4;
+            // Linha separadora (opcional, para melhor leitura)
+            if (idx < prescItems.length - 1) {
+              doc.setDrawColor(226, 232, 240);
+              doc.setLineWidth(0.1);
+              doc.line(margin + 4, y, pageW - margin - 4, y);
+              y += 4;
             }
           });
 
-          y = doc.lastAutoTable.finalY + 10;
+          y += 6;
 
-          // Aviso
+          // ===== AVISO (completo e centralizado) =====
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
           const warningText = 'Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.';
           y = addWrappedText(warningText, margin, y, contentW, 4, 'center');
 
+          // Linha final
           y += 6;
           doc.setDrawColor(226, 232, 240);
           doc.line(margin, y, pageW - margin, y);
@@ -735,7 +750,7 @@
         };
       };
 
-      // ===== RENDER RESULTADOS =====
+      // ===== RENDER RESULTADOS (sem alterações) =====
       function renderResults(results) {
         const container = document.getElementById('cidResults');
         const tips = document.getElementById('searchTips');
