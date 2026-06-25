@@ -169,7 +169,6 @@
     @supports (padding-top: env(safe-area-inset-top)) { body { padding-top: env(safe-area-inset-top); } }
     @supports (padding-bottom: env(safe-area-inset-bottom)) { .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); } }
 
-    /* ===== PDF PREVIEW (single scroll area) ===== */
     .pdf-preview-modal-body { padding: 0; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .pdf-preview-content { background: #fff; padding: 24px; font-family: 'Inter', sans-serif; }
     .pdf-preview-content .pdf-header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 20px; }
@@ -189,7 +188,6 @@
     .pdf-preview-content .pdf-item .pdf-med-meta span { background: #F1F5F9; padding: 3px 10px; border-radius: 9999px; }
     .pdf-preview-content .pdf-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.75rem; color: #94A3B8; font-style: italic; line-height: 1.5; }
   </style>
-<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -342,7 +340,6 @@
       logAccess, createNote
     } from './supabase-config.js';
 
-    // ===== PRESCRIÇÕES DETALHADAS (com entrada para I20) =====
     const prescricaoDetalhada = {
       'A09': [
         { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
@@ -558,46 +555,30 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF CORRIGIDO (TEXTO REAL, SEM NUMERAÇÃO DUPLICADA) =====
+      // ===== GERAR PDF CORRIGIDO =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
 
-        // Tenta obter prescrição detalhada, senão usa as strings do banco (removendo numeração inicial)
         let prescDetalhada = getPrescricaoDetalhada(code);
         let prescItems = [];
         if (prescDetalhada) {
           prescItems = prescDetalhada.map(item => ({ ...item }));
         } else {
-          // Usa prescrições antigas (strings) e remove numeração inicial
           const raw = result.prescriptions || [];
           prescItems = raw.map(p => {
-            // Remove numeração inicial como "1. ", "2. " etc.
             const clean = p.replace(/^\d+\.\s*/, '');
             return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' };
           });
         }
 
-        // Monta preview HTML
-        let prescHtml = prescItems.map((item, idx) => `
-          <div class="pdf-item">
-            <div>
-              <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
-              ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
-            </div>
-            ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
-            <div class="pdf-med-meta">
-              ${item.via ? `<span>Via: ${item.via}</span>` : ''}
-              ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
-            </div>
-          </div>
-        `).join('');
-
+        // Preview
         const previewContainer = document.getElementById('pdfPreviewContainer');
         previewContainer.innerHTML = `
           <div class="pdf-header">
-            <h2>📄 Receituário Médico</h2>
-            <p>Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+            <h2>📄 Way For System</h2>
+            <p style="font-weight:500; color:#3B82F6;">Busca CID & Prescrição</p>
+            <p style="font-size:0.8rem; color:#94A3B8;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
           </div>
           <div class="pdf-diagnostico">
             <h3>CID ${code} — ${name}</h3>
@@ -608,7 +589,19 @@
           </div>
           <div class="pdf-prescricao">
             <h4>💊 Prescrição</h4>
-            ${prescHtml}
+            ${prescItems.map((item, idx) => `
+              <div class="pdf-item">
+                <div>
+                  <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
+                  ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
+                </div>
+                ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
+                <div class="pdf-med-meta">
+                  ${item.via ? `<span>Via: ${item.via}</span>` : ''}
+                  ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
+                </div>
+              </div>
+            `).join('')}
           </div>
           <div class="pdf-footer">
             ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.
@@ -617,7 +610,6 @@
 
         pdfModal.classList.add('show');
 
-        // ===== GERAR PDF COM jsPDF + autoTable (UMA COLUNA) =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
@@ -627,18 +619,22 @@
           const contentW = pageW - 2 * margin;
           let y = 20;
 
-          // Helper para texto com quebra
           function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
             const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, yPos, { align: align || 'left' });
             return yPos + lines.length * lineHeight;
           }
 
-          // Header
+          // Cabeçalho
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(18);
+          doc.setFontSize(20);
           doc.setTextColor(30, 41, 59);
-          doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
+          doc.text('Way For System', pageW / 2, y, { align: 'center' });
+          y += 8;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.setTextColor(59, 130, 246);
+          doc.text('Busca CID & Prescrição', pageW / 2, y, { align: 'center' });
           y += 8;
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
@@ -646,7 +642,6 @@
           doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
           y += 12;
 
-          // Linha
           doc.setDrawColor(226, 232, 240);
           doc.setLineWidth(0.3);
           doc.line(margin, y, pageW - margin, y);
@@ -676,23 +671,25 @@
           }
           y += 12;
 
-          // Título "Prescrição"
+          // Título
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
           doc.setTextColor(30, 41, 59);
-          doc.text('Prescricao', margin, y);
+          doc.text('Prescrição', margin, y);
           y += 8;
 
-          // Monta dados para tabela única
+          // Tabela com quebras de linha
           const tableBody = prescItems.map((item, idx) => {
-            let text = `${idx+1}. ${item.nome}`;
-            if (item.dosagem) text += ` — ${item.dosagem}`;
-            if (item.posologia) text += `\n${item.posologia}`;
+            let lines = [];
+            let nomeLinha = `${idx+1}. ${item.nome}`;
+            if (item.dosagem) nomeLinha += ` — ${item.dosagem}`;
+            lines.push(nomeLinha);
+            if (item.posologia) lines.push(item.posologia);
             const meta = [];
             if (item.via) meta.push('Via: ' + item.via);
-            if (item.duracao) meta.push('Duracao: ' + item.duracao);
-            if (meta.length > 0) text += '\n' + meta.join('    ');
-            return [text];
+            if (item.duracao) meta.push('Duração: ' + item.duracao);
+            if (meta.length > 0) lines.push(meta.join('    '));
+            return [lines.join('\n')];
           });
 
           doc.autoTable({
@@ -710,7 +707,6 @@
               0: { cellWidth: contentW, textColor: [51, 65, 85] }
             },
             didParseCell: function(data) {
-              // Destaca a primeira linha de cada medicamento
               if (data.row.index % 2 === 0) {
                 data.cell.styles.fillColor = [248, 250, 252];
               }
@@ -719,14 +715,13 @@
 
           y = doc.lastAutoTable.finalY + 10;
 
-          // Aviso (texto completo, centralizado)
+          // Aviso
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
-          const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
+          const warningText = 'Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.';
           y = addWrappedText(warningText, margin, y, contentW, 4, 'center');
 
-          // Linha final
           y += 6;
           doc.setDrawColor(226, 232, 240);
           doc.line(margin, y, pageW - margin, y);
@@ -734,12 +729,13 @@
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(180, 180, 180);
-          doc.text('Way For System - Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
+          doc.text('Way For System - Busca CID & Prescrição', pageW / 2, y, { align: 'center' });
 
           doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
         };
       };
 
+      // ===== RENDER RESULTADOS =====
       function renderResults(results) {
         const container = document.getElementById('cidResults');
         const tips = document.getElementById('searchTips');
@@ -811,10 +807,10 @@
                   </div>
                 </div>
                 <div class="result-actions">
-                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
                     <span>📝</span> Criar Nota
                   </button>
-                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
                     <span>📄</span> Gerar PDF
                   </button>
                 </div>
