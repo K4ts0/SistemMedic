@@ -11,6 +11,62 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .attempts-warning {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      color: #92400E;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .attempts-warning.show { display: flex; }
+    .attempts-warning.danger {
+      background: #FEE2E2;
+      border-color: #EF4444;
+      color: #991B1B;
+    }
+    .forgot-password-link {
+      text-align: center;
+      margin-top: 12px;
+      display: none;
+    }
+    .forgot-password-link.show { display: block; }
+    .forgot-password-link a {
+      color: #3B82F6;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .forgot-password-link a:hover { text-decoration: underline; }
+    .mensagem.erro {
+      background: #FEE2E2;
+      border: 1px solid #EF4444;
+      color: #991B1B;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .mensagem.erro.show { display: block; }
+    .mensagem.sucesso {
+      background: #D1FAE5;
+      border: 1px solid #10B981;
+      color: #065F46;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .mensagem.sucesso.show { display: block; }
+  </style>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -19,6 +75,12 @@
         <div class="logo">📝</div>
         <h1>Way For System</h1>
         <p>Gerencie suas anotações médicas com segurança</p>
+      </div>
+
+      <!-- Contador de tentativas -->
+      <div id="attemptsWarning" class="attempts-warning">
+        <span>⚠️</span>
+        <span id="attemptsText"></span>
       </div>
 
       <div id="mensagem" class="mensagem"></div>
@@ -37,6 +99,11 @@
         </button>
       </form>
 
+      <!-- Link "Esqueceu a senha?" (aparece após 3 tentativas) -->
+      <div id="forgotPasswordLink" class="forgot-password-link">
+        <a href="forgot-password.html">🔑 Esqueceu a senha?</a>
+      </div>
+
       <div class="auth-footer">
         Não tem conta? <a href="register.html">Cadastre-se</a>
       </div>
@@ -54,7 +121,6 @@
       try {
         const user = await getCurrentUser();
         if (user) {
-          // Admin vai direto para o painel administrativo
           if (user.email === 'admin@wayforsystem.med') {
             window.location.href = 'admin.html';
           } else {
@@ -63,15 +129,28 @@
         }
       } catch {}
 
+      // Contador de tentativas de login
+      let failedAttempts = parseInt(localStorage.getItem('login_attempts') || '0');
+      const MAX_ATTEMPTS = 3;
+
+      updateAttemptsUI();
+
       document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
+
+        // Limpa mensagens anteriores
+        hideMessage();
 
         try {
           await signIn(email, password);
+
+          // Login bem-sucedido: reseta contador
+          localStorage.removeItem('login_attempts');
+          failedAttempts = 0;
+
           await registerSession();
-          // Verifica se é admin para redirecionar ao painel correto
           const { data: { user } } = await supabase.auth.getUser();
           if (user && user.email === 'admin@wayforsystem.med') {
             window.location.href = 'admin.html';
@@ -79,14 +158,43 @@
             window.location.href = 'dashboard.html';
           }
         } catch (error) {
-          const msg = document.getElementById('mensagem');
-          msg.textContent = error.message || 'Erro no login';
-          msg.className = 'mensagem erro';
+          failedAttempts++;
+          localStorage.setItem('login_attempts', failedAttempts.toString());
+
+          updateAttemptsUI();
+
+          // Mensagem padrão de erro
+          const errorMsg = 'Padrão incorreto, seu email ou senha estão incorretos';
+          showMessage(errorMsg, 'erro');
+
+          // Limpa o campo de senha
+          document.getElementById('password').value = '';
+          document.getElementById('password').focus();
         }
       });
 
+      function updateAttemptsUI() {
+        const warningEl = document.getElementById('attemptsWarning');
+        const textEl = document.getElementById('attemptsText');
+        const forgotLink = document.getElementById('forgotPasswordLink');
+
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          // Mostra link de recuperação
+          forgotLink.classList.add('show');
+          warningEl.classList.add('show', 'danger');
+          textEl.textContent = `Você excedeu ${MAX_ATTEMPTS} tentativas. Use "Esqueceu a senha?" para recuperar seu acesso.`;
+        } else if (failedAttempts > 0) {
+          warningEl.classList.add('show');
+          warningEl.classList.remove('danger');
+          const remaining = MAX_ATTENTTS - failedAttempts;
+          textEl.textContent = `Tentativa ${failedAttempts} de ${MAX_ATTEMPTS}. Mais ${remaining} tentativa(s) antes de bloquear.`;
+        } else {
+          warningEl.classList.remove('show', 'danger');
+          forgotLink.classList.remove('show');
+        }
+      }
+
       function checkUrlErrors() {
-        // Verifica hash de erro (ex: #error=access_denied&error_code=otp_expired)
         const hash = window.location.hash;
         if (hash && hash.includes('error=')) {
           const params = new URLSearchParams(hash.slice(1));
@@ -102,15 +210,27 @@
           } else if (errorDesc) {
             showMessage(decodeURIComponent(errorDesc.replace(/\+/g, ' ')), 'erro');
           }
-          // Limpa o hash da URL
           history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+
+        // Verifica mensagem de sucesso (vinda do forgot-password)
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMsg = urlParams.get('success');
+        if (successMsg) {
+          showMessage(decodeURIComponent(successMsg), 'sucesso');
+          history.replaceState(null, '', window.location.pathname);
         }
       }
 
       function showMessage(msg, type = 'erro') {
         const el = document.getElementById('mensagem');
         el.textContent = msg;
-        el.className = `mensagem ${type}`;
+        el.className = `mensagem ${type} show`;
+      }
+
+      function hideMessage() {
+        const el = document.getElementById('mensagem');
+        el.className = 'mensagem';
       }
     })();
   </script>
