@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     :root {
       --primary: #3B82F6; --primary-light: #60A5FA; --primary-lighter: #DBEAFE; --primary-soft: #EFF6FF;
@@ -162,27 +163,31 @@
     .sender-info { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--gray-600); }
     .sender-avatar { width: 30px; height: 30px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; color: var(--white); font-size: 0.75rem; font-weight: 600; }
     .modal-footer { padding: 14px 20px; border-top: 1px solid var(--gray-100); display: flex; gap: 10px; justify-content: flex-end; }
-    .pdf-preview { background: var(--white); padding: 20px; max-height: 60vh; overflow-y: auto; font-family: 'Inter', sans-serif; }
-    .pdf-preview .pdf-header { text-align: center; border-bottom: 2px solid var(--gray-200); padding-bottom: 12px; margin-bottom: 16px; }
-    .pdf-preview .pdf-header h2 { color: var(--gray-800); font-size: 1.4rem; }
-    .pdf-preview .pdf-header p { color: var(--gray-500); font-size: 0.9rem; }
-    .pdf-preview .pdf-diagnostico { background: var(--primary-soft); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; }
-    .pdf-preview .pdf-diagnostico h3 { color: var(--primary); font-size: 1.1rem; }
-    .pdf-preview .pdf-diagnostico p { color: var(--gray-700); font-size: 0.9rem; margin-top: 4px; }
-    .pdf-preview .pdf-prescricao h4 { color: var(--gray-800); font-size: 1rem; margin-bottom: 10px; }
-    .pdf-preview .pdf-prescricao .pdf-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; }
-    .pdf-preview .pdf-prescricao .pdf-item .pdf-med-nome { font-weight: 700; color: var(--gray-800); }
-    .pdf-preview .pdf-prescricao .pdf-item .pdf-med-dosagem { color: var(--gray-600); }
-    .pdf-preview .pdf-prescricao .pdf-item .pdf-med-posologia { color: var(--gray-700); font-size: 0.85rem; margin-top: 2px; }
-    .pdf-preview .pdf-prescricao .pdf-item .pdf-med-meta { font-size: 0.75rem; color: var(--gray-500); margin-top: 4px; }
-    .pdf-preview .pdf-footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--gray-200); text-align: center; font-size: 0.75rem; color: var(--gray-400); }
-    .pdf-preview .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-    .pdf-preview .pdf-sintomas span { background: var(--gray-100); padding: 2px 10px; border-radius: var(--radius-full); font-size: 0.75rem; color: var(--gray-600); }
     .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--gray-400); gap: 10px; font-size: 0.9rem; }
     .loading-spinner { width: 22px; height: 22px; border: 3px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @supports (padding-top: env(safe-area-inset-top)) { body { padding-top: env(safe-area-inset-top); } }
     @supports (padding-bottom: env(safe-area-inset-bottom)) { .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); } }
+
+    /* ===== PDF PREVIEW MODAL (single scroll) ===== */
+    .pdf-preview-modal-body { padding: 0; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .pdf-preview-content { background: #fff; padding: 24px; font-family: 'Inter', sans-serif; }
+    .pdf-preview-content .pdf-header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 20px; }
+    .pdf-preview-content .pdf-header h2 { color: #1E293B; font-size: 1.5rem; margin-bottom: 4px; }
+    .pdf-preview-content .pdf-header p { color: #94A3B8; font-size: 0.85rem; }
+    .pdf-preview-content .pdf-diagnostico { background: #EFF6FF; padding: 16px; border-radius: 10px; margin-bottom: 20px; }
+    .pdf-preview-content .pdf-diagnostico h3 { color: #3B82F6; font-size: 1.15rem; margin-bottom: 6px; }
+    .pdf-preview-content .pdf-diagnostico p { color: #334155; font-size: 0.9rem; line-height: 1.5; }
+    .pdf-preview-content .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .pdf-preview-content .pdf-sintomas span { background: #F1F5F9; padding: 3px 12px; border-radius: 9999px; font-size: 0.75rem; color: #64748B; }
+    .pdf-preview-content .pdf-prescricao h4 { color: #1E293B; font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .pdf-preview-content .pdf-item { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+    .pdf-preview-content .pdf-item .pdf-med-nome { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
+    .pdf-preview-content .pdf-item .pdf-med-dosagem { color: #475569; font-size: 0.9rem; }
+    .pdf-preview-content .pdf-item .pdf-med-posologia { color: #334155; font-size: 0.85rem; margin-top: 4px; line-height: 1.5; }
+    .pdf-preview-content .pdf-item .pdf-med-meta { font-size: 0.75rem; color: #64748B; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .pdf-preview-content .pdf-item .pdf-med-meta span { background: #F1F5F9; padding: 3px 10px; border-radius: 9999px; }
+    .pdf-preview-content .pdf-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.75rem; color: #94A3B8; font-style: italic; line-height: 1.5; }
   </style>
 <base target="_blank">
 </head>
@@ -290,6 +295,7 @@
     </div>
   </div>
 
+  <!-- Modal de Mensagem -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -313,14 +319,15 @@
     </div>
   </div>
 
+  <!-- Modal de PDF (visualização) -->
   <div class="modal-overlay" id="pdfModal">
     <div class="modal-content" style="max-width: 700px;">
       <div class="modal-header">
-        <h3><span>📄</span> Visualizar PDF</h3>
+        <h3><span>📄</span> Pré-visualização do PDF</h3>
         <button class="modal-close" id="pdfModalClose">✕</button>
       </div>
-      <div class="modal-body" id="pdfModalBody">
-        <div id="pdfPreviewContainer" class="pdf-preview"></div>
+      <div class="modal-body pdf-preview-modal-body" id="pdfModalBody">
+        <div id="pdfPreviewContainer" class="pdf-preview-content"></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="pdfModalDismiss">Fechar</button>
@@ -544,7 +551,7 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF MELHORADO =====
+      // ===== GERAR PDF COM html2pdf.js (PDF REAL, SEM ABRIR PÁGINA) =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
@@ -597,48 +604,17 @@
 
         pdfModal.classList.add('show');
 
+        // Botão de download gera PDF REAL usando html2pdf.js
         document.getElementById('pdfDownloadBtn').onclick = () => {
-          const content = previewContainer.innerHTML;
-          const fullHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Receituário CID ${code}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: white; padding: 20px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #334155; }
-    .pdf-preview { max-width: 700px; margin: 0 auto; }
-    .pdf-header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 16px; }
-    .pdf-header h2 { color: #1E293B; font-size: 1.4rem; }
-    .pdf-header p { color: #94A3B8; font-size: 0.9rem; }
-    .pdf-diagnostico { background: #EFF6FF; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
-    .pdf-diagnostico h3 { color: #3B82F6; font-size: 1.1rem; }
-    .pdf-diagnostico p { color: #334155; font-size: 0.9rem; margin-top: 4px; }
-    .pdf-prescricao h4 { color: #1E293B; font-size: 1rem; margin-bottom: 10px; }
-    .pdf-item { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
-    .pdf-item .pdf-med-nome { font-weight: 700; color: #1E293B; }
-    .pdf-item .pdf-med-dosagem { color: #475569; }
-    .pdf-item .pdf-med-posologia { color: #334155; font-size: 0.85rem; margin-top: 2px; }
-    .pdf-item .pdf-med-meta { font-size: 0.75rem; color: #64748B; margin-top: 4px; }
-    .pdf-item .pdf-med-meta span { background: #F1F5F9; padding: 2px 10px; border-radius: 9999px; display: inline-block; margin-right: 6px; }
-    .pdf-footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 0.75rem; color: #94A3B8; }
-    .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-    .pdf-sintomas span { background: #F1F5F9; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; color: #64748B; }
-    @media print { body { padding: 0; } .pdf-preview { max-width: 100%; } }
-  </style>
-</head>
-<body>
-  <div class="pdf-preview">${content}</div>
-  <script>window.onload = function() { window.print(); }</script>
-</body>
-</html>`;
-          const blob = new Blob([fullHtml], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `CID_${code}_${name.replace(/\s/g, '_')}.html`;
-          a.click();
-          URL.revokeObjectURL(url);
+          const element = document.getElementById('pdfPreviewContainer');
+          const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `CID_${code}_${name.replace(/\s/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          html2pdf().set(opt).from(element).save();
         };
       };
 
