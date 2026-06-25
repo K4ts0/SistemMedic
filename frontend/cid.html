@@ -191,6 +191,7 @@
     .pdf-preview-content .pdf-system-footer { margin-top: 14px; text-align: center; font-size: 0.7rem; color: #94A3B8; }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="container">
@@ -343,7 +344,7 @@
       logAccess, createNote
     } from './supabase-config.js';
 
-    // ===== PRESCRIÇÕES DETALHADAS (com entrada para I20) =====
+    // ===== PRESCRICOES DETALHADAS (com entrada para I20) =====
     const prescricaoDetalhada = {
       'A09': [
         { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
@@ -559,21 +560,21 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF CORRIGIDO (TEXTO REAL, SEM NUMERAÇÃO DUPLICADA) =====
+      // ===== GERAR PDF CORRIGIDO (TEXTO REAL, SEM NUMERACAO DUPLICADA) =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
 
-        // Tenta obter prescrição detalhada, senão usa as strings do banco (removendo numeração inicial)
+        // Tenta obter prescricao detalhada, senao usa as strings do banco (removendo numeracao inicial)
         let prescDetalhada = getPrescricaoDetalhada(code);
         let prescItems = [];
         if (prescDetalhada) {
           prescItems = prescDetalhada.map(item => ({ ...item }));
         } else {
-          // Usa prescrições antigas (strings) e remove numeração inicial
+          // Usa prescricoes antigas (strings) e remove numeracao inicial
           const raw = result.prescriptions || [];
           prescItems = raw.map(p => {
-            // Remove numeração inicial como "1. ", "2. " etc.
+            // Remove numeracao inicial como "1. ", "2. " etc.
             const clean = p.replace(/^\d+\.\s*/, '');
             return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' };
           });
@@ -654,7 +655,7 @@
           doc.line(margin, y, pageW - margin, y);
           y += 10;
 
-          // Diagnóstico
+          // Diagnostico
           doc.setFillColor(239, 246, 255);
           doc.setDrawColor(219, 234, 254);
           doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
@@ -678,14 +679,14 @@
           }
           y += 12;
 
-          // Título "Prescrição"
+          // Titulo "Prescricao"
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
           doc.setTextColor(30, 41, 59);
           doc.text('Prescricao', margin, y);
           y += 8;
 
-          // Monta dados para tabela única
+          // Monta dados para tabela unica
           const tableBody = prescItems.map((item, idx) => {
             let text = `${idx+1}. ${item.nome}`;
             if (item.dosagem) text += ` — ${item.dosagem}`;
@@ -721,7 +722,7 @@
 
           y = doc.lastAutoTable.finalY + 10;
 
-          // Aviso — caixa estilizada com borda, alinhado à esquerda (texto centralizado dentro da caixa)
+          // Aviso — caixa estilizada com borda, alinhado a esquerda (texto centralizado dentro da caixa)
           const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
           const warningLines = doc.splitTextToSize(warningText, contentW - 8);
           const warningBoxH = warningLines.length * 4.5 + 8;
@@ -820,10 +821,10 @@
                   </div>
                 </div>
                 <div class="result-actions">
-                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
                     <span>📝</span> Criar Nota
                   </button>
-                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\'")}')">
+                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
                     <span>📄</span> Gerar PDF
                   </button>
                 </div>
