@@ -66,6 +66,7 @@
     }
     .mensagem.sucesso.show { display: block; }
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -120,6 +121,7 @@
       try {
         const user = await getCurrentUser();
         if (user) {
+          // Admin vai direto para o painel administrativo
           if (user.email === 'admin@wayforsystem.med') {
             window.location.href = 'admin.html';
           } else {
@@ -136,6 +138,7 @@
 
       document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const email = document.getElementById('email').value;
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
@@ -150,6 +153,7 @@
           failedAttempts = 0;
 
           await registerSession();
+          // Verifica se é admin para redirecionar ao painel correto
           const { data: { user } } = await supabase.auth.getUser();
           if (user && user.email === 'admin@wayforsystem.med') {
             window.location.href = 'admin.html';
@@ -157,6 +161,9 @@
             window.location.href = 'dashboard.html';
           }
         } catch (error) {
+          const msg = document.getElementById('mensagem');
+          msg.textContent = error.message || 'Erro no login';
+          msg.className = 'mensagem erro';
           failedAttempts++;
           localStorage.setItem('login_attempts', failedAttempts.toString());
 
@@ -194,6 +201,7 @@
       }
 
       function checkUrlErrors() {
+        // Verifica hash de erro (ex: #error=access_denied&error_code=otp_expired)
         const hash = window.location.hash;
         if (hash && hash.includes('error=')) {
           const params = new URLSearchParams(hash.slice(1));
@@ -209,6 +217,7 @@
           } else if (errorDesc) {
             showMessage(decodeURIComponent(errorDesc.replace(/\+/g, ' ')), 'erro');
           }
+          // Limpa o hash da URL
           history.replaceState(null, '', window.location.pathname + window.location.search);
         }
 
@@ -224,6 +233,7 @@
       function showMessage(msg, type = 'erro') {
         const el = document.getElementById('mensagem');
         el.textContent = msg;
+        el.className = `mensagem ${type}`;
         el.className = `mensagem ${type} show`;
       }
 
