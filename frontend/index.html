@@ -5,1891 +5,235 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#3B82F6" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Busca CID — Way For System</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Login — Way For System</title>
+  <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    /* ============================================
-       CID PAGE — MOBILE FIRST RESPONSIVE
-       ============================================ */
-    :root {
-      --primary: #3B82F6;
-      --primary-light: #60A5FA;
-      --primary-lighter: #DBEAFE;
-      --primary-soft: #EFF6FF;
-      --secondary: #14B8A6;
-      --white: #FFFFFF;
-      --gray-50: #F8FAFC;
-      --gray-100: #F1F5F9;
-      --gray-200: #E2E8F0;
-      --gray-300: #CBD5E1;
-      --gray-400: #94A3B8;
-      --gray-500: #64748B;
-      --gray-600: #475569;
-      --gray-700: #334155;
-      --gray-800: #1E293B;
-      --success: #10B981;
-      --success-soft: #ECFDF5;
-      --danger: #EF4444;
-      --danger-soft: #FEF2F2;
-      --warning: #F59E0B;
-      --warning-soft: #FFFBEB;
-      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
-      --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-      --radius-sm: 8px;
-      --radius: 12px;
-      --radius-lg: 16px;
-      --radius-full: 9999px;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      font-family: var(--font-sans);
-      background: linear-gradient(180deg, var(--gray-50) 0%, var(--primary-soft) 100%);
-      background-attachment: fixed;
-      color: var(--gray-700);
-      min-height: 100vh;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    /* ===== CONTAINER ===== */
-    .container {
-      width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 12px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (min-width: 768px) {
-      .container { max-width: 720px; padding: 20px; }
-    }
-    @media (min-width: 1024px) {
-      .container { max-width: 900px; padding: 24px; }
-    }
-
-    /* ===== HEADER ===== */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding: 8px 4px 16px;
-      border-bottom: 1px solid var(--gray-200);
-      gap: 8px;
-    }
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
-    }
-    .header-brand .logo-icon {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: var(--white);
-      box-shadow: var(--shadow-md);
-    }
-    .header-brand h1 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--gray-800);
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .header-brand .subtitle {
-      font-size: 0.65rem;
-      color: var(--gray-400);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    @media (min-width: 768px) {
-      .header-brand h1 { font-size: 1.4rem; }
-      .header-brand .subtitle { font-size: 0.75rem; }
-      .header-brand .logo-icon { width: 48px; height: 48px; font-size: 24px; }
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--primary-soft);
-      padding: 6px 12px;
-      border-radius: var(--radius-full);
-      border: 1px solid var(--primary-lighter);
-    }
-    .user-info .avatar {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-weight: 600;
+    .attempts-warning {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      color: #92400E;
+      padding: 10px 14px;
+      border-radius: 8px;
       font-size: 13px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .user-info .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-info .user-name {
-      font-weight: 600;
-      color: var(--gray-700);
-      font-size: 0.8rem;
-      max-width: 80px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: none;
-    }
-    @media (min-width: 400px) {
-      .user-info .user-name { display: block; }
-    }
-    @media (min-width: 768px) {
-      .user-info { padding: 8px 16px; }
-      .user-info .avatar { width: 36px; height: 36px; }
-      .user-info .user-name { max-width: 120px; font-size: 0.85rem; }
-    }
-
-    /* ===== NAVIGATION ===== */
-    .nav-menu {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .nav-menu::-webkit-scrollbar { display: none; }
-    .nav-item {
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      color: var(--gray-500);
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-      touch-action: manipulation;
-    }
-    .nav-item:hover, .nav-item:active {
-      border-color: var(--primary);
-      color: var(--primary);
-      background: var(--primary-soft);
-    }
-    .nav-item.active {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: var(--white);
-      border-color: var(--primary);
-      box-shadow: 0 4px 12px rgba(59,130,246,0.3);
-    }
-    @media (min-width: 768px) {
-      .nav-item { padding: 10px 20px; font-size: 0.9rem; gap: 8px; }
-    }
-
-    /* ===== MENSAGEM ===== */
-    .mensagem {
-      padding: 12px 16px;
-      border-radius: var(--radius);
       margin-bottom: 12px;
-      font-weight: 500;
-      font-size: 0.9rem;
-      animation: slideDown 0.3s ease;
       display: none;
-      word-break: break-word;
-    }
-    .mensagem.erro { background: var(--danger-soft); color: #991B1B; border: 1px solid #FECACA; }
-    .mensagem.sucesso { background: var(--success-soft); color: #065F46; border: 1px solid #A7F3D0; }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ===== CARD ===== */
-    .card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-      padding: 20px 16px;
-      border: 1px solid var(--gray-100);
-      margin-bottom: 16px;
-    }
-    @media (min-width: 768px) {
-      .card { padding: 28px 24px; }
-    }
-
-    /* ===== PAGE TITLE ===== */
-    .page-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--gray-800);
-      margin-bottom: 4px;
-      display: flex;
       align-items: center;
       gap: 8px;
     }
-    .page-subtitle {
-      color: var(--gray-400);
-      font-size: 0.85rem;
-      margin-bottom: 20px;
-      line-height: 1.5;
+    .attempts-warning.show { display: flex; }
+    .attempts-warning.danger {
+      background: #FEE2E2;
+      border-color: #EF4444;
+      color: #991B1B;
     }
-    @media (min-width: 768px) {
-      .page-title { font-size: 1.5rem; }
-      .page-subtitle { font-size: 0.95rem; }
-    }
-
-    /* ===== SEARCH BOX ===== */
-    .search-wrapper {
-      position: relative;
-      margin-bottom: 16px;
-    }
-    .search-box {
-      display: flex;
-      gap: 8px;
-      flex-direction: column;
-    }
-    @media (min-width: 480px) {
-      .search-box { flex-direction: row; }
-    }
-    .search-input {
-      flex: 1;
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-family: var(--font-sans);
-      color: var(--gray-700);
-      background: var(--white);
-      transition: all 0.2s;
-      outline: none;
-      min-height: 52px;
-    }
-    .search-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px var(--primary-lighter);
-    }
-    .search-input::placeholder { color: var(--gray-400); }
-    .search-btn {
-      padding: 14px 20px;
-      border: none;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: var(--white);
-      font-weight: 600;
-      font-size: 1rem;
-      font-family: var(--font-sans);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(59,130,246,0.35);
-      transition: all 0.15s;
-      touch-action: manipulation;
-      min-height: 52px;
-      white-space: nowrap;
-    }
-    .search-btn:active { transform: scale(0.97); }
-    @media (min-width: 480px) {
-      .search-btn { padding: 14px 24px; }
-    }
-
-    /* ===== SYMPTOM TAGS ===== */
-    .symptoms-label {
-      font-size: 0.8rem;
-      color: var(--gray-500);
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .symptom-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .symptom-tag {
-      padding: 8px 14px;
-      background: var(--primary-soft);
-      color: var(--primary);
-      border: 1px solid var(--primary-lighter);
-      border-radius: var(--radius-full);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-weight: 500;
-      touch-action: manipulation;
-      white-space: nowrap;
-    }
-    .symptom-tag:active {
-      background: var(--primary);
-      color: var(--white);
-      transform: scale(0.95);
-    }
-    @media (min-width: 768px) {
-      .symptom-tag:hover {
-        background: var(--primary);
-        color: var(--white);
-      }
-    }
-
-    /* ===== SEARCH TIPS ===== */
-    .search-tips {
-      background: var(--gray-50);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-    .search-tips h4 {
-      color: var(--gray-600);
-      font-size: 0.85rem;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .search-tips p {
-      color: var(--gray-500);
-      font-size: 0.8rem;
-      line-height: 1.7;
-    }
-    .search-tips strong { color: var(--gray-700); }
-
-    /* ===== RESULTS ===== */
-    .results-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .result-card {
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      transition: all 0.2s;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    .result-card:active { transform: scale(0.99); }
-    @media (min-width: 768px) {
-      .result-card:hover {
-        border-color: var(--primary);
-        box-shadow: 0 4px 20px rgba(59,130,246,0.1);
-        transform: translateY(-2px);
-      }
-    }
-    .result-card.expanded {
-      border-color: var(--primary);
-      box-shadow: 0 4px 20px rgba(59,130,246,0.15);
-    }
-
-    .result-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    .result-code {
-      background: linear-gradient(135deg, var(--primary), #1D4ED8);
-      color: var(--white);
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      font-weight: 700;
-      font-size: 0.95rem;
-      flex-shrink: 0;
-      min-width: 60px;
+    .forgot-password-link {
       text-align: center;
-      font-family: var(--font-sans);
-    }
-    .result-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .result-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gray-800);
-      margin-bottom: 4px;
-      line-height: 1.3;
-    }
-    .result-desc {
-      color: var(--gray-500);
-      font-size: 0.8rem;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .result-match {
-      background: #dcfce7;
-      color: #166534;
-      padding: 3px 8px;
-      border-radius: var(--radius-full);
-      font-size: 0.7rem;
-      font-weight: 600;
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .result-symptoms {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
-      padding-left: 72px;
-    }
-    .result-symptom-chip {
-      background: var(--warning-soft);
-      color: #92400e;
-      padding: 3px 10px;
-      border-radius: var(--radius-full);
-      font-size: 0.7rem;
-      font-weight: 500;
-    }
-
-    /* ===== RESULT DETAILS ===== */
-    .result-details {
-      display: none;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--gray-100);
-    }
-    .result-details.show { display: block; }
-
-    /* ===== PRESCRIPTION STRUCTURED ===== */
-    .prescription-box {
-      background: var(--success-soft);
-      border: 1px solid #a7f3d0;
-      border-radius: var(--radius);
-      padding: 14px;
-    }
-    .prescription-box h4 {
-      color: #166534;
-      font-size: 0.9rem;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 700;
-    }
-    .rx-section {
-      margin-bottom: 14px;
-    }
-    .rx-section-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #065F46;
-      border-bottom: 2px solid #6EE7B7;
-      padding-bottom: 4px;
-      margin-bottom: 8px;
-    }
-    .rx-item {
-      background: white;
-      border: 1px solid #A7F3D0;
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      position: relative;
-    }
-    .rx-item:last-child { margin-bottom: 0; }
-    .rx-item-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-    .rx-item-number {
-      width: 22px;
-      height: 22px;
-      min-width: 22px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      border-radius: var(--radius-full);
-      color: white;
-      font-size: 0.65rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .rx-item-name {
-      flex: 1;
-      font-weight: 700;
-      color: var(--gray-800);
-      font-size: 0.85rem;
-      line-height: 1.3;
-    }
-    .rx-item-qty {
-      background: var(--primary-soft);
-      color: var(--primary);
-      border: 1px solid var(--primary-lighter);
-      border-radius: var(--radius-full);
-      padding: 2px 8px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .rx-item-posology {
-      list-style: none;
-      padding: 0;
-      margin: 6px 0 0 30px;
-    }
-    .rx-item-posology li {
-      color: var(--gray-600);
-      font-size: 0.78rem;
-      line-height: 1.6;
-      padding-left: 12px;
-      position: relative;
-    }
-    .rx-item-posology li::before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: var(--primary-light);
-      font-weight: 700;
-    }
-    .rx-item-max {
-      display: inline-block;
-      margin-top: 3px;
-      margin-left: 30px;
-      font-size: 0.73rem;
-      font-weight: 600;
-      color: #DC2626;
-      background: #FEF2F2;
-      border: 1px solid #FECACA;
-      border-radius: var(--radius-full);
-      padding: 1px 8px;
-    }
-    .prescription-warning {
       margin-top: 12px;
-      padding: 10px 12px;
-      background: var(--warning-soft);
-      border: 1px solid #fcd34d;
-      border-radius: var(--radius-sm);
-      font-size: 0.75rem;
-      color: #92400e;
-      font-style: italic;
-      line-height: 1.5;
-    }
-
-    /* ===== RESULT ACTIONS ===== */
-    .result-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-    .result-actions .btn {
-      flex: 1;
-      justify-content: center;
-      min-width: 120px;
-    }
-    .btn-danger {
-      background: linear-gradient(135deg, #EF4444, #F87171);
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(239,68,68,0.3);
-    }
-    .btn-success {
-      background: linear-gradient(135deg, var(--success), #34D399);
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-    }
-    /* Toast inline note feedback */
-    .note-feedback {
       display: none;
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 0.8rem;
-      font-weight: 500;
-      text-align: center;
     }
-    .note-feedback.show { display: block; }
-    .note-feedback.ok { background: var(--success-soft); color: #065F46; border: 1px solid #A7F3D0; }
-    .note-feedback.fail { background: var(--danger-soft); color: #991B1B; border: 1px solid #FECACA; }
-
-    /* ===== BUTTONS ===== */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 12px 18px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      font-weight: 600;
-      font-family: var(--font-sans);
-      cursor: pointer;
-      transition: all 0.15s;
+    .forgot-password-link.show { display: block; }
+    .forgot-password-link a {
+      color: #3B82F6;
+      font-size: 14px;
+      font-weight: 500;
       text-decoration: none;
-      white-space: nowrap;
-      touch-action: manipulation;
-      min-height: 44px;
     }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(59,130,246,0.35);
-    }
-    .btn-secondary {
-      background: var(--white);
-      color: var(--gray-600);
-      border: 2px solid var(--gray-200);
-    }
-    .btn-sm {
-      padding: 8px 14px;
-      font-size: 0.8rem;
-      min-height: 40px;
-    }
-
-    /* ===== EMPTY STATE ===== */
-    .search-empty {
-      text-align: center;
-      padding: 40px 16px;
-    }
-    .search-empty-icon {
-      font-size: 3rem;
-      margin-bottom: 12px;
-      opacity: 0.6;
-    }
-    .search-empty h3 {
-      color: var(--gray-500);
-      font-size: 1rem;
-      margin-bottom: 6px;
-    }
-    .search-empty p {
-      color: var(--gray-400);
-      font-size: 0.8rem;
-      line-height: 1.6;
-    }
-
-    /* ===== POPULAR CIDs ===== */
-    .popular-section { margin-top: 8px; }
-    .popular-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--gray-700);
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .popular-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .popular-tag {
-      padding: 10px 14px;
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      color: var(--gray-600);
-      font-weight: 500;
-      touch-action: manipulation;
-      line-height: 1.4;
-    }
-    .popular-tag:active {
-      background: var(--primary-soft);
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-    @media (min-width: 768px) {
-      .popular-tag:hover {
-        background: var(--primary-soft);
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-    }
-
-    /* ===== NOTIFICATION BELL ===== */
-    .notification-bell {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-full);
-      background: var(--white);
-      border: 2px solid var(--gray-200);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      touch-action: manipulation;
-      flex-shrink: 0;
-    }
-    .notification-bell:active { transform: scale(0.95); }
-    .notification-bell.has-unread {
-      border-color: var(--danger);
-      background: var(--danger-soft);
-    }
-    .notification-badge {
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      width: 18px;
-      height: 18px;
-      background: var(--danger);
-      color: var(--white);
-      border-radius: var(--radius-full);
-      font-size: 0.65rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--white);
-    }
-    .notification-dropdown {
-      position: fixed;
-      top: 60px;
-      left: 12px;
-      right: 12px;
-      max-height: 60vh;
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      border: 1px solid var(--gray-100);
-      z-index: 200;
-      overflow: hidden;
-      display: none;
-    }
-    @media (min-width: 768px) {
-      .notification-dropdown {
-        position: absolute;
-        top: 52px;
-        right: 0;
-        left: auto;
-        width: 360px;
-        max-height: 400px;
-      }
-    }
-    .notification-dropdown.show { display: block; }
-    .notification-dropdown-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--gray-100);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .notification-dropdown-header h3 {
-      font-size: 0.95rem;
-      color: var(--gray-800);
-    }
-    .mark-all-read {
-      font-size: 0.75rem;
-      color: var(--primary);
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .notification-list {
-      max-height: calc(60vh - 50px);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .notification-item {
+    .forgot-password-link a:hover { text-decoration: underline; }
+    .mensagem.erro {
+      background: #FEE2E2;
+      border: 1px solid #EF4444;
+      color: #991B1B;
       padding: 12px 16px;
-      border-bottom: 1px solid var(--gray-50);
-      cursor: pointer;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
-    .notification-item:active { background: var(--primary-soft); }
-    .notification-item.unread {
-      background: var(--primary-soft);
-      border-left: 3px solid var(--primary);
-    }
-    .notif-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-weight: 600;
-      font-size: 0.8rem;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .notif-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .notif-content { flex: 1; min-width: 0; }
-    .notif-sender {
-      font-weight: 600;
-      color: var(--gray-800);
-      font-size: 0.85rem;
-    }
-    .notif-text {
-      color: var(--gray-500);
-      font-size: 0.8rem;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .notif-time {
-      color: var(--gray-400);
-      font-size: 0.7rem;
-      margin-top: 2px;
-    }
-    .notification-empty {
-      padding: 32px 16px;
-      text-align: center;
-      color: var(--gray-400);
-    }
-    .notification-empty .empty-icon {
-      font-size: 2.5rem;
-      margin-bottom: 8px;
-      opacity: 0.5;
-    }
-
-    /* ===== MODAL ===== */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      z-index: 300;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
       display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0;
     }
-    @media (min-width: 768px) {
-      .modal-overlay {
-        align-items: center;
-        padding: 24px;
-      }
+    .mensagem.erro.show { display: block; }
+    .mensagem.sucesso {
+      background: #D1FAE5;
+      border: 1px solid #10B981;
+      color: #065F46;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
     }
-    .modal-overlay.show { display: flex; }
-    .modal-content {
-      background: var(--white);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-      width: 100%;
-      max-height: 85vh;
-      overflow: hidden;
-      animation: modalSlideUp 0.25s ease;
-    }
-    @media (min-width: 768px) {
-      .modal-content {
-        border-radius: var(--radius-xl);
-        max-width: 500px;
-        max-height: 80vh;
-        animation: modalFadeIn 0.2s ease;
-      }
-    }
-    @keyframes modalSlideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    @keyframes modalFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--gray-100);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-header h3 {
-      font-size: 1rem;
-      color: var(--gray-800);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .modal-close {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      border: none;
-      background: var(--gray-100);
-      color: var(--gray-500);
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      touch-action: manipulation;
-    }
-    .modal-body {
-      padding: 16px 20px;
-      max-height: 50vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .modal-message-text {
-      color: var(--gray-700);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-    .modal-message-meta {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--gray-100);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .sender-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--gray-600);
-    }
-    .sender-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--gray-100);
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    /* ===== LOADING ===== */
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      color: var(--gray-400);
-      gap: 10px;
-      font-size: 0.9rem;
-    }
-    .loading-spinner {
-      width: 22px;
-      height: 22px;
-      border: 3px solid var(--gray-200);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ===== SAFE AREA (iPhone notch) ===== */
-    @supports (padding-top: env(safe-area-inset-top)) {
-      body { padding-top: env(safe-area-inset-top); }
-    }
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-      .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-    }
+    .mensagem.sucesso.show { display: block; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-brand">
-        <div class="logo-icon">🔍</div>
-        <div>
-          <h1>Way For System</h1>
-          <div class="subtitle">Busca CID & Prescrição</div>
+  <div class="auth-container">
+    <div class="auth-card card-elevated">
+      <div class="auth-header">
+        <div class="logo">📝</div>
+        <h1>Way For System</h1>
+        <p>Gerencie suas anotações médicas com segurança</p>
+      </div>
+
+      <!-- Contador de tentativas -->
+      <div id="attemptsWarning" class="attempts-warning">
+        <span>⚠️</span>
+        <span id="attemptsText"></span>
+      </div>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email" />
         </div>
-      </div>
-      <div class="header-actions">
-        <div style="position:relative;">
-          <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span>🔔</span>
-            <span class="notification-badge hidden" id="notificationBadge">0</span>
-          </button>
-          <div class="notification-dropdown" id="notificationDropdown">
-            <div class="notification-dropdown-header">
-              <h3>🔔 Notificações</h3>
-              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
-            </div>
-            <div class="notification-list" id="notificationList">
-              <div class="notification-empty">
-                <div class="empty-icon">📭</div>
-                <p>Sem notificações</p>
-              </div>
-            </div>
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Senha</label>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
         </div>
-        <div class="user-info" id="userInfo">
-          <div class="avatar" id="headerAvatar">👤</div>
-          <span class="user-name" id="headerName">...</span>
-        </div>
-      </div>
-    </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" style="margin-top:8px;">
+          <span>🔐</span> Entrar
+        </button>
+      </form>
 
-    <!-- Navigation -->
-    <div class="nav-menu">
-      <button class="nav-item" data-page="dashboard"><span>📝</span> Anotações</button>
-      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
-      <button class="nav-item active" data-page="cid"><span>🔍</span> CID</button>
-    </div>
-
-    <div id="mensagem" class="mensagem"></div>
-
-    <!-- Main Card -->
-    <div class="card">
-      <div class="page-title">🔍 Busca Inteligente CID-10</div>
-      <div class="page-subtitle">
-        Busque por sintomas, nome da doença ou código CID. O sistema sugere os diagnósticos mais prováveis.
+      <!-- Link "Esqueceu a senha?" (aparece após 3 tentativas) -->
+      <div id="forgotPasswordLink" class="forgot-password-link">
+        <a href="forgot-password.html">🔑 Esqueceu a senha?</a>
       </div>
 
-      <!-- Search -->
-      <div class="search-wrapper">
-        <div class="search-box">
-          <input type="text" class="search-input" id="cidInput" placeholder="Ex: dor de cabeça, febre, tosse, diarreia..." />
-          <button class="search-btn" id="searchBtn">
-            <span>🔍</span> Buscar
-          </button>
-        </div>
-      </div>
-
-      <!-- Symptom Tags -->
-      <div class="symptoms-label">Sintomas comuns:</div>
-      <div class="symptom-tags" id="symptomTags">
-        <span class="symptom-tag" data-term="dor de cabeca">🤕 Dor de cabeça</span>
-        <span class="symptom-tag" data-term="febre">🌡️ Febre</span>
-        <span class="symptom-tag" data-term="tosse">🤧 Tosse</span>
-        <span class="symptom-tag" data-term="diarreia">💩 Diarreia</span>
-        <span class="symptom-tag" data-term="dor de garganta">🫁 Dor garganta</span>
-        <span class="symptom-tag" data-term="dor no peito">❤️ Dor no peito</span>
-        <span class="symptom-tag" data-term="falta de ar">😮‍💨 Falta de ar</span>
-        <span class="symptom-tag" data-term="dor abdominal">🤢 Dor barriga</span>
-        <span class="symptom-tag" data-term="prurido">🤲 Coceira</span>
-        <span class="symptom-tag" data-term="dor articular">🦵 Dor articulações</span>
-      </div>
-
-      <!-- Tips -->
-      <div class="search-tips" id="searchTips">
-        <h4>💡 Como buscar</h4>
-        <p>
-          <strong>Sintomas:</strong> "dor de cabeça", "febre alta", "tosse com catarro"<br>
-          <strong>Parte do corpo:</strong> "olho", "peito", "estômago", "costas"<br>
-          <strong>Código CID:</strong> "A00", "E11", "I10", "J18"<br>
-          <strong>Nome da doença:</strong> "diabetes", "asma", "gastrite"
-        </p>
-      </div>
-
-      <!-- Results -->
-      <div id="cidResults"></div>
-    </div>
-
-    <!-- Popular CIDs -->
-    <div class="card popular-section">
-      <div class="popular-title">📋 CIDs Mais Consultados</div>
-      <div class="popular-tags">
-        <span class="popular-tag" data-code="A09">A09 — Gastroenterite</span>
-        <span class="popular-tag" data-code="E11">E11 — Diabetes T2</span>
-        <span class="popular-tag" data-code="I10">I10 — Hipertensão</span>
-        <span class="popular-tag" data-code="J06">J06 — Resfriado</span>
-        <span class="popular-tag" data-code="J18">J18 — Pneumonia</span>
-        <span class="popular-tag" data-code="F32">F32 — Depressão</span>
-        <span class="popular-tag" data-code="K29">K29 — Gastrite</span>
-        <span class="popular-tag" data-code="M79">M79 — Dores musculares</span>
-        <span class="popular-tag" data-code="G43">G43 — Enxaqueca</span>
-        <span class="popular-tag" data-code="R52">R52 — Dor</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal -->
-  <div class="modal-overlay" id="messageModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3><span>📩</span> Nova Mensagem</h3>
-        <button class="modal-close" id="modalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-message-text" id="modalMessageText"></div>
-        <div class="modal-message-meta">
-          <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
-            <span id="modalSenderName">...</span>
-          </div>
-          <span style="color:var(--gray-400); font-size:0.8rem;" id="modalMessageTime"></span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
-        <button class="btn btn-primary" id="modalGoToChat">Ir para Chat</button>
+      <div class="auth-footer">
+        Não tem conta? <a href="register.html">Cadastre-se</a>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { 
-      getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, searchCID, getCID,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
-      logAccess
-    } from './supabase-config.js';
-
-    let currentUserId = null;
-    let lastMessageId = null;
+    import { signIn, getCurrentUser, registerSession, supabase } from './supabase-config.js';
 
     (async function init() {
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
+      // Verifica hash de erro na URL (ex: confirmação de email expirada)
+      checkUrlErrors();
 
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
-
-      // Registra acesso
-      try { await logAccess('cid'); } catch(e) {}
-
-      // Navegação
-      document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = btn.dataset.page;
-          if (page) window.location.href = page + '.html';
-        });
-      });
-
-      // Header
+      // Verifica se já está logado
       try {
-        const profile = await getUserProfile();
-        document.getElementById('headerName').textContent = profile.name || profile.email;
-        const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) {
-          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        const user = await getCurrentUser();
+        if (user) {
+          if (user.email === 'admin@wayforsystem.med') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        }
+      } catch {}
+
+      // Contador de tentativas de login
+      let failedAttempts = parseInt(localStorage.getItem('login_attempts') || '0');
+      const MAX_ATTEMPTS = 3;
+
+      updateAttemptsUI();
+
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailValue = document.getElementById('email').value.trim(); // ← renomeado
+        // ⚠️ Nome único para evitar conflitos de declaração
+        const userEmail = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        // Limpa mensagens anteriores
+        hideMessage();
+
+        try {
+          await signIn(emailValue, password); // ← usa a nova variável
+          await signIn(userEmail, password);
+
+          // Login bem-sucedido: reseta contador
+          localStorage.removeItem('login_attempts');
+          failedAttempts = 0;
+
+          await registerSession();
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.email === 'admin@wayforsystem.med') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        } catch (error) {
+          failedAttempts++;
+          localStorage.setItem('login_attempts', failedAttempts.toString());
+
+          updateAttemptsUI();
+
+          // Mensagem padrão de erro
+          const errorMsg = 'Padrão incorreto, seu email ou senha estão incorretos';
+          showMessage(errorMsg, 'erro');
+
+          // Limpa o campo de senha
+          document.getElementById('password').value = '';
+          document.getElementById('password').focus();
+        }
+      });
+
+      function updateAttemptsUI() {
+        const warningEl = document.getElementById('attemptsWarning');
+        const textEl = document.getElementById('attemptsText');
+        const forgotLink = document.getElementById('forgotPasswordLink');
+
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          forgotLink.classList.add('show');
+          warningEl.classList.add('show', 'danger');
+          textEl.textContent = `Você excedeu ${MAX_ATTEMPTS} tentativas. Use "Esqueceu a senha?" para recuperar seu acesso.`;
+        } else if (failedAttempts > 0) {
+          warningEl.classList.add('show');
+          warningEl.classList.remove('danger');
+          const remaining = MAX_ATTEMPTS - failedAttempts; // ← CORRIGIDO
+          const remaining = MAX_ATTEMPTS - failedAttempts;
+          textEl.textContent = `Tentativa ${failedAttempts} de ${MAX_ATTEMPTS}. Mais ${remaining} tentativa(s) antes de bloquear.`;
         } else {
-          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
+          warningEl.classList.remove('show', 'danger');
+          forgotLink.classList.remove('show');
         }
-      } catch (e) {}
-
-      // Logout no avatar (long press ou duplo clique no mobile)
-      let pressTimer;
-      const userInfo = document.getElementById('userInfo');
-      userInfo.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(async () => {
-          if (confirm('Deseja sair da conta?')) {
-            await signOut();
-            localStorage.removeItem('session_id');
-            window.location.href = 'index.html';
-          }
-        }, 800);
-      });
-      userInfo.addEventListener('touchend', () => clearTimeout(pressTimer));
-      userInfo.addEventListener('touchmove', () => clearTimeout(pressTimer));
-
-      // ===== NOTIFICAÇÕES =====
-      const bell = document.getElementById('notificationBell');
-      const dropdown = document.getElementById('notificationDropdown');
-      const badge = document.getElementById('notificationBadge');
-
-      bell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) loadNotifications();
-      });
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) {
-          dropdown.classList.remove('show');
-        }
-      });
-      document.getElementById('markAllRead').addEventListener('click', async () => {
-        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
-      });
-
-      async function loadNotifications() {
-        try {
-          const messages = await getUnreadMessages();
-          const list = document.getElementById('notificationList');
-          if (messages.length === 0) {
-            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
-            return;
-          }
-          list.innerHTML = messages.map(msg => {
-            const sender = msg.sender || {};
-            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-            return `
-              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
-                <div class="notif-avatar">${avatar}</div>
-                <div class="notif-content">
-                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
-                  <div class="notif-text">${escapeHtml(msg.content)}</div>
-                  <div class="notif-time">${time}</div>
-                </div>
-              </div>
-            `;
-          }).join('');
-          document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', async () => {
-              const msgId = item.dataset.msgId;
-              const msg = messages.find(m => m.id === msgId);
-              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch(e){} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
-            });
-          });
-        } catch(e) { console.error(e); }
       }
 
-      async function checkNewMessages() {
-        try {
-          const count = await getUnreadCount();
-          updateBellState(count);
-          if (count > 0) {
-            const messages = await getUnreadMessages();
-            if (messages.length > 0 && messages[0].id !== lastMessageId) {
-              lastMessageId = messages[0].id;
-              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
-            }
+      function checkUrlErrors() {
+        const hash = window.location.hash;
+        if (hash && hash.includes('error=')) {
+          const params = new URLSearchParams(hash.slice(1));
+          const errorCode = params.get('error_code');
+          const errorDesc = params.get('error_description');
+
+          if (errorCode === 'otp_expired' || errorDesc?.includes('expired')) {
+            showMessage(
+              'O link de confirmação expirou ou já foi usado. ' +
+              'Tente fazer login diretamente ou cadastre-se novamente.', 
+              'erro'
+            );
+          } else if (errorDesc) {
+            showMessage(decodeURIComponent(errorDesc.replace(/\+/g, ' ')), 'erro');
           }
-        } catch(e) {}
-      }
-
-      function updateBellState(count) {
-        badge.textContent = count;
-        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
-        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
-      }
-
-      // ===== MODAL =====
-      const modal = document.getElementById('messageModal');
-      function showMessageModal(msg) {
-        const sender = msg.sender || {};
-        document.getElementById('modalMessageText').textContent = msg.content;
-        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
-        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
-        const avatar = document.getElementById('modalSenderAvatar');
-        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
-        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-        modal.dataset.senderId = msg.sender_id;
-        modal.classList.add('show');
-      }
-      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
-      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
-      document.getElementById('modalGoToChat').addEventListener('click', () => {
-        const senderId = modal.dataset.senderId;
-        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
-        window.location.href = 'chat.html';
-      });
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      // ===== BUSCA CID =====
-      // ===== MAPA DE rxSections (enriquecimento client-side) =====
-      // Quando o supabase-config.js retornar rxSections diretamente, este mapa pode ser removido.
-      // Estrutura: { [code]: { rxSections: [...] } }
-      const RX_SECTIONS_MAP = {
-        'A09': {
-          rxSections: [
-            {
-              title: 'USO ORAL',
-              items: [
-                {
-                  name: 'Soro de Reidratação Oral (SRO)',
-                  qty: '1 FA',
-                  posology: ['Tomar pequenos volumes frequentemente após cada evacuação diarreica.']
-                },
-                {
-                  name: 'Loperamida 2 mg',
-                  qty: null,
-                  posology: [
-                    'Tomar 2 comprimidos (4 mg) inicialmente.',
-                    'Seguido de 1 comprimido (2 mg) após cada evacuação diarreica.'
-                  ],
-                  max: 'Máximo: 8 mg/dia.'
-                },
-                {
-                  name: 'Saccharomyces boulardii 200 mg',
-                  qty: '10 cáps',
-                  posology: ['Tomar 1 cápsula VO a cada 12 horas por 5 dias.']
-                },
-                {
-                  name: 'Sulfato de Zinco 20 mg',
-                  qty: '10 comps',
-                  posology: ['Tomar 1 comprimido VO 1 vez ao dia por 10 dias.']
-                }
-              ]
-            }
-          ]
-        },
-        'E11': {
-          rxSections: [
-            {
-              title: 'USO ORAL',
-              items: [
-                {
-                  name: 'Metformina 500 mg',
-                  qty: '60 comps',
-                  posology: ['Tomar 1 comprimido VO às refeições 2x ao dia.', 'Aumentar para 1g/dia após 2 semanas conforme tolerância.'],
-                  max: 'Máximo: 2550 mg/dia.'
-                }
-              ]
-            }
-          ]
-        },
-        'I10': {
-          rxSections: [
-            {
-              title: 'USO ORAL',
-              items: [
-                {
-                  name: 'Losartana Potássica 50 mg',
-                  qty: '30 comps',
-                  posology: ['Tomar 1 comprimido VO 1 vez ao dia.'],
-                  max: 'Dose máxima: 100 mg/dia.'
-                },
-                {
-                  name: 'Hidroclorotiazida 25 mg',
-                  qty: '30 comps',
-                  posology: ['Tomar 1 comprimido VO 1 vez ao dia (pela manhã).']
-                }
-              ]
-            }
-          ]
-        },
-        'J06': {
-          rxSections: [
-            {
-              title: 'USO ORAL',
-              items: [
-                {
-                  name: 'Paracetamol 500 mg',
-                  qty: '20 comps',
-                  posology: ['Tomar 1–2 comprimidos VO a cada 6 horas se febre ou dor.'],
-                  max: 'Máximo: 4 g/dia.'
-                },
-                {
-                  name: 'Loratadina 10 mg',
-                  qty: '10 comps',
-                  posology: ['Tomar 1 comprimido VO 1 vez ao dia.']
-                }
-              ]
-            },
-            {
-              title: 'MEDIDAS GERAIS',
-              items: [
-                {
-                  name: 'Hidratação e repouso',
-                  qty: null,
-                  posology: ['Ingerir pelo menos 2 litros de água ao dia.', 'Repouso relativo até melhora dos sintomas.']
-                }
-              ]
-            }
-          ]
-        },
-        'K29': {
-          rxSections: [
-            {
-              title: 'USO ORAL',
-              items: [
-                {
-                  name: 'Omeprazol 20 mg',
-                  qty: '28 cáps',
-                  posology: ['Tomar 1 cápsula VO em jejum 30 min antes do café por 28 dias.']
-                },
-                {
-                  name: 'Domperidona 10 mg',
-                  qty: '30 comps',
-                  posology: ['Tomar 1 comprimido VO 3x ao dia, 15–30 min antes das refeições.']
-                }
-              ]
-            }
-          ]
-        },
-        'G43': {
-          rxSections: [
-            {
-              title: 'CRISE AGUDA',
-              items: [
-                {
-                  name: 'Sumatriptana 50 mg',
-                  qty: '2 comps',
-                  posology: ['Tomar 1 comprimido VO no início da crise.', 'Repetir após 2h se necessário.'],
-                  max: 'Máximo: 200 mg/dia.'
-                },
-                {
-                  name: 'Ibuprofeno 400 mg',
-                  qty: '12 comps',
-                  posology: ['Tomar 1 comprimido VO a cada 8h durante a crise.'],
-                  max: 'Máximo: 1200 mg/dia. Usar com alimento.'
-                }
-              ]
-            },
-            {
-              title: 'PROFILAXIA (se ≥4 crises/mês)',
-              items: [
-                {
-                  name: 'Propranolol 40 mg',
-                  qty: '30 comps',
-                  posology: ['Tomar 1 comprimido VO 2x ao dia. Avaliar titulação.']
-                }
-              ]
-            }
-          ]
-        }
-      };
-
-      function enrichWithRxSections(results) {
-        return results.map(r => {
-          if (RX_SECTIONS_MAP[r.code]) {
-            return { ...r, ...RX_SECTIONS_MAP[r.code] };
-          }
-          return r;
-        });
-      }
-
-      // ===== RENDER PRESCRIÇÃO ESTRUTURADA =====
-      function renderPrescription(r) {
-        if (!r.prescriptions || r.prescriptions.length === 0) {
-          return `<p style="color:var(--gray-400);font-size:0.8rem;font-style:italic;">Sem prescrição sugerida para este CID.</p>`;
+          history.replaceState(null, '', window.location.pathname + window.location.search);
         }
 
-        // Detecta se o CID tem estrutura avançada (objeto com sections) ou array simples
-        if (r.rxSections) {
-          // Estrutura avançada
-          return r.rxSections.map(sec => `
-            <div class="rx-section">
-              <div class="rx-section-title">📋 ${sec.title}</div>
-              ${sec.items.map((item, i) => `
-                <div class="rx-item">
-                  <div class="rx-item-header">
-                    <div class="rx-item-number">${i + 1}</div>
-                    <div class="rx-item-name">${item.name}</div>
-                    ${item.qty ? `<div class="rx-item-qty">${item.qty}</div>` : ''}
-                  </div>
-                  ${item.posology && item.posology.length ? `
-                    <ul class="rx-item-posology">
-                      ${item.posology.map(p => `<li>${p}</li>`).join('')}
-                    </ul>
-                  ` : ''}
-                  ${item.max ? `<div class="rx-item-max">⚠️ ${item.max}</div>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          `).join('');
+        // Verifica mensagem de sucesso (vinda do forgot-password)
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMsg = urlParams.get('success');
+        if (successMsg) {
+          showMessage(decodeURIComponent(successMsg), 'sucesso');
+          history.replaceState(null, '', window.location.pathname);
         }
-
-        // Fallback: array simples de strings → exibe como seção única
-        return `
-          <div class="rx-section">
-            <div class="rx-section-title">📋 USO ORAL</div>
-            ${r.prescriptions.map((p, i) => `
-              <div class="rx-item">
-                <div class="rx-item-header">
-                  <div class="rx-item-number">${i + 1}</div>
-                  <div class="rx-item-name" style="font-weight:500;">${p}</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        `;
       }
 
-      function renderResults(results) {
-        const container = document.getElementById('cidResults');
-        const tips = document.getElementById('searchTips');
-
-        if (results.length === 0) {
-          container.innerHTML = `
-            <div class="search-empty">
-              <div class="search-empty-icon">🔍</div>
-              <h3>Nenhum resultado encontrado</h3>
-              <p>Tente buscar por outros sintomas, parte do corpo ou código CID.<br>Exemplo: "dor de cabeça", "febre", "peito", "A00"</p>
-            </div>
-          `;
-          tips.style.display = 'block';
-          return;
-        }
-
-        tips.style.display = 'none';
-
-        container.innerHTML = results.map((r, index) => {
-          const symptomsHtml = (r.symptoms || []).slice(0, 4).map(s => 
-            `<span class="result-symptom-chip">${s}</span>`
-          ).join('');
-
-          const matchLabel = r.score >= 80 ? '🏆 Melhor' : 
-                            r.score >= 50 ? '⭐ Alta' : 
-                            r.score >= 20 ? '✅ Boa' : 'Relacionado';
-
-          const prescHtml = renderPrescription(r);
-
-          return `
-            <div class="result-card" data-index="${index}" data-code="${r.code}">
-              <div class="result-header">
-                <div class="result-code">${r.code}</div>
-                <div class="result-info">
-                  <div class="result-name">${r.name}</div>
-                  <div class="result-desc">${r.desc}</div>
-                </div>
-                <div class="result-match">${matchLabel}</div>
-              </div>
-              <div class="result-symptoms">${symptomsHtml}</div>
-              <div class="result-details" id="details-${index}">
-                <div class="prescription-box">
-                  <h4>💊 Prescrição Sugerida</h4>
-                  ${prescHtml}
-                  <div class="prescription-warning">
-                    ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere contraindicações do paciente.
-                  </div>
-                </div>
-                <div class="result-actions">
-                  <button class="btn btn-success btn-sm" onclick="createNoteInline('${r.code}', '${r.name.replace(/'/g, "\\'")}', ${index})">
-                    <span>📝</span> Criar Nota
-                  </button>
-                  <button class="btn btn-primary btn-sm" onclick="generatePDF('${r.code}', '${r.name.replace(/'/g, "\\'")}', ${index})">
-                    <span>📄</span> Gerar PDF
-                  </button>
-                  <button class="btn btn-secondary btn-sm" onclick="selectCID('${r.code}')">
-                    <span>✅</span> Selecionar
-                  </button>
-                </div>
-                <div class="note-feedback" id="noteFeedback-${index}"></div>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        document.querySelectorAll('.result-card').forEach(card => {
-          card.addEventListener('click', (e) => {
-            if (e.target.closest('.btn')) return;
-            const index = card.dataset.index;
-            const details = document.getElementById(`details-${index}`);
-            const isExpanded = details.classList.contains('show');
-            document.querySelectorAll('.result-details').forEach(d => d.classList.remove('show'));
-            document.querySelectorAll('.result-card').forEach(c => c.classList.remove('expanded'));
-            if (!isExpanded) {
-              details.classList.add('show');
-              card.classList.add('expanded');
-            }
-          });
-        });
-      }
-
-      // ===== CRIAR NOTA INLINE (sem redirecionar) =====
-      window.createNoteInline = async (code, name, index) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
-
-        const feedback = document.getElementById(`noteFeedback-${index}`);
-        feedback.textContent = '⏳ Criando nota...';
-        feedback.className = 'note-feedback show ok';
-
-        try {
-          // Monta o conteúdo HTML da nota
-          let noteHtml = `<h3>CID: ${code} — ${name}</h3>`;
-          if (result.rxSections) {
-            result.rxSections.forEach(sec => {
-              noteHtml += `<p><strong>${sec.title}</strong></p><ol>`;
-              sec.items.forEach(item => {
-                noteHtml += `<li><strong>${item.name}</strong>`;
-                if (item.qty) noteHtml += ` — ${item.qty}`;
-                if (item.posology && item.posology.length) {
-                  noteHtml += `<ul>${item.posology.map(p => `<li>${p}</li>`).join('')}</ul>`;
-                }
-                if (item.max) noteHtml += `<p><em>⚠️ ${item.max}</em></p>`;
-                noteHtml += `</li>`;
-              });
-              noteHtml += `</ol>`;
-            });
-          } else {
-            noteHtml += `<ul>${(result.prescriptions || []).map(p => `<li>${p}</li>`).join('')}</ul>`;
-          }
-          noteHtml += `<p><em>⚠️ Sugestão automatizada. Sempre valide antes de aplicar.</em></p>`;
-
-          // Importa createNote do supabase-config
-          const { createNote } = await import('./supabase-config.js');
-          await createNote({
-            title: `CID ${code} — ${name}`,
-            content: noteHtml,
-            tags: ['CID', code]
-          });
-
-          feedback.textContent = '✅ Nota criada com sucesso!';
-          feedback.className = 'note-feedback show ok';
-        } catch (e) {
-          // Fallback: salva via sessionStorage e redireciona
-          const content = `<h3>CID: ${code} — ${name}</h3><ul>${(result.prescriptions || []).map(p => `<li>${p}</li>`).join('')}</ul>`;
-          sessionStorage.setItem('cidNoteContent', content);
-          sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
-          feedback.textContent = '⚠️ Redirecionando para anotações...';
-          feedback.className = 'note-feedback show ok';
-          setTimeout(() => { window.location.href = 'note.html?fromCid=1'; }, 1200);
-        }
-
-        setTimeout(() => { feedback.className = 'note-feedback'; }, 5000);
-      };
-
-      // ===== GERAR PDF DO CID =====
-      window.generatePDF = (code, name, index) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
-
-        const feedback = document.getElementById(`noteFeedback-${index}`);
-        feedback.textContent = '⏳ Gerando PDF...';
-        feedback.className = 'note-feedback show ok';
-
-        try {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-          const pageW = doc.internal.pageSize.getWidth();
-          const margin = 18;
-          const contentW = pageW - margin * 2;
-          let y = 20;
-
-          const addText = (text, opts = {}) => {
-            const { size = 10, style = 'normal', color = [30, 41, 59], indent = 0, lineH = 6 } = opts;
-            doc.setFontSize(size);
-            doc.setFont('helvetica', style);
-            doc.setTextColor(...color);
-            const lines = doc.splitTextToSize(text, contentW - indent);
-            if (y + lines.length * lineH > 270) { doc.addPage(); y = 20; }
-            doc.text(lines, margin + indent, y);
-            y += lines.length * lineH;
-          };
-
-          // Header azul
-          doc.setFillColor(59, 130, 246);
-          doc.roundedRect(margin - 2, 8, contentW + 4, 18, 3, 3, 'F');
-          doc.setFontSize(13);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(255, 255, 255);
-          doc.text(`CID ${code} — ${name}`, margin + 2, 19);
-          y = 34;
-
-          // Data / usuário
-          const now = new Date().toLocaleString('pt-BR');
-          addText(`Emitido em: ${now}`, { size: 8, color: [100, 116, 139] });
-          y += 2;
-
-          // Linha separadora
-          doc.setDrawColor(226, 232, 240);
-          doc.line(margin, y, pageW - margin, y);
-          y += 6;
-
-          // Descrição
-          if (result.desc) {
-            addText('Descrição', { size: 10, style: 'bold', color: [51, 65, 85] });
-            addText(result.desc, { size: 9, color: [71, 85, 105], indent: 2 });
-            y += 3;
-          }
-
-          // Sintomas
-          if (result.symptoms && result.symptoms.length) {
-            addText('Sintomas', { size: 10, style: 'bold', color: [51, 65, 85] });
-            addText(result.symptoms.join(' • '), { size: 9, color: [71, 85, 105], indent: 2 });
-            y += 3;
-          }
-
-          // Linha separadora
-          doc.setDrawColor(226, 232, 240);
-          doc.line(margin, y, pageW - margin, y);
-          y += 6;
-
-          // Prescrição
-          addText('💊 PRESCRIÇÃO SUGERIDA', { size: 11, style: 'bold', color: [22, 101, 52] });
-          y += 2;
-
-          if (result.rxSections) {
-            result.rxSections.forEach(sec => {
-              y += 2;
-              // Faixa de seção
-              doc.setFillColor(240, 253, 244);
-              doc.rect(margin, y - 4, contentW, 7, 'F');
-              addText(sec.title, { size: 9, style: 'bold', color: [6, 95, 70] });
-              y += 1;
-
-              sec.items.forEach((item, i) => {
-                // Número do item
-                doc.setFillColor(59, 130, 246);
-                doc.circle(margin + 3, y + 1.5, 3, 'F');
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(255, 255, 255);
-                doc.text(String(i + 1), margin + 3, y + 2.2, { align: 'center' });
-
-                // Nome + qty
-                const nameText = item.qty ? `${item.name}  —  ${item.qty}` : item.name;
-                addText(nameText, { size: 9.5, style: 'bold', color: [30, 41, 59], indent: 8 });
-
-                // Posologia
-                if (item.posology) {
-                  item.posology.forEach(p => {
-                    addText(`• ${p}`, { size: 8.5, color: [71, 85, 105], indent: 10, lineH: 5.5 });
-                  });
-                }
-                // Máximo
-                if (item.max) {
-                  addText(`⚠ ${item.max}`, { size: 8, style: 'bolditalic', color: [185, 28, 28], indent: 10 });
-                }
-                y += 2;
-              });
-            });
-          } else {
-            (result.prescriptions || []).forEach((p, i) => {
-              addText(`${i + 1}. ${p}`, { size: 9, color: [51, 65, 85], indent: 2 });
-            });
-          }
-
-          // Aviso
-          y += 4;
-          doc.setFillColor(255, 251, 235);
-          doc.setDrawColor(252, 211, 77);
-          const warnLines = doc.splitTextToSize('⚠ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere as contraindicações do paciente.', contentW - 6);
-          doc.roundedRect(margin, y - 3, contentW, warnLines.length * 5 + 8, 2, 2, 'FD');
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'italic');
-          doc.setTextColor(146, 64, 14);
-          doc.text(warnLines, margin + 3, y + 2);
-          y += warnLines.length * 5 + 10;
-
-          // Footer
-          const totalPages = doc.internal.getNumberOfPages();
-          for (let p = 1; p <= totalPages; p++) {
-            doc.setPage(p);
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(148, 163, 184);
-            doc.text(`Way For System • ${now}`, margin, 290);
-            doc.text(`Pág. ${p}/${totalPages}`, pageW - margin, 290, { align: 'right' });
-          }
-
-          doc.save(`CID_${code}_${name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
-          feedback.textContent = '✅ PDF gerado e baixado!';
-          feedback.className = 'note-feedback show ok';
-        } catch (err) {
-          console.error(err);
-          feedback.textContent = '❌ Erro ao gerar PDF. Verifique o console.';
-          feedback.className = 'note-feedback show fail';
-        }
-
-        setTimeout(() => { feedback.className = 'note-feedback'; }, 6000);
-      };
-
-      window.copyToNote = (code, name) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
-        const prescriptions = result.prescriptions || [];
-        const content = `<h3>CID: ${code} — ${name}</h3><p><strong>Prescrição:</strong></p><ul>${prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>`;
-        sessionStorage.setItem('cidNoteContent', content);
-        sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
-        window.location.href = 'note.html?fromCid=1';
-      };
-
-      window.selectCID = (code) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
-        showMessage(`CID ${code} — ${result.name} selecionado!`, 'sucesso');
-        sessionStorage.setItem('selectedCID', JSON.stringify({ code, ...result }));
-      };
-
-      function doSearch() {
-        const query = document.getElementById('cidInput').value;
-        if (!query.trim()) { 
-          document.getElementById('cidResults').innerHTML = ''; 
-          document.getElementById('searchTips').style.display = 'block';
-          return; 
-        }
-        const results = enrichWithRxSections(searchCID(query));
-        renderResults(results);
-      }
-
-      document.getElementById('searchBtn').addEventListener('click', doSearch);
-      document.getElementById('cidInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') doSearch();
-      });
-
-      document.querySelectorAll('.symptom-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-          document.getElementById('cidInput').value = tag.dataset.term;
-          doSearch();
-        });
-      });
-
-      document.querySelectorAll('.popular-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-          const code = tag.dataset.code;
-          document.getElementById('cidInput').value = code;
-          doSearch();
-        });
-      });
-
-      setInterval(async () => { await checkSingleSession(); }, 10000);
-      setInterval(async () => { await checkNewMessages(); }, 8000);
-
-      window.showMessage = (msg, type = 'erro') => {
+      function showMessage(msg, type = 'erro') {
         const el = document.getElementById('mensagem');
         el.textContent = msg;
-        el.className = `mensagem ${type}`;
-        el.style.display = 'block';
-        setTimeout(() => el.style.display = 'none', 5000);
-      };
+        el.className = `mensagem ${type} show`;
+      }
 
-      await checkNewMessages();
+      function hideMessage() {
+        const el = document.getElementById('mensagem');
+        el.className = 'mensagem';
+      }
     })();
   </script>
 </body>
