@@ -6,6 +6,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===== CONSTANTE ADMIN =====
+const ADMIN_EMAIL = 'admin@wayforsystem.med';
+
 // ===== AUTENTICACAO =====
 
 // ===== VALIDACAO DE DUPLICADAS (CORRIGIDO) =====
@@ -975,11 +978,8 @@ export function getCID(code) {
 
 /**
  * Retorna resumo geral para o painel admin
- */
-
-/**
- * Retorna resumo geral para o painel admin
  * Formato compativel com admin.html
+ * AGORA: Filtra o admin e corrige timezone
  */
 export async function getAdminSummary() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -991,6 +991,15 @@ export async function getAdminSummary() {
     const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
     const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
 
+    // Pega ID do admin para filtrar
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .single();
+
+    const adminId = adminProfile?.id;
+
     // Tenta buscar de access_logs para dados mais precisos
     let onlineNow = 0;
     let todayAccess = 0;
@@ -1001,21 +1010,38 @@ export async function getAdminSummary() {
       today.setHours(0, 0, 0, 0);
       const todayISO = today.toISOString();
 
-      // Conta acessos de hoje
-      const { count } = await supabase.from('access_logs').select('*', { count: 'exact', head: true }).gte('accessed_at', todayISO);
+      // Conta acessos de hoje (excluindo admin)
+      let query = supabase
+        .from('access_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('accessed_at', todayISO);
+
+      if (adminId) {
+        query = query.neq('user_id', adminId);
+      }
+
+      const { count } = await query;
       todayAccess = count || 0;
 
-      // Calcula hora de pico de hoje
-      const { data: hourlyData } = await supabase
+      // Calcula hora de pico de hoje (excluindo admin)
+      let peakQuery = supabase
         .from('access_logs')
         .select('accessed_at')
         .gte('accessed_at', todayISO);
 
+      if (adminId) {
+        peakQuery = peakQuery.neq('user_id', adminId);
+      }
+
+      const { data: hourlyData } = await peakQuery;
+
       if (hourlyData && hourlyData.length > 0) {
         const hourCounts = {};
         hourlyData.forEach(log => {
-          const hour = new Date(log.accessed_at).getHours();
-          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+          // === CORREÇÃO: Ajusta timezone para UTC-3 (Brasil) ===
+          const logDate = new Date(log.accessed_at);
+          const localHour = (logDate.getUTCHours() - 3 + 24) % 24;
+          hourCounts[localHour] = (hourCounts[localHour] || 0) + 1;
         });
         let maxCount = 0;
         for (const [hour, count] of Object.entries(hourCounts)) {
@@ -1026,23 +1052,37 @@ export async function getAdminSummary() {
         }
       }
 
-      // Usuarios online (ultimos 15 min via access_logs)
+      // Usuarios online (ultimos 15 min via access_logs) — EXCLUINDO admin
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      const { data: recentLogs } = await supabase
+      
+      let onlineQuery = supabase
         .from('access_logs')
         .select('user_id')
         .gte('accessed_at', fifteenMinutesAgo)
         .not('user_id', 'is', null);
+
+      if (adminId) {
+        onlineQuery = onlineQuery.neq('user_id', adminId);
+      }
+
+      const { data: recentLogs } = await onlineQuery;
 
       if (recentLogs) {
         onlineNow = new Set(recentLogs.map(l => l.user_id)).size;
       }
     } catch (e) {
       // access_logs pode estar vazia ou nao existir
-      // Fallback: usa profiles.updated_at como indicador de atividade
+      // Fallback: usa profiles.updated_at como indicador de atividade (excluindo admin)
       try {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', fiveMinutesAgo);
+        let query = supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gte('updated_at', fiveMinutesAgo);
+        if (adminId) {
+          query = query.neq('id', adminId);
+        }
+        const { count } = await query;
         onlineNow = count || 0;
       } catch (e2) {
         onlineNow = 0;
@@ -1050,7 +1090,7 @@ export async function getAdminSummary() {
     }
 
     return {
-      total_users: totalUsers || 0,
+      total_users: (totalUsers || 0) - (adminId ? 1 : 0), // Subtrai admin do total
       total_notes: totalNotes || 0,
       total_messages: totalMessages || 0,
       online_now: onlineNow,
@@ -1069,6 +1109,7 @@ export async function getAdminSummary() {
     };
   }
 }
+
 /**
  * Retorna lista de todos os usuarios (apenas admin)
  */
@@ -1236,11 +1277,8 @@ export async function getNotesStats() {
 
 /**
  * Retorna usuarios online (baseado em acessos nos ultimos 15 minutos)
- */
-
-/**
- * Retorna usuarios online (baseado em acessos nos ultimos 15 minutos)
  * Fallback para profiles.updated_at quando access_logs nao existe
+ * AGORA: Filtra o admin da lista
  */
 export async function getOnlineUsers() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -1249,14 +1287,28 @@ export async function getOnlineUsers() {
   try {
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-    // TENTATIVA 1: Buscar de access_logs (mais preciso)
+    // Pega ID do admin
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .single();
+
+    const adminId = adminProfile?.id;
+
+    // TENTATIVA 1: Buscar de access_logs (mais preciso) — excluindo admin
     try {
-      const { data: logs, error: logsError } = await supabase
+      let logsQuery = supabase
         .from('access_logs')
         .select('user_id, accessed_at')
         .gte('accessed_at', fifteenMinutesAgo)
-        .not('user_id', 'is', null)
-        .order('accessed_at', { ascending: false });
+        .not('user_id', 'is', null);
+
+      if (adminId) {
+        logsQuery = logsQuery.neq('user_id', adminId);
+      }
+
+      const { data: logs, error: logsError } = await logsQuery.order('accessed_at', { ascending: false });
 
       if (!logsError && logs && logs.length > 0) {
         // Pega o acesso mais recente de cada usuario
@@ -1299,12 +1351,17 @@ export async function getOnlineUsers() {
       console.log('access_logs nao disponivel, usando fallback');
     }
 
-    // FALLBACK: Usa profiles.updated_at como indicador de atividade
-    const { data: profiles, error: profileError } = await supabase
+    // FALLBACK: Usa profiles.updated_at como indicador de atividade — excluindo admin
+    let profileQuery = supabase
       .from('profiles')
       .select('id, name, email, avatar_url, specialty, crm, updated_at')
-      .gte('updated_at', fifteenMinutesAgo)
-      .order('updated_at', { ascending: false });
+      .gte('updated_at', fifteenMinutesAgo);
+
+    if (adminId) {
+      profileQuery = profileQuery.neq('id', adminId);
+    }
+
+    const { data: profiles, error: profileError } = await profileQuery.order('updated_at', { ascending: false });
 
     if (profileError) {
       console.error('Erro ao buscar perfis online:', profileError.message);
@@ -1321,6 +1378,7 @@ export async function getOnlineUsers() {
     return [];
   }
 }
+
 export async function getBannedUsers() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
@@ -1641,11 +1699,7 @@ export async function isAdmin() {
 /**
  * Retorna estatisticas de acesso por hora (ultimas 24h)
  * Requer tabela 'access_logs' com colunas: id, user_id, page, accessed_at
- */
-
-/**
- * Retorna estatisticas de acesso por hora (ultimas 24h)
- * Requer tabela 'access_logs' com colunas: id, user_id, page, accessed_at
+ * AGORA: Filtra admin e corrige timezone para BRT (UTC-3)
  */
 export async function getAccessStatsByHour() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -1654,11 +1708,26 @@ export async function getAccessStatsByHour() {
   try {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const { data, error } = await supabase
+    // Pega ID do admin para filtrar
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .single();
+
+    const adminId = adminProfile?.id;
+
+    // Busca logs excluindo admin
+    let query = supabase
       .from('access_logs')
-      .select('accessed_at')
-      .gte('accessed_at', twentyFourHoursAgo)
-      .order('accessed_at', { ascending: true });
+      .select('accessed_at, user_id')
+      .gte('accessed_at', twentyFourHoursAgo);
+
+    if (adminId) {
+      query = query.neq('user_id', adminId);
+    }
+
+    const { data, error } = await query.order('accessed_at', { ascending: true });
 
     if (error) {
       if (error.message.includes('does not exist') || error.code === '42P01') {
@@ -1668,19 +1737,23 @@ export async function getAccessStatsByHour() {
       throw error;
     }
 
-    // Agrupa por hora
+    // Agrupa por hora (com timezone BRT/UTC-3)
     const hourlyStats = {};
     for (let i = 0; i < 24; i++) {
       hourlyStats[i] = 0;
     }
 
-    // Count unique users per hour, not total logs (prevents inflation from polling)
+    // Count unique users per hour (prevents inflation from polling)
     const hourUsers = {};
     (data || []).forEach(log => {
-      const hour = new Date(log.accessed_at).getHours();
-      if (!hourUsers[hour]) hourUsers[hour] = new Set();
-      hourUsers[hour].add(log.user_id);
+      // Converte UTC para BRT (UTC-3)
+      const logDate = new Date(log.accessed_at);
+      const localHour = (logDate.getUTCHours() - 3 + 24) % 24;
+      
+      if (!hourUsers[localHour]) hourUsers[localHour] = new Set();
+      hourUsers[localHour].add(log.user_id);
     });
+    
     for (let i = 0; i < 24; i++) {
       hourlyStats[i] = hourUsers[i] ? hourUsers[i].size : 0;
     }
@@ -1694,6 +1767,7 @@ export async function getAccessStatsByHour() {
     return Array.from({length: 24}, (_, i) => ({ hour_of_day: i, access_count: 0 }));
   }
 }
+
 /**
  * Retorna estatisticas do dia atual
  */
@@ -1992,8 +2066,8 @@ export async function getTopPages(limit = 10) {
 
 /**
  * Registra um acesso na tabela access_logs
+ * AGORA: Não registra acesso do admin
  */
-// Deduplication cache for logAccess (per page, per session)
 const _logAccessCache = new Map();
 
 export async function logAccess(page) {
@@ -2003,6 +2077,11 @@ export async function logAccess(page) {
     // Se não há usuário logado, não tenta inserir
     if (!user?.id) {
       return { success: false, reason: 'no_user' };
+    }
+
+    // === CORREÇÃO: Não registra acesso do admin ===
+    if (user.email === ADMIN_EMAIL) {
+      return { success: false, reason: 'admin_excluded' };
     }
 
     const cacheKey = `${user.id}:${page}`;
