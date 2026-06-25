@@ -1,4 +1,4 @@
-// supabase-config.js — NoteMed for Unisystem v2.3 (CORRIGIDO)
+// supabase-config.js — NoteMed for Unisystem v2.4 (UNIFICADO + RECUPERACAO DE SENHA)
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://zqwuzytzeytpypbpiads.supabase.co';
@@ -2131,6 +2131,29 @@ export async function logAccess(page) {
     console.warn('[logAccess] Erro inesperado:', err?.message || err);
     return { success: false, reason: 'exception', error: err?.message };
   }
+}
+
+// ===== RECUPERACAO DE SENHA =====
+
+/**
+ * Envia e-mail de recuperação de senha para o usuário
+ * @param {string} email - E-mail do usuário
+ */
+export async function resetPassword(email) {
+  const redirectUrl = typeof window !== 'undefined' 
+    ? window.location.origin + '/reset-password.html' 
+    : 'http://localhost:3000/reset-password.html';
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl
+  });
+
+  if (error) {
+    console.error('Erro ao enviar recuperação:', error.message);
+    throw error;
+  }
+
+  return data;
 }
 
 // ===== SESSAO UNICA =====
