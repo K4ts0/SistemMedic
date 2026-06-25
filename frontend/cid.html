@@ -10,7 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
       --primary: #3B82F6; --primary-light: #60A5FA; --primary-lighter: #DBEAFE; --primary-soft: #EFF6FF;
@@ -90,7 +91,6 @@
     .result-info { flex: 1; min-width: 0; }
     .result-name { font-size: 1rem; font-weight: 600; color: var(--gray-800); margin-bottom: 4px; line-height: 1.3; }
     .result-desc { color: var(--gray-500); font-size: 0.8rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .result-match { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
     .result-symptoms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-left: 72px; }
     .result-symptom-chip { background: var(--warning-soft); color: #92400e; padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 500; }
     .prescricao-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; }
@@ -169,7 +169,7 @@
     @supports (padding-top: env(safe-area-inset-top)) { body { padding-top: env(safe-area-inset-top); } }
     @supports (padding-bottom: env(safe-area-inset-bottom)) { .container { padding-bottom: calc(12px + env(safe-area-inset-bottom)); } }
 
-    /* ===== PDF PREVIEW MODAL (single scroll) ===== */
+    /* ===== PDF PREVIEW (single scroll area) ===== */
     .pdf-preview-modal-body { padding: 0; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .pdf-preview-content { background: #fff; padding: 24px; font-family: 'Inter', sans-serif; }
     .pdf-preview-content .pdf-header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 20px; }
@@ -295,7 +295,6 @@
     </div>
   </div>
 
-  <!-- Modal de Mensagem -->
   <div class="modal-overlay" id="messageModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -319,7 +318,6 @@
     </div>
   </div>
 
-  <!-- Modal de PDF (visualização) -->
   <div class="modal-overlay" id="pdfModal">
     <div class="modal-content" style="max-width: 700px;">
       <div class="modal-header">
@@ -551,11 +549,12 @@
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF COM html2pdf.js (PDF REAL, SEM ABRIR PÁGINA) =====
+      // ===== GERAR PDF COM jsPDF NATIVO (TEXTO REAL, NÃO IMAGEM) =====
       window.gerarPDF = (code, name) => {
         const result = searchCID(code)[0];
         if (!result) return;
 
+        // Build preview HTML
         let prescDetalhada = getPrescricaoDetalhada(code);
         let prescHtml = '';
         if (prescDetalhada) {
@@ -604,17 +603,129 @@
 
         pdfModal.classList.add('show');
 
-        // Botão de download gera PDF REAL usando html2pdf.js
+        // ===== GERAR PDF REAL COM jsPDF + autoTable (SEM ABRIR PÁGINA) =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
-          const element = document.getElementById('pdfPreviewContainer');
-          const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `CID_${code}_${name.replace(/\s/g, '_')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          };
-          html2pdf().set(opt).from(element).save();
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+          const pageW = 210;
+          const margin = 20;
+          const contentW = pageW - margin * 2;
+          let y = 20;
+
+          // Helper: add wrapped text
+          function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
+            const lines = doc.splitTextToSize(text, maxWidth);
+            doc.text(lines, x, yPos, { align: align || 'left' });
+            return yPos + lines.length * lineHeight;
+          }
+
+          // Header
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(18);
+          doc.setTextColor(30, 41, 59);
+          doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
+          y += 8;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(148, 163, 184);
+          doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
+          y += 12;
+
+          // Line
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.3);
+          doc.line(margin, y, pageW - margin, y);
+          y += 10;
+
+          // Diagnostico box
+          doc.setFillColor(239, 246, 255);
+          doc.setDrawColor(219, 234, 254);
+          doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.setTextColor(59, 130, 246);
+          doc.text('CID ' + code + ' — ' + name, margin + 4, y + 5);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(51, 65, 85);
+          y = addWrappedText(result.desc, margin + 4, y + 12, contentW - 8, 4, 'left');
+          y += 4;
+
+          // Symptoms
+          if (result.symptoms && result.symptoms.length > 0) {
+            const symptomsText = result.symptoms.join('   ');
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            y = addWrappedText(symptomsText, margin + 4, y, contentW - 8, 4, 'left');
+          }
+          y += 12;
+
+          // Prescrição title
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(30, 41, 59);
+          doc.text('Prescricao', margin, y);
+          y += 8;
+
+          // Medications table
+          const prescItems = prescDetalhada || (result.prescriptions || []).map(p => ({ nome: p, dosagem: '', posologia: '', via: '', duracao: '' }));
+          const tableBody = prescItems.map((item, idx) => {
+            const nome = item.dosagem ? `${idx + 1}. ${item.nome} — ${item.dosagem}` : `${idx + 1}. ${item.nome}`;
+            const pos = item.posologia || '';
+            const meta = [];
+            if (item.via) meta.push('Via: ' + item.via);
+            if (item.duracao) meta.push('Duracao: ' + item.duracao);
+            const metaStr = meta.join('    ');
+            return [nome, pos, metaStr];
+          });
+
+          doc.autoTable({
+            startY: y,
+            body: tableBody,
+            theme: 'plain',
+            margin: { left: margin, right: margin },
+            styles: {
+              fontSize: 9,
+              cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+              lineColor: [226, 232, 240],
+              lineWidth: 0.2,
+            },
+            columnStyles: {
+              0: { fontStyle: 'bold', textColor: [30, 41, 59], cellWidth: contentW },
+              1: { textColor: [51, 65, 85], cellWidth: contentW },
+              2: { textColor: [100, 116, 139], fontSize: 8, cellWidth: contentW }
+            },
+            didDrawCell: function(data) {
+              if (data.row.index % 3 === 0 && data.column.index === 0) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+              }
+            }
+          });
+
+          y = doc.lastAutoTable.finalY + 10;
+
+          // Warning footer
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
+          y = addWrappedText(warningText, margin, y, contentW, 4, 'center');
+
+          // Line
+          y += 6;
+          doc.setDrawColor(226, 232, 240);
+          doc.line(margin, y, pageW - margin, y);
+          y += 6;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(180, 180, 180);
+          doc.text('Way For System - Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
+
+          doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
         };
       };
 
@@ -640,10 +751,6 @@
           const symptomsHtml = (r.symptoms || []).slice(0, 4).map(s => 
             `<span class="result-symptom-chip">${s}</span>`
           ).join('');
-
-          const matchLabel = r.score >= 80 ? '🏆 Melhor' : 
-                            r.score >= 50 ? '⭐ Alta' : 
-                            r.score >= 20 ? '✅ Boa' : 'Relacionado';
 
           let prescDetalhada = getPrescricaoDetalhada(r.code);
           let prescHtml = '';
@@ -678,7 +785,6 @@
                   <div class="result-name">${r.name}</div>
                   <div class="result-desc">${r.desc}</div>
                 </div>
-                <div class="result-match">${matchLabel}</div>
               </div>
               <div class="result-symptoms">${symptomsHtml}</div>
               <div class="result-details" id="details-${index}">
