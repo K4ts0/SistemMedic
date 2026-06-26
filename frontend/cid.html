@@ -178,9 +178,10 @@
     .pdf-preview-content .pdf-diagnostico { background: #EFF6FF; padding: 16px; border-radius: 10px; margin-bottom: 20px; }
     .pdf-preview-content .pdf-diagnostico h3 { color: #3B82F6; font-size: 1.15rem; margin-bottom: 6px; }
     .pdf-preview-content .pdf-diagnostico p { color: #334155; font-size: 0.9rem; line-height: 1.5; }
-    .pdf-preview-content .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .pdf-preview-content .pdf-sintomas-label { font-size: 0.75rem; color: #64748B; font-weight: 600; margin-bottom: 6px; margin-top: 10px; }
+    .pdf-preview-content .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; }
     .pdf-preview-content .pdf-sintomas span { background: #F1F5F9; padding: 3px 12px; border-radius: 9999px; font-size: 0.75rem; color: #64748B; }
-    .pdf-preview-content .pdf-prescricao h4 { color: #1E293B; font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .pdf-preview-content .pdf-prescricao h4 { color: #1E293B; font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; font-weight: 700; }
     .pdf-preview-content .pdf-item { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
     .pdf-preview-content .pdf-item .pdf-med-nome { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
     .pdf-preview-content .pdf-item .pdf-med-dosagem { color: #475569; font-size: 0.9rem; }
@@ -344,7 +345,6 @@
       logAccess, createNote
     } from './supabase-config.js';
 
-    // ===== PRESCRICOES DETALHADAS (com entrada para I20) =====
     const prescricaoDetalhada = {
       'A09': [
         { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
@@ -398,50 +398,35 @@
       ]
     };
 
-    function getPrescricaoDetalhada(code) {
-      return prescricaoDetalhada[code] || null;
-    }
+    function getPrescricaoDetalhada(code) { return prescricaoDetalhada[code] || null; }
 
-    let currentUserId = null;
-    let lastMessageId = null;
+    let currentUserId = null, lastMessageId = null;
 
     (async function init() {
       const isValid = await ensureValidSession();
       if (!isValid) return;
-
       const user = await getCurrentUser();
       if (!user) { window.location.href = 'index.html'; return; }
       currentUserId = user.id;
-
       try { await logAccess('cid'); } catch(e) {}
 
       document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = btn.dataset.page;
-          if (page) window.location.href = page + '.html';
-        });
+        btn.addEventListener('click', () => { const page = btn.dataset.page; if (page) window.location.href = page + '.html'; });
       });
 
       try {
         const profile = await getUserProfile();
         document.getElementById('headerName').textContent = profile.name || profile.email;
         const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) {
-          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        } else {
-          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-        }
+        if (profile.avatar_url) avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
+        else avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
       } catch (e) {}
 
       let pressTimer;
       const userInfo = document.getElementById('userInfo');
       userInfo.addEventListener('touchstart', () => {
         pressTimer = setTimeout(async () => {
-          if (confirm('Deseja sair da conta?')) {
-            await signOut();
-            localStorage.removeItem('session_id');
-            window.location.href = 'index.html';
-          }
+          if (confirm('Deseja sair da conta?')) { await signOut(); localStorage.removeItem('session_id'); window.location.href = 'index.html'; }
         }, 800);
       });
       userInfo.addEventListener('touchend', () => clearTimeout(pressTimer));
@@ -451,42 +436,20 @@
       const dropdown = document.getElementById('notificationDropdown');
       const badge = document.getElementById('notificationBadge');
 
-      bell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) loadNotifications();
-      });
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) {
-          dropdown.classList.remove('show');
-        }
-      });
-      document.getElementById('markAllRead').addEventListener('click', async () => {
-        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
-      });
+      bell.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); if (dropdown.classList.contains('show')) loadNotifications(); });
+      document.addEventListener('click', (e) => { if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show'); });
+      document.getElementById('markAllRead').addEventListener('click', async () => { try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){} });
 
       async function loadNotifications() {
         try {
           const messages = await getUnreadMessages();
           const list = document.getElementById('notificationList');
-          if (messages.length === 0) {
-            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
-            return;
-          }
+          if (messages.length === 0) { list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`; return; }
           list.innerHTML = messages.map(msg => {
             const sender = msg.sender || {};
             const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
             const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-            return `
-              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
-                <div class="notif-avatar">${avatar}</div>
-                <div class="notif-content">
-                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
-                  <div class="notif-text">${escapeHtml(msg.content)}</div>
-                  <div class="notif-time">${time}</div>
-                </div>
-              </div>
-            `;
+            return `<div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}"><div class="notif-avatar">${avatar}</div><div class="notif-content"><div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div><div class="notif-text">${escapeHtml(msg.content)}</div><div class="notif-time">${time}</div></div></div>`;
           }).join('');
           document.querySelectorAll('.notification-item').forEach(item => {
             item.addEventListener('click', async () => {
@@ -499,24 +462,10 @@
       }
 
       async function checkNewMessages() {
-        try {
-          const count = await getUnreadCount();
-          updateBellState(count);
-          if (count > 0) {
-            const messages = await getUnreadMessages();
-            if (messages.length > 0 && messages[0].id !== lastMessageId) {
-              lastMessageId = messages[0].id;
-              if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]);
-            }
-          }
-        } catch(e) {}
+        try { const count = await getUnreadCount(); updateBellState(count); if (count > 0) { const messages = await getUnreadMessages(); if (messages.length > 0 && messages[0].id !== lastMessageId) { lastMessageId = messages[0].id; if (!window.location.href.includes('chat.html')) showMessageModal(messages[0]); } } } catch(e) {}
       }
 
-      function updateBellState(count) {
-        badge.textContent = count;
-        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
-        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
-      }
+      function updateBellState(count) { badge.textContent = count; if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); } else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); } }
 
       const msgModal = document.getElementById('messageModal');
       function showMessageModal(msg) {
@@ -527,16 +476,11 @@
         const avatar = document.getElementById('modalSenderAvatar');
         if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
         else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-        msgModal.dataset.senderId = msg.sender_id;
-        msgModal.classList.add('show');
+        msgModal.dataset.senderId = msg.sender_id; msgModal.classList.add('show');
       }
       document.getElementById('modalClose').addEventListener('click', () => msgModal.classList.remove('show'));
       document.getElementById('modalDismiss').addEventListener('click', () => msgModal.classList.remove('show'));
-      document.getElementById('modalGoToChat').addEventListener('click', () => {
-        const senderId = msgModal.dataset.senderId;
-        if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
-        window.location.href = 'chat.html';
-      });
+      document.getElementById('modalGoToChat').addEventListener('click', () => { const senderId = msgModal.dataset.senderId; if (senderId) sessionStorage.setItem('chatTargetUserId', senderId); window.location.href = 'chat.html'; });
       msgModal.addEventListener('click', (e) => { if (e.target === msgModal) msgModal.classList.remove('show'); });
 
       const pdfModal = document.getElementById('pdfModal');
@@ -544,54 +488,33 @@
       document.getElementById('pdfModalDismiss').addEventListener('click', () => pdfModal.classList.remove('show'));
       pdfModal.addEventListener('click', (e) => { if (e.target === pdfModal) pdfModal.classList.remove('show'); });
 
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
+      function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
       window.copyToNote = (code, name) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
+        const result = searchCID(code)[0]; if (!result) return;
         const prescriptions = result.prescriptions || [];
         const content = `<h3>CID: ${code} — ${name}</h3><p><strong>Prescrição:</strong></p><ul>${prescriptions.map(p => `<li>${p}</li>`).join('')}</ul>`;
-        sessionStorage.setItem('cidNoteContent', content);
-        sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
+        sessionStorage.setItem('cidNoteContent', content); sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
         window.location.href = 'note.html?fromCid=1';
       };
 
-      // ===== GERAR PDF CORRIGIDO (TEXTO REAL, SEM NUMERACAO DUPLICADA) =====
+      // ===== GERAR PDF CORRIGIDO =====
       window.gerarPDF = (code, name) => {
-        const result = searchCID(code)[0];
-        if (!result) return;
-
-        // Tenta obter prescricao detalhada, senao usa as strings do banco (removendo numeracao inicial)
+        const result = searchCID(code)[0]; if (!result) return;
         let prescDetalhada = getPrescricaoDetalhada(code);
         let prescItems = [];
-        if (prescDetalhada) {
-          prescItems = prescDetalhada.map(item => ({ ...item }));
-        } else {
-          // Usa prescricoes antigas (strings) e remove numeracao inicial
+        if (prescDetalhada) { prescItems = prescDetalhada.map(item => ({ ...item })); }
+        else {
           const raw = result.prescriptions || [];
-          prescItems = raw.map(p => {
-            // Remove numeracao inicial como "1. ", "2. " etc.
-            const clean = p.replace(/^\d+\.\s*/, '');
-            return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' };
-          });
+          prescItems = raw.map(p => { const clean = p.replace(/^\d+\.\s*/, ''); return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' }; });
         }
 
-        // Monta preview HTML
+        // Preview HTML com rótulo para sintomas
         let prescHtml = prescItems.map((item, idx) => `
           <div class="pdf-item">
-            <div>
-              <span class="pdf-med-nome">${idx+1}. ${item.nome}</span>
-              ${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}
-            </div>
+            <div><span class="pdf-med-nome">${idx+1}. ${item.nome}</span>${item.dosagem ? ` <span class="pdf-med-dosagem">— ${item.dosagem}</span>` : ''}</div>
             ${item.posologia ? `<div class="pdf-med-posologia">${item.posologia}</div>` : ''}
-            <div class="pdf-med-meta">
-              ${item.via ? `<span>Via: ${item.via}</span>` : ''}
-              ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
-            </div>
+            <div class="pdf-med-meta">${item.via ? `<span>Via: ${item.via}</span>` : ''}${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}</div>
           </div>
         `).join('');
 
@@ -604,9 +527,10 @@
           <div class="pdf-diagnostico">
             <h3>CID ${code} — ${name}</h3>
             <p>${result.desc}</p>
-            <div class="pdf-sintomas">
-              ${(result.symptoms || []).map(s => `<span>${s}</span>`).join('')}
-            </div>
+            ${(result.symptoms && result.symptoms.length > 0) ? `
+              <div class="pdf-sintomas-label">Sintomas associados:</div>
+              <div class="pdf-sintomas">${result.symptoms.map(s => `<span>${s}</span>`).join('')}</div>
+            ` : ''}
           </div>
           <div class="pdf-prescricao">
             <h4>💊 Prescrição</h4>
@@ -615,78 +539,70 @@
           <div class="pdf-footer">
             ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.
           </div>
-          <div class="pdf-system-footer">Way For System - Busca CID &amp; Prescrição</div>
+          <div class="pdf-system-footer">Way For System - Busca CID & Prescrição</div>
         `;
 
         pdfModal.classList.add('show');
 
-        // ===== GERAR PDF COM jsPDF + autoTable (UMA COLUNA) =====
+        // ===== PDF COM jsPDF =====
         document.getElementById('pdfDownloadBtn').onclick = () => {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-
-          const pageW = 210;
-          const margin = 20;
-          const contentW = pageW - 2 * margin;
+          const pageW = 210, margin = 20, contentW = pageW - 2 * margin;
           let y = 20;
 
-          // Helper para texto com quebra
           function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
             const lines = doc.splitTextToSize(text, maxWidth);
             doc.text(lines, x, yPos, { align: align || 'left' });
             return yPos + lines.length * lineHeight;
           }
 
-          // Header
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(18);
-          doc.setTextColor(30, 41, 59);
+          // HEADER
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(30, 41, 59);
           doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
           y += 8;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(148, 163, 184);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(148, 163, 184);
           doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
           y += 12;
 
-          // Linha
-          doc.setDrawColor(226, 232, 240);
-          doc.setLineWidth(0.3);
-          doc.line(margin, y, pageW - margin, y);
-          y += 10;
+          // LINHA
+          doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+          doc.line(margin, y, pageW - margin, y); y += 10;
 
-          // Diagnostico
-          doc.setFillColor(239, 246, 255);
-          doc.setDrawColor(219, 234, 254);
-          doc.roundedRect(margin, y - 4, contentW, 32 + (result.symptoms || []).length * 5, 3, 3, 'FD');
+          // DIAGNOSTICO BOX
+          const descLines = doc.splitTextToSize(result.desc, contentW - 8);
+          const symptomsText = (result.symptoms || []).join('   ');
+          const symLines = result.symptoms && result.symptoms.length > 0 ? doc.splitTextToSize(symptomsText, contentW - 8) : [];
+          const boxH = 22 + descLines.length * 4 + (symLines.length > 0 ? symLines.length * 4 + 10 : 0);
 
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(12);
-          doc.setTextColor(59, 130, 246);
+          doc.setFillColor(239, 246, 255); doc.setDrawColor(219, 234, 254);
+          doc.roundedRect(margin, y - 4, contentW, boxH, 3, 3, 'FD');
+
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(59, 130, 246);
           doc.text('CID ' + code + ' — ' + name, margin + 4, y + 5);
 
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(51, 65, 85);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(51, 65, 85);
           y = addWrappedText(result.desc, margin + 4, y + 12, contentW - 8, 4, 'left');
-          y += 4;
 
           if (result.symptoms && result.symptoms.length > 0) {
-            const symptomsText = result.symptoms.join('   ');
-            doc.setFontSize(8);
-            doc.setTextColor(100, 116, 139);
+            y += 4;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
+            doc.text('Sintomas associados:', margin + 4, y);
+            y += 4;
+            doc.setFont('helvetica', 'normal');
             y = addWrappedText(symptomsText, margin + 4, y, contentW - 8, 4, 'left');
           }
           y += 12;
 
-          // Titulo "Prescricao"
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.setTextColor(30, 41, 59);
+          // TITULO PRESCRICAO - ALINHADO A ESQUERDA, ESTILIZADO
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(30, 41, 59);
           doc.text('Prescricao', margin, y);
-          y += 8;
+          // Linha decorativa abaixo do titulo
+          doc.setDrawColor(59, 130, 246); doc.setLineWidth(0.5);
+          doc.line(margin, y + 2, margin + 25, y + 2);
+          y += 10;
 
-          // Monta dados para tabela unica
+          // MEDICAMENTOS - TABELA COM UMA COLUNA
           const tableBody = prescItems.map((item, idx) => {
             let text = `${idx+1}. ${item.nome}`;
             if (item.dosagem) text += ` — ${item.dosagem}`;
@@ -699,51 +615,29 @@
           });
 
           doc.autoTable({
-            startY: y,
-            body: tableBody,
-            theme: 'plain',
+            startY: y, body: tableBody, theme: 'plain',
             margin: { left: margin, right: margin },
-            styles: {
-              fontSize: 9,
-              cellPadding: { top: 3, bottom: 3, left: 4, right: 4 },
-              lineColor: [226, 232, 240],
-              lineWidth: 0.2,
-            },
-            columnStyles: {
-              0: { cellWidth: contentW, textColor: [51, 65, 85] }
-            },
-            didParseCell: function(data) {
-              // Destaca a primeira linha de cada medicamento
-              if (data.row.index % 2 === 0) {
-                data.cell.styles.fillColor = [248, 250, 252];
-              }
-            }
+            styles: { fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 5, right: 5 }, lineColor: [226, 232, 240], lineWidth: 0.2 },
+            columnStyles: { 0: { cellWidth: contentW, textColor: [51, 65, 85] } },
+            didParseCell: function(data) { if (data.row.index % 2 === 0) data.cell.styles.fillColor = [248, 250, 252]; }
           });
 
           y = doc.lastAutoTable.finalY + 10;
 
-          // Aviso — caixa estilizada com borda, alinhado a esquerda (texto centralizado dentro da caixa)
+          // AVISO
           const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
           const warningLines = doc.splitTextToSize(warningText, contentW - 8);
           const warningBoxH = warningLines.length * 4.5 + 8;
-          doc.setFillColor(255, 251, 235);
-          doc.setDrawColor(252, 211, 77);
-          doc.setLineWidth(0.3);
+          doc.setFillColor(255, 251, 235); doc.setDrawColor(252, 211, 77); doc.setLineWidth(0.3);
           doc.roundedRect(margin, y, contentW, warningBoxH, 2, 2, 'FD');
-          doc.setFont('helvetica', 'italic');
-          doc.setFontSize(8);
-          doc.setTextColor(146, 64, 14);
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(146, 64, 14);
           doc.text(warningLines, pageW / 2, y + 5, { align: 'center' });
           y += warningBoxH + 8;
 
-          // Linha final
-          doc.setDrawColor(226, 232, 240);
-          doc.setLineWidth(0.3);
-          doc.line(margin, y, pageW - margin, y);
-          y += 6;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7);
-          doc.setTextColor(180, 180, 180);
+          // RODAPE
+          doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+          doc.line(margin, y, pageW - margin, y); y += 6;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(180, 180, 180);
           doc.text('Way For System - Busca CID & Prescricao', pageW / 2, y, { align: 'center' });
 
           doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
@@ -753,84 +647,24 @@
       function renderResults(results) {
         const container = document.getElementById('cidResults');
         const tips = document.getElementById('searchTips');
-
         if (results.length === 0) {
-          container.innerHTML = `
-            <div class="search-empty">
-              <div class="search-empty-icon">🔍</div>
-              <h3>Nenhum resultado encontrado</h3>
-              <p>Tente buscar por outros sintomas, parte do corpo ou código CID.<br>Exemplo: "dor de cabeça", "febre", "peito", "A00"</p>
-            </div>
-          `;
-          tips.style.display = 'block';
-          return;
+          container.innerHTML = `<div class="search-empty"><div class="search-empty-icon">🔍</div><h3>Nenhum resultado encontrado</h3><p>Tente buscar por outros sintomas, parte do corpo ou código CID.<br>Exemplo: "dor de cabeça", "febre", "peito", "A00"</p></div>`;
+          tips.style.display = 'block'; return;
         }
-
         tips.style.display = 'none';
-
         container.innerHTML = results.map((r, index) => {
-          const symptomsHtml = (r.symptoms || []).slice(0, 4).map(s => 
-            `<span class="result-symptom-chip">${s}</span>`
-          ).join('');
-
+          const symptomsHtml = (r.symptoms || []).slice(0, 4).map(s => `<span class="result-symptom-chip">${s}</span>`).join('');
           let prescDetalhada = getPrescricaoDetalhada(r.code);
           let prescHtml = '';
           if (prescDetalhada) {
             prescHtml = prescDetalhada.map((item, idx) => `
-              <div class="prescricao-item">
-                <div>
-                  <span class="med-numero">${idx+1}</span>
-                  <span class="med-nome">${item.nome}</span>
-                  ${item.dosagem ? `<span class="med-dosagem"> — ${item.dosagem}</span>` : ''}
-                </div>
-                ${item.posologia ? `<div class="med-posologia">${item.posologia}</div>` : ''}
-                <div class="med-meta">
-                  ${item.via ? `<span>Via: ${item.via}</span>` : ''}
-                  ${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}
-                </div>
-              </div>
+              <div class="prescricao-item"><div><span class="med-numero">${idx+1}</span><span class="med-nome">${item.nome}</span>${item.dosagem ? `<span class="med-dosagem"> — ${item.dosagem}</span>` : ''}</div>${item.posologia ? `<div class="med-posologia">${item.posologia}</div>` : ''}<div class="med-meta">${item.via ? `<span>Via: ${item.via}</span>` : ''}${item.duracao ? `<span>Duração: ${item.duracao}</span>` : ''}</div></div>
             `).join('');
           } else {
             const raw = r.prescriptions || [];
-            prescHtml = raw.map(p => {
-              const clean = p.replace(/^\d+\.\s*/, '');
-              return `
-                <div class="prescricao-item">
-                  <div><span class="med-nome">${clean}</span></div>
-                </div>
-              `;
-            }).join('');
+            prescHtml = raw.map(p => { const clean = p.replace(/^\d+\.\s*/, ''); return `<div class="prescricao-item"><div><span class="med-nome">${clean}</span></div></div>`; }).join('');
           }
-
-          return `
-            <div class="result-card" data-index="${index}" data-code="${r.code}">
-              <div class="result-header">
-                <div class="result-code">${r.code}</div>
-                <div class="result-info">
-                  <div class="result-name">${r.name}</div>
-                  <div class="result-desc">${r.desc}</div>
-                </div>
-              </div>
-              <div class="result-symptoms">${symptomsHtml}</div>
-              <div class="result-details" id="details-${index}">
-                <div class="prescription-box">
-                  <h4>💊 Prescrição Sugerida</h4>
-                  ${prescHtml}
-                  <div class="prescription-warning">
-                    ⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere contraindicações do paciente.
-                  </div>
-                </div>
-                <div class="result-actions">
-                  <button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
-                    <span>📝</span> Criar Nota
-                  </button>
-                  <button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\\'")}')">
-                    <span>📄</span> Gerar PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-          `;
+          return `<div class="result-card" data-index="${index}" data-code="${r.code}"><div class="result-header"><div class="result-code">${r.code}</div><div class="result-info"><div class="result-name">${r.name}</div><div class="result-desc">${r.desc}</div></div></div><div class="result-symptoms">${symptomsHtml}</div><div class="result-details" id="details-${index}"><div class="prescription-box"><h4>💊 Prescrição Sugerida</h4>${prescHtml}<div class="prescription-warning">⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar e considere contraindicações do paciente.</div></div><div class="result-actions"><button class="btn btn-success btn-sm" onclick="copyToNote('${r.code}', '${r.name.replace(/'/g, "\\'")}')"><span>📝</span> Criar Nota</button><button class="btn btn-primary btn-sm" onclick="gerarPDF('${r.code}', '${r.name.replace(/'/g, "\\'")}')"><span>📄</span> Gerar PDF</button></div></div></div>`;
         }).join('');
 
         document.querySelectorAll('.result-card').forEach(card => {
@@ -841,55 +675,26 @@
             const isExpanded = details.classList.contains('show');
             document.querySelectorAll('.result-details').forEach(d => d.classList.remove('show'));
             document.querySelectorAll('.result-card').forEach(c => c.classList.remove('expanded'));
-            if (!isExpanded) {
-              details.classList.add('show');
-              card.classList.add('expanded');
-            }
+            if (!isExpanded) { details.classList.add('show'); card.classList.add('expanded'); }
           });
         });
       }
 
       function doSearch() {
         const query = document.getElementById('cidInput').value;
-        if (!query.trim()) { 
-          document.getElementById('cidResults').innerHTML = ''; 
-          document.getElementById('searchTips').style.display = 'block';
-          return; 
-        }
-        const results = searchCID(query);
-        renderResults(results);
+        if (!query.trim()) { document.getElementById('cidResults').innerHTML = ''; document.getElementById('searchTips').style.display = 'block'; return; }
+        const results = searchCID(query); renderResults(results);
       }
 
       document.getElementById('searchBtn').addEventListener('click', doSearch);
-      document.getElementById('cidInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') doSearch();
-      });
-
-      document.querySelectorAll('.symptom-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-          document.getElementById('cidInput').value = tag.dataset.term;
-          doSearch();
-        });
-      });
-
-      document.querySelectorAll('.popular-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-          const code = tag.dataset.code;
-          document.getElementById('cidInput').value = code;
-          doSearch();
-        });
-      });
+      document.getElementById('cidInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') doSearch(); });
+      document.querySelectorAll('.symptom-tag').forEach(tag => { tag.addEventListener('click', () => { document.getElementById('cidInput').value = tag.dataset.term; doSearch(); }); });
+      document.querySelectorAll('.popular-tag').forEach(tag => { tag.addEventListener('click', () => { const code = tag.dataset.code; document.getElementById('cidInput').value = code; doSearch(); }); });
 
       setInterval(async () => { await checkSingleSession(); }, 10000);
       setInterval(async () => { await checkNewMessages(); }, 8000);
 
-      window.showMessage = (msg, type = 'erro') => {
-        const el = document.getElementById('mensagem');
-        el.textContent = msg;
-        el.className = `mensagem ${type}`;
-        el.style.display = 'block';
-        setTimeout(() => el.style.display = 'none', 5000);
-      };
+      window.showMessage = (msg, type = 'erro') => { const el = document.getElementById('mensagem'); el.textContent = msg; el.className = `mensagem ${type}`; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 5000); };
 
       await checkNewMessages();
     })();
