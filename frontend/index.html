@@ -66,6 +66,7 @@
     }
     .mensagem.sucesso.show { display: block; }
   </style>
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -136,17 +137,14 @@
 
       document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const emailValue = document.getElementById('email').value.trim(); // ← renomeado
-        // ⚠️ Nome único para evitar conflitos de declaração
-        const userEmail = document.getElementById('email').value.trim();
+        const emailValue = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
         // Limpa mensagens anteriores
         hideMessage();
 
         try {
-          await signIn(emailValue, password); // ← usa a nova variável
-          await signIn(userEmail, password);
+          await signIn(emailValue, password);
 
           // Login bem-sucedido: reseta contador
           localStorage.removeItem('login_attempts');
@@ -187,7 +185,6 @@
         } else if (failedAttempts > 0) {
           warningEl.classList.add('show');
           warningEl.classList.remove('danger');
-          const remaining = MAX_ATTEMPTS - failedAttempts; // ← CORRIGIDO
           const remaining = MAX_ATTEMPTS - failedAttempts;
           textEl.textContent = `Tentativa ${failedAttempts} de ${MAX_ATTEMPTS}. Mais ${remaining} tentativa(s) antes de bloquear.`;
         } else {
