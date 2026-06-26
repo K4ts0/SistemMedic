@@ -61,19 +61,9 @@
       font-size: 14px;
       margin-bottom: 16px;
       display: none;
-      padding-left: 20px;
-      position: relative;
-    }
-    .mensagem.erro::before {
-      content: '⚠️';
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
     }
     .mensagem.erro.show {
       display: block;
-      padding-left: 38px;
     }
     .mensagem.erro.show { display: block; }
     .mensagem.sucesso {
@@ -101,6 +91,8 @@
     }
     .mensagem.sucesso.show { display: block; }
   </style>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="auth-container">
@@ -113,7 +105,7 @@
 
       <!-- Contador de tentativas -->
       <div id="attemptsWarning" class="attempts-warning">
-         <span>⚠️</span>
+        <span>⚠️</span>
         <span id="attemptsText"></span>
       </div>
 
@@ -199,7 +191,7 @@
 
           // Mensagem padrão de erro
           const errorMsg = 'Padrão incorreto, seu email ou senha estão incorretos';
-          showMessage(errorMsg);
+          showMessage(errorMsg, 'erro');
 
           // Limpa o campo de senha
           document.getElementById('password').value = '';
