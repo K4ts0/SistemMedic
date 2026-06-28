@@ -2,7 +2,7 @@
 
 Sistema web completo para profissionais de saúde gerenciarem anotações médicas, comunicação entre médicos, busca inteligente de CID-10 e perfil profissional. Desenvolvido com foco em praticidade, segurança e usabilidade.
 
-🔗 **Acesse o sistema online:** [https://notemed.onrender.com/index.html]
+🔗 **Acesse o sistema online:** [Seu link do Render aqui]
 
 ---
 
@@ -10,13 +10,14 @@ Sistema web completo para profissionais de saúde gerenciarem anotações médic
 
 | Tela | Descrição |
 |:----:|:----------|
-| Login | **Login** — Autenticação segura com e-mail e senha |
-| Cadastro | **Cadastro** — Registro de novos profissionais com especialidade e CRM |
-| Dashboard | **Anotações** — Listagem, busca, favoritos e ações (visualizar, editar, excluir) |
-| Perfil | **Perfil** — Dados do profissional, estatísticas e edição de informações |
-| Chat | **Chat Médico** — Comunicação entre médicos cadastrados no sistema |
-| CID-10 | **Busca CID-10** — Busca inteligente por sintomas, doenças ou códigos CID |
-| Nova Anotação | **Editor de Anotações** — Editor rico com formatação de texto |
+| ![Login](screenshots/login.png) | **Login** — Autenticação segura com e-mail e senha |
+| ![Cadastro](screenshots/cadastro.png) | **Cadastro** — Registro de novos profissionais com especialidade e CRM |
+| ![Dashboard](screenshots/anotacoes.png) | **Anotações** — Listagem, busca, favoritos e ações (visualizar, editar, excluir) |
+| ![Perfil](screenshots/perfil.png) | **Perfil** — Dados do profissional, estatísticas e edição de informações |
+| ![Chat](screenshots/chat.png) | **Chat Médico** — Comunicação entre médicos cadastrados no sistema |
+| ![CID-10](screenshots/cid.png) | **Busca CID-10** — Busca inteligente por sintomas, doenças ou códigos CID |
+| ![Nova Anotação](screenshots/nova-anotacao.png) | **Editor de Anotações** — Editor rico com formatação de texto |
+
 ---
 
 ## ✨ Funcionalidades
@@ -66,7 +67,11 @@ Sistema web completo para profissionais de saúde gerenciarem anotações médic
 
 ---
 
-Aprendizados
+📌 Status do Projeto : 
+
+🚧 Em construção — Funcionalidades principais implementadas, melhorias contínuas em andamento.
+
+🧠 Aprendizados : 
 Durante o desenvolvimento deste projeto, aprofundei conhecimentos em:
 Arquitetura de aplicações web com Flask
 Integração Flask + PostgreSQL (Supabase)
@@ -78,13 +83,46 @@ Sistema de chat em tempo real
 Uso de IA como ferramenta produtiva no desenvolvimento
 Resolução de problemas de UI/UX (ex: sobreposição de ícones em formulários)
 
-📝 Licença
+📝 Licença : 
 Este projeto foi desenvolvido para fins de aprendizado e portfólio.
 
-👤 Autor
+👤 Autor : 
 Emerson Hugo Venceslau
 https://www.linkedin.com/in/emerson-venceslau-9587bb2b7/
 https://github.com/K4ts0
+
+## 🚀 Como Executar Localmente
+
+&gt; **Nota:** O sistema está disponível online via Render. As instruções abaixo são para desenvolvimento local.
+
+### Pré-requisitos
+- Python 3.10+
+- Conta no [Supabase](https://supabase.com)
+
+### Passo a passo
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/way-for-system.git
+cd way-for-system
+
+# 2. Crie um ambiente virtual
+python -m venv venv
+
+# 3. Ative o ambiente virtual
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# 4. Instale as dependências
+pip install -r requirements.txt
+
+# 5. Configure as variáveis de ambiente
+# Crie um arquivo .env com:
+SUPABASE_URL=sua_url_do_supabase
+SUPABASE_KEY=sua_chave_do_supabase
+SECRET_KEY=sua_chave_secreta_flask
 
 # 6. Execute a aplicação
 python app.py
