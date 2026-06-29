@@ -10,13 +10,13 @@ Sistema web completo para profissionais de saúde gerenciarem anotações médic
 
 | Tela | Descrição |
 |:----:|:----------|
-| ![Login](screenshots/login.png) | **Login** — Autenticação segura com e-mail e senha |
-| ![Cadastro](screenshots/cadastro.png) | **Cadastro** — Registro de novos profissionais com especialidade e CRM |
-| ![Dashboard](screenshots/anotacoes.png) | **Anotações** — Listagem, busca, favoritos e ações (visualizar, editar, excluir) |
-| ![Perfil](screenshots/perfil.png) | **Perfil** — Dados do profissional, estatísticas e edição de informações |
-| ![Chat](screenshots/chat.png) | **Chat Médico** — Comunicação entre médicos cadastrados no sistema |
-| ![CID-10](screenshots/cid.png) | **Busca CID-10** — Busca inteligente por sintomas, doenças ou códigos CID |
-| ![Nova Anotação](screenshots/nova-anotacao.png) | **Editor de Anotações** — Editor rico com formatação de texto |
+| Login | **Login** — Autenticação segura com e-mail e senha |
+| Cadastro | **Cadastro** — Registro de novos profissionais com especialidade e CRM |
+| Dashboard | **Anotações** — Listagem, busca, favoritos e ações (visualizar, editar, excluir) |
+| Perfil | **Perfil** — Dados do profissional, estatísticas e edição de informações |
+| Chat | **Chat Médico** — Comunicação entre médicos cadastrados no sistema |
+| CID-10 | **Busca CID-10** — Busca inteligente por sintomas, doenças ou códigos CID |
+| Nova Anotação | **Editor de Anotações** — Editor rico com formatação de texto |
 
 ---
 
