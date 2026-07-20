@@ -2,662 +2,123 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#3B82F6" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Chat — Way For System</title>
+  <title>Email Confirmado — Way For System</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ===== ESTILOS ESPECÍFICOS DO CHAT ===== */
-
-    /* Contador de Médicos */
-    .doctors-counter {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-      color: white;
-      padding: 20px 24px;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-    .counter-icon { font-size: 2.5rem; }
-    .counter-number { font-size: 2rem; font-weight: 700; line-height: 1; }
-    .counter-label { font-size: 0.9rem; opacity: 0.9; }
-
-    /* Lista de Conversas */
-    .chat-conversations {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .chat-conversation-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: white;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .chat-conversation-item:hover {
-      background: #f9fafb;
-      border-color: #bfdbfe;
-      transform: translateX(4px);
-    }
-    .chat-conversation-item.active {
-      background: #eff6ff;
-      border-color: #93c5fd;
-    }
-    .conversation-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #dbeafe;
-      color: #2563eb;
+    .confirm-container {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 600;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-      overflow: hidden;
+      padding: 24px;
     }
-    .conversation-avatar img {
+    .confirm-card {
+      text-align: center;
+      max-width: 440px;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
     }
-    .conversation-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .conversation-name {
-      font-weight: 600;
-      color: #1f2937;
+    .confirm-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
     }
-    .unread-badge {
-      background: #EF4444;
-      color: white;
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 600;
-    }
-    .conversation-preview {
-      color: #6b7280;
-      font-size: 0.85rem;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .conversation-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 4px;
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-    .conversation-crm {
-      color: #3b82f6;
-      font-weight: 500;
-    }
-    .conversation-time { margin-left: auto; }
-
-    /* Resultado de busca - CRM */
-    .result-crm {
-      font-size: 0.85rem;
-      color: #2563eb;
-      font-weight: 500;
-      margin-top: 2px;
-    }
-    /* Chat header - CRM */
-    #chatUserCrm { margin-top: 2px; }
+    .confirm-icon.success { background: var(--success-soft); }
+    .confirm-icon.error { background: var(--danger-soft); }
+    .confirm-icon.loading { background: var(--primary-soft); }
+    .confirm-title { font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin-bottom: 12px; }
+    .confirm-text { color: var(--gray-500); font-size: 1rem; line-height: 1.6; margin-bottom: 24px; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   </style>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
-  <div class="container container-chat">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-brand">
-        <div class="logo-icon">💬</div>
-        <div>
-          <h1>Way For System</h1>
-          <div class="subtitle">Chat Médico</div>
-        </div>
-      </div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <!-- Sino de Notificações -->
-        <div style="position:relative;">
-          <button class="notification-bell" id="notificationBell" title="Notificações">
-            <span class="bell-icon">🔔</span>
-            <span class="notification-badge hidden" id="notificationBadge">0</span>
-          </button>
-          <div class="notification-dropdown" id="notificationDropdown">
-            <div class="notification-dropdown-header">
-              <h3>🔔 Notificações</h3>
-              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
-            </div>
-            <div class="notification-list" id="notificationList">
-              <div class="notification-empty">
-                <div class="empty-icon">📭</div>
-                <p>Sem notificações</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="user-info" id="userInfo">
-          <div class="avatar" id="headerAvatar">👤</div>
-          <span class="user-name" id="headerName">...</span>
-          <button class="btn btn-ghost btn-icon" id="logoutBtn" title="Sair">🚪</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="nav-menu">
-      <button class="nav-item" data-page="dashboard"><span>📝</span> Anotações</button>
-      <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
-      <button class="nav-item active" data-page="chat"><span>💬</span> Chat</button>
-      <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
-      <button class="nav-item" data-page="pediatria"><span>👶</span> Pediatria</button>
-    </div>
-
-    <div id="mensagem" class="mensagem"></div>
-
-    <!-- Busca por CRM/Nome/Email/ID -->
-    <div class="chat-search-box">
-      <input type="text" id="searchUserId" placeholder="Buscar por CRM, nome, email ou ID" maxlength="36" />
-      <button class="btn btn-primary" id="searchIdBtn">
-        <span>🔍</span> Buscar
-      </button>
-    </div>
-
-    <!-- Resultado da Busca -->
-    <div class="chat-search-result" id="searchResult">
-      <div class="result-header">
-        <div class="result-avatar" id="resultAvatar">👤</div>
-        <div class="result-info">
-          <h4 id="resultName">...</h4>
-          <div class="result-id" id="resultId">...</div>
-          <div class="result-crm" id="resultCrm"></div>
-          <div class="result-specialty" id="resultSpecialty"></div>
-        </div>
-      </div>
-      <div class="result-actions">
-        <button class="btn btn-primary" id="startChatBtn">
-          <span>💬</span> Iniciar Conversa
-        </button>
-        <button class="btn btn-secondary" id="clearSearchBtn">
-          <span>🧹</span> Limpar
-        </button>
-      </div>
-    </div>
-
-    <!-- Contador de Médicos Cadastrados -->
-    <div class="doctors-counter" id="doctorsCounter">
-      <div class="counter-icon">👨‍⚕️</div>
-      <div class="counter-info">
-        <div class="counter-number" id="doctorsCount">0</div>
-        <div class="counter-label">Médicos Cadastrados</div>
-      </div>
-    </div>
-
-    <!-- Conversas Iniciadas -->
-    <div class="toolbar" style="margin-bottom:12px;">
-      <div class="toolbar-title">💬 Conversas</div>
-    </div>
-    <div class="chat-conversations" id="conversationsList">
-      <div class="loading" style="padding:20px;">
-        <div class="loading-spinner"></div>
-        Carregando conversas...
-      </div>
-    </div>
-
-    <!-- Chat Area -->
-    <div class="chat-container" id="chatContainer" style="display:none;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e5e7eb;">
-        <div class="avatar" id="chatAvatar" style="width:40px;height:40px;font-size:1rem;">👤</div>
-        <div>
-          <div style="font-weight:600; color:#1f2937;" id="chatUserName">...</div>
-          <div style="font-size:0.75rem; color:#9ca3af; font-family:monospace;" id="chatUserId">...</div>
-          <div style="font-size:0.75rem; color:#6b7280;" id="chatUserCrm"></div>
-        </div>
-      </div>
-
-      <div class="chat-messages" id="chatMessages">
-        <div class="empty-state" style="padding:30px 0;">
-          <div class="empty-icon">💬</div>
-          <p>Envie uma mensagem para iniciar a conversa</p>
-        </div>
-      </div>
-
-      <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" />
-        <button class="btn btn-primary" id="sendBtn" style="border-radius:50%; width:50px; height:50px; padding:0; font-size:1.3rem;">
-          📤
-        </button>
-      </div>
-    </div>
-
-    <div class="empty-state" id="noChatSelected" style="padding:40px 0;">
-      <div class="empty-icon">💬</div>
-      <h3>Selecione uma conversa</h3>
-      <p>Busque por CRM ou clique em uma conversa para continuar.</p>
-    </div>
-  </div>
-
-  <!-- Modal de Mensagem -->
-  <div class="modal-overlay" id="messageModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3><span>📩</span> Nova Mensagem</h3>
-        <button class="modal-close" id="modalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-message-text" id="modalMessageText"></div>
-        <div class="modal-message-meta">
-          <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
-            <span id="modalSenderName">...</span>
-          </div>
-          <span style="color:#9ca3af; font-size:0.85rem;" id="modalMessageTime"></span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="modalDismiss">Fechar</button>
-        <button class="btn btn-primary" id="modalGoToChat">Responder</button>
+  <div class="confirm-container">
+    <div class="confirm-card card-elevated">
+      <div class="confirm-icon loading" id="statusIcon">⏳</div>
+      <h1 class="confirm-title" id="statusTitle">Verificando seu email...</h1>
+      <p class="confirm-text" id="statusText">Aguarde um momento enquanto confirmamos sua conta.</p>
+      <div class="confirm-actions" id="actions" style="display:none;">
+        <a href="index.html" class="btn btn-primary">🔐 Fazer Login</a>
+        <a href="register.html" class="btn btn-secondary">✨ Criar Nova Conta</a>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { 
-      getCurrentUser, signOut, ensureValidSession, checkSingleSession,
-      getUserProfile, getChatUsers, sendMessage, getMessages,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
-      findUserById, searchUserByPartialId, searchUserByCRM, getConversations, getDoctorsCount,
-      logAccess
-    } from './supabase-config.js';
-
-    let currentUserId = null;
-    let currentChatUser = null;
-    let pollInterval = null;
-    let lastMessageId = null;
+    import { supabase } from './supabase-config.js';
 
     (async function init() {
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const text = document.getElementById('statusText');
+      const actions = document.getElementById('actions');
 
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
-            currentUserId = user.id;
+      // Verifica se há erro no hash da URL (ex: link expirado)
+      const hash = window.location.hash;
+      if (hash && hash.includes('error=')) {
+        const params = new URLSearchParams(hash.slice(1));
+        const errorCode = params.get('error_code');
+        const errorDesc = params.get('error_description');
 
-      // Registra acesso
-      try { await logAccess('chat'); } catch(e) {}
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Link inválido ou expirado';
+        text.textContent = errorDesc 
+          ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+          : 'O link de confirmação é inválido ou já expirou. Solicite um novo cadastro.';
+        actions.style.display = 'flex';
+        return;
+      }
 
-      // Navegação
-      document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = btn.dataset.page;
-          if (page) window.location.href = page + '.html';
-        });
-      });
-
-      // Load header
       try {
-        const profile = await getUserProfile();
-        document.getElementById('headerName').textContent = profile.name || profile.email;
-        const avatar = document.getElementById('headerAvatar');
-        if (profile.avatar_url) {
-          avatar.innerHTML = `<img src="${profile.avatar_url}" alt="Avatar">`;
-        } else {
-          avatar.textContent = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
-        }
-      } catch (e) {}
+        // O Supabase já processou o token e criou a sessão antes de redirecionar
+        // Aguardamos um momento para o supabase-js detectar os tokens no hash
+        await new Promise(r => setTimeout(r, 1500));
 
-      // ===== BUSCA POR CRM/NOME/EMAIL/ID =====
-      document.getElementById('searchIdBtn').addEventListener('click', searchById);
-      document.getElementById('searchUserId').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') searchById();
-      });
-      document.getElementById('clearSearchBtn').addEventListener('click', () => {
-        document.getElementById('searchResult').classList.remove('show');
-        document.getElementById('searchUserId').value = '';
-      });
-      document.getElementById('startChatBtn').addEventListener('click', () => {
-        const result = document.getElementById('searchResult');
-        if (result.dataset.userData) {
-          const userData = JSON.parse(result.dataset.userData);
-          openChat(userData);
-          document.getElementById('searchResult').classList.remove('show');
-        }
-      });
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      async function searchById() {
-        const query = document.getElementById('searchUserId').value.trim();
-        if (!query) {
-          showMessage('Digite um termo para buscar.', 'erro');
+        if (error) throw error;
+
+        if (session && session.user) {
+          // Email confirmado com sucesso!
+          icon.className = 'confirm-icon success';
+          icon.textContent = '✅';
+          title.textContent = 'Email verificado com sucesso!';
+          text.textContent = 'Sua conta foi confirmada. Agora você pode fazer login e começar a usar o NoteMed.';
+          actions.style.display = 'flex';
+
+          // Opcional: redireciona automaticamente para dashboard após 4 segundos
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 4000);
           return;
         }
 
-        const btn = document.getElementById('searchIdBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span> Buscando...';
+        // Sem sessão - pode ser que o token já foi usado ou expirou
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Não foi possível verificar';
+        text.textContent = 'Não detectamos uma confirmação válida. O link pode ter expirado ou já foi usado. Tente fazer login ou cadastre-se novamente.';
+        actions.style.display = 'flex';
 
-        try {
-          let foundUser = null;
-
-          // Tenta buscar por CRM primeiro (se parece com CRM: números com possível barra)
-          if (/^\d{4,}$/.test(query.replace(/\//g, ''))) {
-            foundUser = await searchUserByCRM(query);
-          }
-
-          // Se não encontrar por CRM, tenta busca exata por ID
-          if (!foundUser) {
-            foundUser = await findUserById(query);
-          }
-
-          // Se não encontrar exato, tenta busca parcial por nome/email
-          if (!foundUser) {
-            const results = await searchUserByPartialId(query);
-            if (results.length > 0) {
-              foundUser = results[0];
-            }
-          }
-
-          if (!foundUser) {
-            showMessage('Usuário não encontrado. Verifique o CRM, nome ou ID.', 'erro');
-            document.getElementById('searchResult').classList.remove('show');
-          } else {
-            displaySearchResult(foundUser);
-          }
-        } catch (error) {
-          showMessage('Erro ao buscar usuário.', 'erro');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = '<span>🔍</span> Buscar';
-        }
+      } catch (err) {
+        icon.className = 'confirm-icon error';
+        icon.textContent = '❌';
+        title.textContent = 'Erro na verificação';
+        text.textContent = err.message || 'Ocorreu um erro ao verificar seu email. Tente novamente mais tarde.';
+        actions.style.display = 'flex';
       }
-
-      function displaySearchResult(userData) {
-        const resultDiv = document.getElementById('searchResult');
-        resultDiv.dataset.userData = JSON.stringify(userData);
-
-        document.getElementById('resultName').textContent = userData.name || userData.email || 'Usuário';
-        document.getElementById('resultId').textContent = '#' + userData.id.substring(0, 8) + '...' + userData.id.slice(-4);
-        document.getElementById('resultCrm').textContent = userData.crm ? '🆔 CRM: ' + userData.crm : '';
-        document.getElementById('resultSpecialty').textContent = userData.specialty ? '🏥 ' + userData.specialty : '';
-
-        const avatar = document.getElementById('resultAvatar');
-        if (userData.avatar_url) {
-          avatar.innerHTML = `<img src="${userData.avatar_url}" alt="">`;
-        } else {
-          avatar.textContent = (userData.name || userData.email || 'U').charAt(0).toUpperCase();
-        }
-
-        resultDiv.classList.add('show');
-      }
-
-      // ===== CONTADOR DE MÉDICOS =====
-      async function loadDoctorsCount() {
-        try {
-          const count = await getDoctorsCount();
-          document.getElementById('doctorsCount').textContent = count;
-        } catch (e) {
-          console.error('Erro ao carregar contador de médicos:', e);
-        }
-      }
-
-      // ===== CONVERSAS INICIADAS =====
-      async function loadConversations() {
-        try {
-          const conversations = await getConversations();
-          const container = document.getElementById('conversationsList');
-          if (conversations.length === 0) {
-            container.innerHTML = '<p style="color:#9ca3af; font-size:0.9rem; padding:10px;">Nenhuma conversa iniciada.</p>';
-            return;
-          }
-          container.innerHTML = conversations.map(conv => {
-            const otherUser = conv.other_user || {};
-            const lastMsg = conv.last_message || {};
-            const time = lastMsg.created_at ? new Date(lastMsg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }) : '';
-            const unread = conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count}</span>` : '';
-            const avatar = otherUser.avatar_url ? `<img src="${otherUser.avatar_url}" alt="">` : (otherUser.name || otherUser.email || 'U').charAt(0).toUpperCase();
-            const preview = lastMsg.content ? escapeHtml(lastMsg.content.substring(0, 50)) + (lastMsg.content.length > 50 ? '...' : '') : 'Sem mensagens';
-            return `
-              <div class="chat-conversation-item" data-id="${otherUser.id}" data-name="${otherUser.name || otherUser.email || ''}" data-avatar="${otherUser.avatar_url || ''}" data-specialty="${otherUser.specialty || ''}" data-crm="${otherUser.crm || ''}">
-                <div class="conversation-avatar">${avatar}</div>
-                <div class="conversation-info">
-                  <div class="conversation-name">${otherUser.name || otherUser.email}${unread}</div>
-                  <div class="conversation-preview">${preview}</div>
-                  <div class="conversation-meta">
-                    <span class="conversation-crm">${otherUser.crm ? '🆔 ' + otherUser.crm : ''}</span>
-                    <span class="conversation-time">${time}</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-          document.querySelectorAll('.chat-conversation-item').forEach(item => {
-            item.addEventListener('click', () => openChat(item.dataset));
-          });
-        } catch (error) {
-          console.error('Erro ao carregar conversas:', error);
-          document.getElementById('conversationsList').innerHTML = '<p style="color:#9ca3af;">Erro ao carregar conversas.</p>';
-        }
-      }
-
-      // ===== NOTIFICAÇÕES =====
-      const bell = document.getElementById('notificationBell');
-      const dropdown = document.getElementById('notificationDropdown');
-      const badge = document.getElementById('notificationBadge');
-
-      bell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) loadNotifications();
-      });
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) {
-          dropdown.classList.remove('show');
-        }
-      });
-      document.getElementById('markAllRead').addEventListener('click', async () => {
-        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch(e){}
-      });
-
-      async function loadNotifications() {
-        try {
-          const messages = await getUnreadMessages();
-          const list = document.getElementById('notificationList');
-          if (messages.length === 0) {
-            list.innerHTML = `<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>`;
-            return;
-          }
-          list.innerHTML = messages.map(msg => {
-            const sender = msg.sender || {};
-            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-            return `
-              <div class="notification-item unread" data-msg-id="${msg.id}" data-sender-id="${msg.sender_id}">
-                <div class="notif-avatar">${avatar}</div>
-                <div class="notif-content">
-                  <div class="notif-sender">${sender.name || sender.email || 'Usuário'}</div>
-                  <div class="notif-text">${escapeHtml(msg.content)}</div>
-                  <div class="notif-time">${time}</div>
-                </div>
-              </div>
-            `;
-          }).join('');
-          document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', async () => {
-              const msgId = item.dataset.msgId;
-              const msg = messages.find(m => m.id === msgId);
-              if (msg) {
-                showMessageModal(msg);
-                try { await markMessageAsRead(msgId); } catch(e){}
-                updateBellState(Math.max(0, parseInt(badge.textContent) - 1));
-              }
-            });
-          });
-        } catch(e) { console.error(e); }
-      }
-
-      async function checkNewMessages() {
-        try {
-          const count = await getUnreadCount();
-          updateBellState(count);
-          if (count > 0) {
-            const messages = await getUnreadMessages();
-            if (messages.length > 0 && messages[0].id !== lastMessageId) {
-              lastMessageId = messages[0].id;
-              showMessageModal(messages[0]);
-            }
-          }
-        } catch(e) {}
-      }
-
-      function updateBellState(count) {
-        badge.textContent = count;
-        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
-        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
-      }
-
-      // ===== MODAL =====
-      const modal = document.getElementById('messageModal');
-      function showMessageModal(msg) {
-        const sender = msg.sender || {};
-        document.getElementById('modalMessageText').textContent = msg.content;
-        document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
-        document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
-        const avatar = document.getElementById('modalSenderAvatar');
-        if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
-        else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-        modal.dataset.senderId = msg.sender_id;
-        modal.classList.add('show');
-      }
-      document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('show'));
-      document.getElementById('modalDismiss').addEventListener('click', () => modal.classList.remove('show'));
-      document.getElementById('modalGoToChat').addEventListener('click', () => {
-        const senderId = modal.dataset.senderId;
-        if (senderId) {
-          sessionStorage.setItem('chatTargetUserId', senderId);
-          modal.classList.remove('show');
-          loadConversations().then(() => {
-            const convEl = document.querySelector(`.chat-conversation-item[data-id="${senderId}"]`);
-            if (convEl) convEl.click();
-          });
-        }
-      });
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
-
-      // ===== CHAT =====
-      async function openChat(userData) {
-        currentChatUser = userData;
-        document.querySelectorAll('.chat-conversation-item').forEach(i => i.classList.remove('active'));
-        const convEl = document.querySelector(`.chat-conversation-item[data-id="${userData.id}"]`);
-        if (convEl) convEl.classList.add('active');
-        document.getElementById('noChatSelected').style.display = 'none';
-        document.getElementById('chatContainer').style.display = 'flex';
-        document.getElementById('chatUserName').textContent = userData.name || userData.email || 'Usuário';
-        document.getElementById('chatUserId').textContent = '#' + userData.id.substring(0, 8);
-        document.getElementById('chatUserCrm').textContent = userData.crm ? '🆔 CRM: ' + userData.crm : '';
-        const avatar = document.getElementById('chatAvatar');
-        if (userData.avatar) avatar.innerHTML = `<img src="${userData.avatar}" alt="">`;
-        else avatar.textContent = (userData.name || 'U').charAt(0).toUpperCase();
-        await loadMessages();
-        if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(() => {
-          if (currentChatUser && currentChatUser.id === userData.id) loadMessages();
-        }, 3000);
-      }
-
-      async function loadMessages() {
-        if (!currentChatUser) return;
-        try {
-          const messages = await getMessages(currentChatUser.id);
-          renderMessages(messages);
-        } catch (error) { console.error('Erro ao carregar mensagens:', error); }
-      }
-
-      function renderMessages(messages) {
-        const container = document.getElementById('chatMessages');
-        if (messages.length === 0) {
-          container.innerHTML = `<div class="empty-state" style="padding:30px 0;"><div class="empty-icon">💬</div><p>Envie uma mensagem para iniciar a conversa</p></div>`;
-          return;
-        }
-        container.innerHTML = messages.map(msg => {
-          const isSent = msg.sender_id === currentUserId;
-          const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-          return `
-            <div class="chat-message ${isSent ? 'sent' : 'received'}">
-              ${!isSent ? `<div class="msg-sender">${currentChatUser.name || currentChatUser.email || 'Usuário'}</div>` : ''}
-              <div>${escapeHtml(msg.content)}</div>
-              <div class="msg-time">${time}</div>
-            </div>
-          `;
-        }).join('');
-        container.scrollTop = container.scrollHeight;
-      }
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      async function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        const content = input.value.trim();
-        if (!content || !currentChatUser) return;
-        input.value = '';
-        try {
-          await sendMessage(currentChatUser.id, content);
-          await loadMessages();
-          await loadConversations(); // Atualiza lista de conversas
-        } catch (error) {
-          showMessage('Erro ao enviar mensagem.', 'erro');
-        }
-      }
-
-      document.getElementById('sendBtn').addEventListener('click', sendChatMessage);
-      document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
-      });
-
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await signOut();
-        localStorage.removeItem('session_id');
-        window.location.href = 'index.html';
-      });
-
-      setInterval(async () => { await checkSingleSession(); }, 10000);
-      setInterval(async () => { await checkNewMessages(); }, 8000);
-
-      window.showMessage = (msg, type = 'erro') => {
-        const el = document.getElementById('mensagem');
-        el.textContent = msg;
-        el.className = `mensagem ${type}`;
-        setTimeout(() => el.style.display = 'none', 5000);
-      };
-
-      await checkNewMessages();
-      await loadDoctorsCount();
-      await loadConversations();
     })();
   </script>
 </body>
