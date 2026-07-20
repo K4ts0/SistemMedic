@@ -2277,3 +2277,189 @@ export async function checkSingleSession() {
   }
   return true;
 }
+
+// ============================================================
+// ===== PEDIATRIA — PACIENTES E CONSULTAS (Supabase) =====
+// ============================================================
+// Substitui o antigo armazenamento em localStorage ('pediatra_pacientes' /
+// 'pediatra_ultimo') por tabelas 'pediatric_patients' e 'pediatric_consultations',
+// isoladas por medico via RLS (doctor_id = auth.uid()). Ver pediatria_schema.sql.
+
+/**
+ * Retorna todos os pacientes do medico logado com suas consultas, no mesmo
+ * formato que a pagina pediatria.html usava a partir do localStorage.
+ */
+export async function getPediatricHistory() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data: patients, error } = await supabase
+    .from('pediatric_patients')
+    .select('*')
+    .eq('doctor_id', user.id);
+  if (error) throw error;
+  if (!patients || patients.length === 0) return [];
+
+  const { data: consultations, error: cErr } = await supabase
+    .from('pediatric_consultations')
+    .select('*')
+    .eq('doctor_id', user.id)
+    .order('created_at', { ascending: false });
+  if (cErr) throw cErr;
+
+  return patients.map(p => ({
+    id: p.id,
+    nome: p.nome,
+    cpf: p.cpf || '',
+    nasc: p.nasc || '',
+    mae: p.mae || '',
+    sexo: p.sexo || 'M',
+    consultas: (consultations || [])
+      .filter(c => c.patient_id === p.id)
+      .map(c => ({
+        id: c.id,
+        data: c.created_at,
+        paciente: {
+          nome: p.nome, cpf: p.cpf || '', nasc: p.nasc || '', mae: p.mae || '',
+          sexo: p.sexo || 'M', peso: c.peso, altura: c.altura
+        },
+        anamnese: c.anamnese || '',
+        exameFisico: c.exame_fisico || '',
+        conduta: c.conduta || '',
+        cid: c.cid_codigo || '',
+        cidDesc: c.cid_desc || '',
+        documentos: c.documentos || [],
+        gravada: c.gravada || false
+      }))
+  }));
+}
+
+/**
+ * Retorna os dados do paciente/consulta mais recentemente salvos pelo medico
+ * (equivalente ao antigo 'pediatra_ultimo'), para pre-preencher o formulario.
+ */
+export async function getLastPediatricConsultation() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: consultations, error } = await supabase
+    .from('pediatric_consultations')
+    .select('*')
+    .eq('doctor_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(1);
+  if (error || !consultations || consultations.length === 0) return null;
+
+  const c = consultations[0];
+  const { data: patient } = await supabase
+    .from('pediatric_patients')
+    .select('*')
+    .eq('id', c.patient_id)
+    .single();
+  if (!patient) return null;
+
+  return {
+    pacienteId: patient.id,
+    nome: patient.nome,
+    cpf: patient.cpf || '',
+    nasc: patient.nasc || '',
+    mae: patient.mae || '',
+    sexo: patient.sexo || 'M',
+    peso: c.peso,
+    altura: c.altura
+  };
+}
+
+/**
+ * Cria ou atualiza um paciente + consulta pediatrica.
+ * payload: {
+ *   pacienteId, consultaId,
+ *   paciente: { nome, cpf, nasc, mae, sexo, peso, altura },
+ *   anamnese, exameFisico, conduta, cid, cidDesc, documentos, gravada
+ * }
+ * Retorna { pacienteId, consultaId }.
+ */
+export async function savePediatricConsultation(payload) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const p = payload.paciente || {};
+  let pacienteId = payload.pacienteId || null;
+
+  if (pacienteId) {
+    const { error: upErr } = await supabase
+      .from('pediatric_patients')
+      .update({
+        nome: p.nome, cpf: p.cpf || null, nasc: p.nasc || null,
+        mae: p.mae || null, sexo: p.sexo || 'M',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', pacienteId)
+      .eq('doctor_id', user.id);
+    if (upErr) throw upErr;
+  } else {
+    // Tenta encontrar paciente existente (mesmo nome + mae + nascimento)
+    let query = supabase
+      .from('pediatric_patients')
+      .select('id')
+      .eq('doctor_id', user.id)
+      .ilike('nome', p.nome)
+      .limit(1);
+    if (p.nasc) query = query.eq('nasc', p.nasc);
+    const { data: existing } = await query;
+
+    if (existing && existing.length > 0) {
+      pacienteId = existing[0].id;
+      await supabase.from('pediatric_patients').update({
+        cpf: p.cpf || null, mae: p.mae || null, sexo: p.sexo || 'M',
+        updated_at: new Date().toISOString()
+      }).eq('id', pacienteId);
+    } else {
+      const { data: novo, error: insErr } = await supabase
+        .from('pediatric_patients')
+        .insert([{
+          doctor_id: user.id, nome: p.nome, cpf: p.cpf || null,
+          nasc: p.nasc || null, mae: p.mae || null, sexo: p.sexo || 'M'
+        }])
+        .select()
+        .single();
+      if (insErr) throw insErr;
+      pacienteId = novo.id;
+    }
+  }
+
+  const consultaData = {
+    patient_id: pacienteId,
+    doctor_id: user.id,
+    peso: p.peso ?? null,
+    altura: p.altura ?? null,
+    anamnese: payload.anamnese || '',
+    exame_fisico: payload.exameFisico || '',
+    conduta: payload.conduta || '',
+    cid_codigo: payload.cid || '',
+    cid_desc: payload.cidDesc || '',
+    documentos: payload.documentos || [],
+    gravada: payload.gravada || false,
+    updated_at: new Date().toISOString()
+  };
+
+  let consultaId = payload.consultaId || null;
+  if (consultaId) {
+    const { error: cUpErr } = await supabase
+      .from('pediatric_consultations')
+      .update(consultaData)
+      .eq('id', consultaId)
+      .eq('doctor_id', user.id);
+    if (cUpErr) throw cUpErr;
+  } else {
+    const { data: nova, error: cInsErr } = await supabase
+      .from('pediatric_consultations')
+      .insert([consultaData])
+      .select()
+      .single();
+    if (cInsErr) throw cInsErr;
+    consultaId = nova.id;
+  }
+
+  return { pacienteId, consultaId };
+}
