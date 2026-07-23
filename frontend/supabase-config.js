@@ -2637,12 +2637,18 @@ export async function hasPediatricAccess() {
 /**
  * Libera ou revoga o acesso de um medico ao modulo Pediatria.
  * Chamado apenas pelo painel administrativo (admin.html).
+ * Usa a funcao set_pediatric_access (SECURITY DEFINER) em vez de um
+ * UPDATE direto na tabela: o RLS de profiles so permite que cada
+ * usuario edite a propria linha, entao o admin tentando liberar o
+ * acesso de OUTRO usuario seria bloqueado (403). A funcao no banco
+ * verifica que quem chama e o admin e so entao aplica a alteracao.
+ * Ver fix_pediatric_access_rpc.sql.
  */
 export async function setPediatricAccess(userId, enabled) {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ pediatric_access: !!enabled })
-    .eq('id', userId);
+  const { error } = await supabase.rpc('set_pediatric_access', {
+    target_user_id: userId,
+    enabled: !!enabled
+  });
   if (error) throw error;
   return true;
 }
