@@ -364,6 +364,34 @@
       font-weight:600;
       font-family:'JetBrains Mono',monospace;
     }
+    .mini-switch{
+      position:relative;
+      display:inline-block;
+      width:38px;
+      height:20px;
+      flex-shrink:0;
+    }
+    .mini-switch input{ opacity:0; width:0; height:0; }
+    .mini-switch .slider{
+      position:absolute; cursor:pointer; inset:0;
+      background:rgba(255,255,255,0.12);
+      border-radius:9999px;
+      transition:0.2s;
+    }
+    .mini-switch .slider::before{
+      content:'';
+      position:absolute;
+      height:14px; width:14px;
+      left:3px; bottom:3px;
+      background:#94A3B8;
+      border-radius:50%;
+      transition:0.2s;
+    }
+    .mini-switch input:checked + .slider{ background:rgba(16,185,129,0.35); }
+    .mini-switch input:checked + .slider::before{ background:var(--admin-success); transform:translateX(18px); }
+    .mini-switch input:disabled + .slider{ cursor:not-allowed; opacity:0.5; }
+    .pediatria-cell{ display:flex; align-items:center; gap:8px; }
+    .pediatria-cell .status-label{ font-size:0.75rem; color:var(--admin-muted); white-space:nowrap; }
     .user-status{
       display:inline-flex;
       align-items:center;
@@ -797,10 +825,11 @@
               <th>Especialidade</th>
               <th>CRM</th>
               <th>Anotações</th>
+              <th>Pediatria</th>
             </tr>
           </thead>
           <tbody id="allUsersTable">
-            <tr><td colspan="6">
+            <tr><td colspan="7">
               <div class="empty-state-cell">
                 <div class="icon">⏳</div>
                 <h4>Carregando usuários...</h4>
@@ -870,7 +899,8 @@
 
   <script type="module">
     import { supabase, getCurrentUser, signOut, ensureValidSession, checkSingleSession, getUserProfile,
-      getAccessStatsByHour, getTodayStats, getOnlineUsers, getAdminSummary, logAccess } from './supabase-config.js';
+      getAccessStatsByHour, getAccessStatsByHourToday, getTodayStats, getOnlineUsers, getAdminSummary,
+      getSystemStats, getNotesStats, setPediatricAccess, logAccess } from './supabase-config.js';
 
     const ADMIN_EMAIL = 'admin@wayforsystem.med';
     let selectedUsers = new Set();
@@ -1087,28 +1117,40 @@
           document.getElementById('statTotalNotes').textContent = summary.total_notes || 0;
 
           const peakHour = summary.peak_hour_today;
-          document.getElementById('statPeakHour').textContent = 
+          document.getElementById('statPeakHour').textContent =
             peakHour !== null ? `${String(peakHour).padStart(2,'0')}:00` : '--:--';
-
-          document.getElementById('usersTrend').textContent = `+${summary.total_users || 0}`;
-          document.getElementById('notesTrend').textContent = `+${summary.total_notes || 0}`;
         }
-      } catch (e) { 
+      } catch (e) {
         console.error('Stats error:', e);
         // Fallback direto ao banco
         try {
+          const { data: adminProfile } = await supabase.from('profiles').select('id').eq('email', ADMIN_EMAIL).single();
+          const adminId = adminProfile?.id;
+          const fiveMinAgo = new Date(Date.now()-5*60*1000).toISOString();
+          let onlineQuery = supabase.from('profiles').select('id').gte('updated_at', fiveMinAgo);
+          if (adminId) onlineQuery = onlineQuery.neq('id', adminId);
           const [{ count: uc }, { count: nc }, { data: ou }] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
             supabase.from('notes').select('*', { count: 'exact', head: true }),
-            supabase.from('profiles').select('id').gte('updated_at', new Date(Date.now()-5*60*1000).toISOString())
+            onlineQuery
           ]);
-          document.getElementById('statTotalUsers').textContent = uc || 0;
+          document.getElementById('statTotalUsers').textContent = Math.max(0, (uc || 0) - (adminId ? 1 : 0));
           document.getElementById('statOnlineNow').textContent = ou?.length || 0;
           document.getElementById('statTotalNotes').textContent = nc || 0;
-          document.getElementById('usersTrend').textContent = `+${uc || 0}`;
-          document.getElementById('notesTrend').textContent = `+${nc || 0}`;
           document.getElementById('statPeakHour').textContent = '--:--';
         } catch (e2) { console.error('Fallback error:', e2); }
+      }
+
+      // Tendencias reais (usuarios e anotacoes novos nesta semana), em vez de
+      // repetir o total absoluto com um "+" na frente (o que sugeria uma alta
+      // recente onde nao havia nenhuma).
+      try {
+        const [sysStats, notesStats] = await Promise.all([getSystemStats(), getNotesStats()]);
+        document.getElementById('usersTrend').textContent = `+${sysStats.newUsersWeek || 0} esta semana`;
+        document.getElementById('notesTrend').textContent = `+${notesStats.thisWeek || 0} esta semana`;
+      } catch (e) {
+        document.getElementById('usersTrend').textContent = '—';
+        document.getElementById('notesTrend').textContent = '—';
       }
     }
 
@@ -1141,7 +1183,7 @@
             data:{
               labels:hours,
               datasets:[{
-                label:'Acessos',
+                label:'Usuários únicos',
                 data,
                 backgroundColor:data.map(v=>v===mx?'rgba(239,68,68,0.7)':'rgba(59,130,246,0.5)'),
                 borderColor:data.map(v=>v===mx?'rgba(239,68,68,1)':'rgba(59,130,246,0.7)'),
@@ -1173,15 +1215,30 @@
           });
         }
 
-        loadPeakHours(data);
       } catch (e) {
         console.error('Hourly stats error:', e);
+      }
+
+      // O painel "Picos de Acesso por Hora (Hoje)" precisa de dados do dia
+      // de HOJE (00:00 ate agora), diferente do grafico acima que usa uma
+      // janela rolante das ultimas 24h — por isso usa uma consulta separada.
+      try {
+        const todayStats = await getAccessStatsByHourToday();
+        const todayData = new Array(24).fill(0);
+        todayStats.forEach(s => {
+          if (s.hour_of_day >= 0 && s.hour_of_day < 24) {
+            todayData[s.hour_of_day] = s.access_count || 0;
+          }
+        });
+        loadPeakHours(todayData);
+      } catch (e) {
+        console.error('Today hourly stats error:', e);
         loadPeakHours(new Array(24).fill(0));
       }
     }
 
     // ============================================================
-    // 🔥 PEAK HOURS
+    // 🔥 PEAK HOURS (dados de HOJE, ver getAccessStatsByHourToday)
     // ============================================================
     function loadPeakHours(data) {
       const total = data.reduce((a,b) => a+b, 0) || 1;
@@ -1212,7 +1269,7 @@
           <div class="peak-hour-bar-wrap">
             <div class="peak-hour-bar-bg"><div class="peak-hour-bar-fill" style="width:${(p.count/maxCount)*100}%"></div></div>
           </div>
-          <div class="peak-hour-pct">${p.count}</div>
+          <div class="peak-hour-pct" title="${p.count} usuário(s) único(s) nesta hora">${p.pct}%</div>
         </div>
       `).join('');
     }
@@ -1245,7 +1302,7 @@
               <td style="color:var(--admin-muted);font-size:0.85rem;">${p.email}</td>
               <td>${p.specialty||'-'}</td>
               <td>${p.crm?`<span class="crm-tag">${p.crm}</span>`:'-'}</td>
-              <td><span class="user-status ${isOnline?'online':'away'}"><span class="status-dot"></span>${isOnline?'Online':'Ausente'}</span></td>
+              <td><span class="user-status ${isOnline?'online':'away'}" title="Esta lista mostra usuários ativos nos últimos 15 minutos"><span class="status-dot"></span>${isOnline?'Online':'Ativo recentemente'}</span></td>
               <td style="color:var(--admin-muted);font-size:0.82rem;">${getTimeAgo(p.last_activity)}</td>
             </tr>
           `;
@@ -1263,7 +1320,7 @@
       try {
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('id, name, email, specialty, crm, avatar_url, updated_at')
+          .select('id, name, email, specialty, crm, avatar_url, updated_at, pediatric_access')
           .order('updated_at', { ascending: false });
 
         if (error) throw error;
@@ -1271,14 +1328,14 @@
         await renderUsersTable(allUsersData);
       } catch (e) {
         console.error('All users error:', e);
-        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">❌</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
+        document.getElementById('allUsersTable').innerHTML = `<tr><td colspan="7"><div class="empty-state-cell"><div class="icon">❌</div><h4>Erro ao carregar</h4><p>${e.message||'Verifique as permissões da tabela profiles'}</p></div></td></tr>`;
       }
     }
 
     async function renderUsersTable(users) {
       const tbody = document.getElementById('allUsersTable');
       if (!users || !users.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state-cell"><div class="icon">📭</div><h4>Nenhum usuário encontrado</h4></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state-cell"><div class="icon">📭</div><h4>Nenhum usuário encontrado</h4></div></td></tr>`;
         return;
       }
 
@@ -1289,6 +1346,7 @@
       tbody.innerHTML = users.map(u => {
         const initials = (u.name || u.email || 'U').charAt(0).toUpperCase();
         const isAdmin = u.email === ADMIN_EMAIL;
+        const pediatriaOn = isAdmin || !!u.pediatric_access;
         return `
           <tr>
             <td><input type="checkbox" class="user-checkbox" data-user-id="${u.id}" ${isAdmin?'disabled title="Admin protegido"':''} style="width:auto;cursor:pointer;" /></td>
@@ -1305,6 +1363,15 @@
             <td>${u.specialty||'-'}</td>
             <td>${u.crm?`<span class="crm-tag">${u.crm}</span>`:'-'}</td>
             <td style="font-weight:700;font-size:0.95rem;">${notesPerUser[u.id]||0}</td>
+            <td>
+              <div class="pediatria-cell">
+                <label class="mini-switch" title="${isAdmin?'O admin sempre tem acesso':'Liberar/revogar acesso ao módulo Pediatria'}">
+                  <input type="checkbox" class="pediatria-toggle" data-user-id="${u.id}" ${pediatriaOn?'checked':''} ${isAdmin?'disabled':''} />
+                  <span class="slider"></span>
+                </label>
+                <span class="status-label">${pediatriaOn?'Liberado':'Bloqueado'}</span>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1314,6 +1381,27 @@
           const uid = e.target.dataset.userId;
           e.target.checked ? selectedUsers.add(uid) : selectedUsers.delete(uid);
           updateDeleteButton();
+        });
+      });
+
+      document.querySelectorAll('.pediatria-toggle:not([disabled])').forEach(cb => {
+        cb.addEventListener('change', async (e) => {
+          const uid = e.target.dataset.userId;
+          const enabled = e.target.checked;
+          const label = e.target.closest('.pediatria-cell').querySelector('.status-label');
+          e.target.disabled = true;
+          try {
+            await setPediatricAccess(uid, enabled);
+            label.textContent = enabled ? 'Liberado' : 'Bloqueado';
+            const localUser = allUsersData.find(u => u.id === uid);
+            if (localUser) localUser.pediatric_access = enabled;
+            showToast(enabled ? 'Acesso à Pediatria liberado!' : 'Acesso à Pediatria revogado.', 'success');
+          } catch (err) {
+            e.target.checked = !enabled; // reverte a UI se a chamada falhar
+            showToast('Erro ao atualizar acesso: ' + (err.message||'tente novamente'), 'error');
+          } finally {
+            e.target.disabled = false;
+          }
         });
       });
     }
@@ -1397,31 +1485,70 @@
       try {
         let csv = '', filename = '';
         if (type === 'users') {
-          const { data } = await supabase.from('profiles').select('*').order('updated_at', { ascending: false });
+          const { data, error } = await supabase.from('profiles').select('*').order('updated_at', { ascending: false });
+          if (error) throw error;
           if (!data?.length) { showToast('Sem dados','error'); return; }
           csv = 'ID,Nome,Email,Especialidade,CRM,Telefone,Biografia,Data\n';
           csv += data.map(u => `"${u.id}","${(u.name||'').replace(/"/g,'""')}","${u.email}","${u.specialty||''}","${u.crm||''}","${u.phone||''}","${(u.bio||'').replace(/"/g,'""')}","${u.updated_at}"`).join('\n');
           filename = 'relatorio_usuarios.csv';
         }
         else if (type === 'notes') {
-          const { data } = await supabase.from('notes').select('*, profiles(name,email)').order('updated_at', { ascending: false });
+          // Nota: joins embutidos do PostgREST (ex: "*, profiles(...)") nao
+          // funcionam neste banco porque notes.user_id referencia auth.users,
+          // nao public.profiles diretamente — por isso, como em todo o resto
+          // do supabase-config.js, busca-se em duas consultas separadas e
+          // faz-se o merge manualmente em JS.
+          const { data, error } = await supabase.from('notes').select('*').order('updated_at', { ascending: false });
+          if (error) throw error;
           if (!data?.length) { showToast('Sem dados','error'); return; }
+          const userIds = [...new Set(data.map(n => n.user_id).filter(Boolean))];
+          const { data: profilesData, error: profErr } = userIds.length
+            ? await supabase.from('profiles').select('id,name,email').in('id', userIds)
+            : { data: [] };
+          if (profErr) throw profErr;
+          const profilesMap = new Map((profilesData||[]).map(p => [p.id, p]));
           csv = 'ID,Titulo,Autor,Email,Resumo,Favorita,Criacao,Atualizacao\n';
-          csv += data.map(n => `"${n.id}","${(n.title||'').replace(/"/g,'""')}","${n.profiles?.name||''}","${n.profiles?.email||''}","${(n.content||'').substring(0,100).replace(/"/g,'""')}","${n.is_favorite?'Sim':'Nao'}","${n.created_at}","${n.updated_at}"`).join('\n');
+          csv += data.map(n => {
+            const autor = profilesMap.get(n.user_id) || {};
+            return `"${n.id}","${(n.title||'').replace(/"/g,'""')}","${autor.name||''}","${autor.email||''}","${(n.content||'').substring(0,100).replace(/"/g,'""')}","${n.is_favorite?'Sim':'Nao'}","${n.created_at}","${n.updated_at}"`;
+          }).join('\n');
           filename = 'relatorio_anotacoes.csv';
         }
         else if (type === 'messages') {
-          const { data } = await supabase.from('messages').select('*, sender:sender_id(name,email), receiver:receiver_id(name,email)').order('created_at', { ascending: false });
+          const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+          if (error) throw error;
           if (!data?.length) { showToast('Sem dados','error'); return; }
+          const userIds = [...new Set(data.flatMap(m => [m.sender_id, m.receiver_id]).filter(Boolean))];
+          const { data: profilesData, error: profErr } = userIds.length
+            ? await supabase.from('profiles').select('id,name,email').in('id', userIds)
+            : { data: [] };
+          if (profErr) throw profErr;
+          const profilesMap = new Map((profilesData||[]).map(p => [p.id, p]));
           csv = 'ID,Remetente,EmailRemetente,Destinatario,EmailDestinatario,Conteudo,Lida,Data\n';
-          csv += data.map(m => `"${m.id}","${m.sender?.name||''}","${m.sender?.email||''}","${m.receiver?.name||''}","${m.receiver?.email||''}","${(m.content||'').replace(/"/g,'""')}","${m.read?'Sim':'Nao'}","${m.created_at}"`).join('\n');
+          csv += data.map(m => {
+            const sender = profilesMap.get(m.sender_id) || {};
+            const receiver = profilesMap.get(m.receiver_id) || {};
+            return `"${m.id}","${sender.name||''}","${sender.email||''}","${receiver.name||''}","${receiver.email||''}","${(m.content||'').replace(/"/g,'""')}","${m.read?'Sim':'Nao'}","${m.created_at}"`;
+          }).join('\n');
           filename = 'relatorio_mensagens.csv';
         }
         else if (type === 'logs') {
-          const { data } = await supabase.from('access_logs').select('*').order('created_at', { ascending: false }).limit(5000);
+          const { data, error } = await supabase.from('access_logs').select('*').order('created_at', { ascending: false }).limit(5000);
+          if (error) throw error;
           if (!data?.length) { showToast('Sem dados','error'); return; }
-          csv = 'ID,UserID,Acao,Data\n';
-          csv += data.map(l => `"${l.id}","${l.user_id||''}","${l.action||''}","${l.created_at}"`).join('\n');
+          // access_logs.action nunca e preenchido por logAccess() (so "page" e
+          // gravado) — usar "action" aqui sempre resultava numa coluna vazia.
+          const userIds = [...new Set(data.map(l => l.user_id).filter(Boolean))];
+          const { data: profilesData, error: profErr } = userIds.length
+            ? await supabase.from('profiles').select('id,name,email').in('id', userIds)
+            : { data: [] };
+          if (profErr) throw profErr;
+          const profilesMap = new Map((profilesData||[]).map(p => [p.id, p]));
+          csv = 'ID,Usuario,Email,Pagina,Data\n';
+          csv += data.map(l => {
+            const u = profilesMap.get(l.user_id) || {};
+            return `"${l.id}","${u.name||''}","${u.email||''}","${l.page||l.action||''}","${l.created_at}"`;
+          }).join('\n');
           filename = 'relatorio_logs_acesso.csv';
         }
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
