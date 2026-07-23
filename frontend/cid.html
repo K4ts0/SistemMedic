@@ -235,7 +235,7 @@
       <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
       <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
       <button class="nav-item active" data-page="cid"><span>🔍</span> CID</button>
-      <button class="nav-item" data-page="pediatria"><span>👶</span> Pediatria</button>
+      <button class="nav-item hidden" data-page="pediatria" id="pediatriaNavItem"><span>👶</span> Pediatria</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -343,7 +343,7 @@
       getCurrentUser, signOut, ensureValidSession, checkSingleSession,
       getUserProfile, searchCID, getCID,
       getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
-      logAccess, createNote
+      logAccess, createNote, hasPediatricAccess
     } from './supabase-config.js';
 
     const prescricaoDetalhada = {
@@ -410,6 +410,10 @@
       if (!user) { window.location.href = 'index.html'; return; }
       currentUserId = user.id;
       try { await logAccess('cid'); } catch(e) {}
+
+      try {
+        if (await hasPediatricAccess()) document.getElementById('pediatriaNavItem').classList.remove('hidden');
+      } catch (e) {}
 
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => { const page = btn.dataset.page; if (page) window.location.href = page + '.html'; });
