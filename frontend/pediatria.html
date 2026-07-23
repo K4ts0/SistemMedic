@@ -2,227 +2,130 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#2a7de1" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <title>👶 Pediatria — Way For System</title>
+  <title>👶 Way For System — Pediatria</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ===== RESET & BASE ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(145deg, #eef2f7 0%, #f7f9fc 100%);
+      background: #eef2f7;
       color: #1a2a3a;
       min-height: 100vh;
-      padding: 24px;
-    }
-    .app-container {
-      max-width: 1360px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(4px);
-      border-radius: 40px;
-      box-shadow: 0 25px 60px rgba(26, 42, 58, 0.12), 0 0 0 1px rgba(255,255,255,0.5);
-      overflow: hidden;
-      padding: 28px 32px 24px;
-      transition: all 0.2s;
-    }
-    /* ===== HEADER ===== */
-    .app-header {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding-bottom: 18px;
-      border-bottom: 2px solid rgba(42,125,225,0.08);
-      margin-bottom: 24px;
     }
-    .logo-area {
+    .app-wrapper { display: flex; width: 100%; min-height: 100vh; }
+    .sidebar {
+      width: 220px;
+      background: linear-gradient(180deg, #0e3a45, #16505f 70%);
+      color: #d9eae6;
+      padding: 24px 14px;
       display: flex;
-      align-items: center;
-      gap: 14px;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      flex-shrink: 0;
+      overflow-y: auto;
+      z-index: 10;
     }
-    .logo-icon {
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5);
-      width: 52px;
-      height: 52px;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 26px;
-      box-shadow: 0 8px 20px rgba(42,125,225,0.30);
-    }
-    .logo-text h1 {
-      font-size: 24px;
-      font-weight: 700;
-      color: #0b1e2e;
-      letter-spacing: -0.3px;
-    }
-    .logo-text span {
-      font-size: 13px;
-      color: #5d7184;
-      font-weight: 500;
-      display: block;
-      margin-top: 2px;
-    }
-    .header-center {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-    .header-clock {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1a2a3a;
-      background: rgba(255,255,255,0.7);
-      padding: 8px 20px;
-      border-radius: 40px;
-      border: 1px solid rgba(42,125,225,0.15);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-    .header-clock i { color: #2a7de1; font-size: 16px; }
-    .header-clock .label { color: #5d7184; font-weight: 500; }
-    .header-actions {
+    .sidebar-brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
+      padding: 4px 6px 28px;
     }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 40px;
-      font-size: 14px;
-      font-weight: 600;
+    .sidebar-brand-text { font-size: 20px; font-weight: 600; font-family: 'Segoe UI', sans-serif; }
+    .sidebar-brand-sub { font-size: 11px; color: #9fc7be; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 10px; border: none;
+      background: transparent; color: #d9eae6;
+      font-family: 'Segoe UI', sans-serif; font-size: 14.5px; font-weight: 500;
+      cursor: pointer; text-align: left; width: 100%;
+      transition: background .15s ease, color .15s ease;
+    }
+    .nav-btn svg { flex-shrink: 0; opacity: 0.85; }
+    .nav-btn i { width: 18px; text-align: center; opacity: 0.85; }
+    .nav-btn:hover { background: rgba(255,255,255,0.08); }
+    .nav-btn.active { background: #e2764a; color: #fff; }
+    .nav-btn.active svg, .nav-btn.active i { opacity: 1; }
+    .nav-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 14px 4px; }
+    .sidebar-footer { margin-top: auto; padding-top: 16px; }
+    .doctor-card {
+      background: rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 12px;
+      display: flex; gap: 10px; align-items: center;
+      border: 1px solid rgba(255,255,255,0.08);
       cursor: pointer;
-      transition: 0.25s cubic-bezier(0.34,1.56,0.64,1);
-      background: #f0f5fa;
-      color: #1a2a3a;
-      text-decoration: none;
-      white-space: nowrap;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .btn i { font-size: 16px; }
-    .btn-primary {
-      background: linear-gradient(135deg, #2a7de1, #4a8fe8);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(42,125,225,0.30);
+    .doctor-card:hover { background: rgba(255,255,255,0.12); }
+    .doctor-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #e2764a; color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 14px; flex-shrink: 0; overflow: hidden;
     }
-    .btn-primary:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 25px rgba(42,125,225,0.40);
+    .doctor-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .doctor-name { font-size: 13.5px; font-weight: 600; color: #fff; line-height: 1.2; }
+    .doctor-role { font-size: 11px; color: #a9cfc7; margin-top: 2px; }
+    .logout-btn {
+      margin-top: 10px; width: 100%; padding: 9px; border: none; border-radius: 10px;
+      background: rgba(255,255,255,0.08); color: #d9eae6; cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.15s;
     }
-    .btn-success {
-      background: linear-gradient(135deg, #1fb873, #30c987);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(31,184,115,0.30);
+    .logout-btn:hover { background: rgba(228,92,92,0.35); color: #fff; }
+    @media (max-width: 880px) {
+      .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; flex-wrap: wrap; padding: 12px 16px; align-items: center; }
+      .sidebar-brand { padding-bottom: 0; }
+      .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; flex: unset; }
+      .nav-btn { padding: 8px 12px; font-size: 13px; width: auto; }
+      .sidebar-footer { display: none; }
+      .main-content { max-width: 100%; padding: 20px 16px; }
     }
-    .btn-success:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 25px rgba(31,184,115,0.40);
+    @media (max-width: 600px) {
+      .sidebar { flex-direction: column; align-items: stretch; }
+      .sidebar-nav { flex-direction: column; }
+      .nav-btn { width: 100%; }
     }
-    .btn-outline {
-      background: transparent;
-      border: 2px solid rgba(42,125,225,0.20);
-      color: #2a7de1;
+
+    .main-content {
+      flex: 1;
+      padding: 28px 36px 50px;
+      max-width: calc(100% - 220px);
+      background: #eef2f7;
     }
-    .btn-outline:hover {
-      background: rgba(42,125,225,0.06);
-      border-color: #2a7de1;
-      transform: translateY(-2px);
-    }
-    .btn-warning {
-      background: linear-gradient(135deg, #f5b342, #f7c35a);
-      color: #1a2a3a;
-      box-shadow: 0 4px 14px rgba(245,179,66,0.25);
-    }
-    .btn-warning:hover {
-      transform: translateY(-2px) scale(1.02);
-    }
-    .btn-ghost {
-      background: rgba(42,125,225,0.06);
-      color: #2a7de1;
-    }
-    .btn-ghost:hover {
-      background: rgba(42,125,225,0.12);
-      transform: translateY(-2px);
-    }
-    .btn-sm { padding: 6px 14px; font-size: 12px; }
-    .btn-home {
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(42,125,225,0.30);
-      padding: 10px 18px;
-    }
-    .btn-home:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 8px 25px rgba(42,125,225,0.40);
-    }
-    .btn-home i { font-size: 18px; }
-    .btn-danger {
-      background: linear-gradient(135deg, #e45c5c, #d94a4a);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(228,92,92,0.30);
-    }
-    .btn-danger:hover {
-      transform: translateY(-2px) scale(1.02);
-    }
-    /* ===== NAV TABS ===== */
-    .nav-tabs {
+    @media (max-width: 880px) { .main-content { max-width: 100%; padding: 20px 16px; } }
+
+    .topbar {
       display: flex;
-      gap: 4px;
-      background: rgba(240,245,250,0.6);
-      border-radius: 50px;
-      padding: 4px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
       margin-bottom: 28px;
-      flex-wrap: wrap;
-      backdrop-filter: blur(4px);
     }
-    .nav-tab {
-      padding: 10px 24px;
-      border: none;
+    .topbar-left h1 { font-size: 26px; font-weight: 700; color: #0b1e2e; margin: 0; }
+    .topbar-left p { font-size: 14px; color: #5c7480; margin: 4px 0 0; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-right .clock {
+      background: #fff;
+      border: 1px solid #dce6e4;
       border-radius: 40px;
-      background: transparent;
-      font-weight: 600;
+      padding: 8px 18px;
       font-size: 14px;
-      color: #5d7184;
-      cursor: pointer;
-      transition: 0.2s;
+      font-weight: 600;
+      color: #1a2a3a;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      white-space: nowrap;
     }
-    .nav-tab:hover {
-      background: rgba(42,125,225,0.06);
-      color: #1a2a3a;
-    }
-    .nav-tab.active {
-      background: #ffffff;
-      color: #1a2a3a;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8);
-    }
-    .nav-tab i { font-size: 16px; }
-    /* ===== PANELS ===== */
-    .panel { display: none; animation: fadeUp 0.35s ease; }
-    .panel.active { display: block; }
-    @keyframes fadeUp {
-      0% { opacity: 0; transform: translateY(12px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    /* ===== CARDS ===== */
+    .topbar-right .clock i { color: #2a7de1; }
+
     .card {
       background: #ffffff;
       border-radius: 24px;
@@ -230,11 +133,6 @@
       margin-bottom: 24px;
       border: 1px solid rgba(42,125,225,0.06);
       box-shadow: 0 4px 16px rgba(0,0,0,0.02);
-      transition: 0.2s;
-    }
-    .card:hover {
-      border-color: rgba(42,125,225,0.10);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
     }
     .card-header {
       display: flex;
@@ -253,19 +151,33 @@
       gap: 10px;
     }
     .card-title i { color: #2a7de1; font-size: 20px; }
-    .card-sub { font-size: 13px; color: #5d7184; font-weight: 400; }
-    .badge-gravado {
-      background: #e45c5c;
-      color: #fff;
-      padding: 4px 14px;
-      border-radius: 40px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    .card-sub { font-size: 13px; color: #5c7480; font-weight: 400; }
+
+    .shortcut-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 8px;
     }
-    /* ===== FORM ===== */
+    @media (max-width: 700px) { .shortcut-grid { grid-template-columns: 1fr; } }
+    .shortcut-card {
+      background: #fafcfe;
+      border: 1px solid #e0e7ef;
+      border-radius: 16px;
+      padding: 20px 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .shortcut-card:hover {
+      border-color: #2a7de1;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .shortcut-card .icon { font-size: 32px; color: #2a7de1; margin-bottom: 8px; }
+    .shortcut-card .label { font-weight: 600; font-size: 15px; color: #0b1e2e; }
+    .shortcut-card .desc { font-size: 13px; color: #5c7480; margin-top: 4px; }
+
     .form-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -282,7 +194,6 @@
       font-size: 13px;
       font-weight: 600;
       color: #3d5366;
-      letter-spacing: 0.2px;
     }
     .form-control {
       padding: 10px 14px;
@@ -299,29 +210,12 @@
     .form-control:focus {
       outline: none;
       border-color: #2a7de1;
-      background: #ffffff;
       box-shadow: 0 0 0 4px rgba(42,125,225,0.10);
     }
-    .form-control::placeholder { color: #b0c4d9; font-weight: 400; }
-    .form-control:disabled {
-      background: #f0f5fa;
-      color: #3d5366;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-    textarea.form-control { resize: vertical; min-height: 80px; font-weight: 400; }
-    textarea.form-control:disabled { background: #f0f5fa; color: #3d5366; cursor: not-allowed; }
-    select.form-control {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238aa3c0' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
-    }
-    select.form-control:disabled { background-color: #f0f5fa; cursor: not-allowed; }
-    .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .form-control:disabled { background: #f0f5fa; opacity: 0.7; cursor: not-allowed; }
+    textarea.form-control { resize: vertical; min-height: 80px; }
     .age-badge {
-      background: linear-gradient(135deg, #e8f0fe, #d4e3fc);
+      background: #e8f0fe;
       color: #1f68c0;
       padding: 6px 18px;
       border-radius: 40px;
@@ -330,16 +224,63 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      border: 1px solid rgba(42,125,225,0.15);
+      border: 1px solid #c8ddf5;
     }
-    .age-badge i { font-size: 16px; }
-    /* ===== CHART ===== */
+    .badge-gravado {
+      background: #e45c5c;
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      background: #f0f5fa;
+      color: #1a2a3a;
+      white-space: nowrap;
+    }
+    .btn i { font-size: 16px; }
+    .btn-primary { background: #2a7de1; color: #fff; box-shadow: 0 4px 14px rgba(42,125,225,0.30); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(42,125,225,0.40); }
+    .btn-success { background: #1fb873; color: #fff; box-shadow: 0 4px 14px rgba(31,184,115,0.30); }
+    .btn-success:hover { transform: translateY(-2px); }
+    .btn-danger { background: #e45c5c; color: #fff; box-shadow: 0 4px 14px rgba(228,92,92,0.30); }
+    .btn-danger:hover { transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 2px solid #d0dce8; color: #2a7de1; }
+    .btn-outline:hover { background: rgba(42,125,225,0.06); }
+    .btn-warning { background: #f5b342; color: #1a2a3a; }
+    .btn-warning:hover { transform: translateY(-2px); }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-ghost { background: rgba(42,125,225,0.06); color: #2a7de1; }
+    .btn-ghost:hover { background: rgba(42,125,225,0.12); }
+
+    .panel { display: none; animation: fadeUp 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .sub-panel { display: none; animation: fadeUp 0.25s ease; }
+    .sub-panel.active { display: block; }
+
     .chart-wrapper {
       background: #fafcfe;
       border-radius: 18px;
       padding: 16px;
       border: 1px solid #e8edf3;
-      position: relative;
+      overflow-x: auto;
     }
     .chart-wrapper canvas {
       width: 100% !important;
@@ -363,161 +304,91 @@
       color: #3d5366;
     }
     .legend-color { width: 24px; height: 4px; border-radius: 4px; }
-    /* ===== HISTORY ===== */
-    .history-patient {
-      border-radius: 16px;
-      border: 1px solid #e8edf3;
-      margin-bottom: 12px;
-      overflow: hidden;
-      transition: 0.2s;
-      background: #fafcfe;
-    }
-    .history-patient:hover { border-color: #c8ddf5; }
-    .history-patient-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 18px;
-      cursor: pointer;
-      background: #ffffff;
-      transition: 0.2s;
-    }
-    .history-patient-header:hover { background: #f0f5fa; }
-    .history-patient-header .info {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .history-patient-header .info strong {
-      font-size: 16px;
-      color: #0b1e2e;
-    }
-    .history-patient-header .info span {
-      font-size: 13px;
-      color: #5d7184;
-    }
-    .history-patient-header .badge-count {
-      background: #2a7de1;
-      color: #fff;
-      padding: 2px 12px;
+    .patient-chart-id {
+      background: #f0f5fa;
+      padding: 6px 16px;
       border-radius: 40px;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
-    }
-    .history-consultas {
-      padding: 0 18px 14px;
-      display: none;
-      background: #ffffff;
-    }
-    .history-consultas.open { display: block; }
-    .history-consulta-item {
-      display: flex;
-      justify-content: space-between;
+      color: #0b1e2e;
+      display: inline-flex;
       align-items: center;
-      padding: 10px 12px;
-      border-top: 1px solid #f0f5fa;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .patient-chart-id i { color: #2a7de1; }
+
+    .card-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .card-header-actions .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    .calendar-grid .day-name {
+      font-weight: 600;
+      font-size: 12px;
+      color: #5c7480;
+      text-align: center;
+      padding: 8px 0;
+    }
+    .calendar-grid .day-cell {
+      padding: 10px 4px;
+      text-align: center;
+      border-radius: 10px;
       cursor: pointer;
       transition: 0.15s;
-      border-radius: 8px;
-    }
-    .history-consulta-item:hover { background: #f0f5fa; }
-    .history-consulta-item .info {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: center;
-      font-size: 13px;
-    }
-    .history-consulta-item .info .date { color: #5d7184; }
-    .history-consulta-item .info .cid-badge {
-      background: #dce6f0;
-      padding: 2px 10px;
-      border-radius: 40px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #3d5366;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #8aa3c0;
-    }
-    .empty-state i { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
-    .empty-state p { font-size: 15px; }
-    /* ===== TOAST ===== */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: #1a2a3a;
-      color: #fff;
-      padding: 14px 26px;
-      border-radius: 20px;
-      font-weight: 600;
+      background: #fafcfe;
+      border: 1px solid transparent;
       font-size: 14px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.20);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 999;
-      opacity: 0;
-      transform: translateY(20px) scale(0.96);
-      transition: 0.30s cubic-bezier(0.34,1.56,0.64,1);
-      pointer-events: none;
+      font-weight: 500;
     }
-    .toast.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    .toast i { font-size: 20px; color: #5fcb9a; }
-    /* ===== SIGNATURE ===== */
-    .signature-area {
+    .calendar-grid .day-cell:hover { background: #eef3f8; }
+    .calendar-grid .day-cell.selected { background: #2a7de1; color: #fff; border-color: #2a7de1; }
+    .calendar-grid .day-cell.other-month { color: #b0c4d9; }
+    .calendar-grid .day-cell.has-appointment { font-weight: 700; color: #1f68c0; }
+    .calendar-grid .day-cell.has-appointment.selected { color: #fff; }
+    .appointment-item {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 14px;
-      padding-top: 18px;
-      border-top: 2px dashed rgba(42,125,225,0.15);
-      margin-top: 8px;
-    }
-    .signature-box {
-      display: flex;
       align-items: center;
-      gap: 16px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e8edf3;
+      margin-bottom: 8px;
     }
-    .signature-line {
-      width: 160px;
-      border-bottom: 2px solid #1a2a3a;
-      margin-top: 4px;
-    }
-    .signature-name { font-weight: 700; font-size: 15px; color: #0b1e2e; }
-    .signature-title { font-size: 12px; color: #5d7184; }
-    /* ===== MODAL ===== */
+    .appointment-item .info { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+    .appointment-item .info strong { font-size: 15px; }
+    .appointment-item .info span { font-size: 13px; color: #5c7480; }
+
     .modal-overlay {
       display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 0;
       background: rgba(0,0,0,0.4);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(4px);
       z-index: 1000;
       justify-content: center;
       align-items: center;
-      animation: fadeIn 0.25s ease;
     }
     .modal-overlay.active { display: flex; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.96) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
     .modal-content {
       background: #fff;
-      border-radius: 32px;
-      max-width: 780px;
+      border-radius: 28px;
+      max-width: 560px;
       width: 94%;
-      max-height: 88vh;
       padding: 28px 32px;
+      max-height: 85vh;
       overflow-y: auto;
-      box-shadow: 0 30px 70px rgba(0,0,0,0.25);
-      position: relative;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.20);
     }
     .modal-header {
       display: flex;
@@ -534,124 +405,135 @@
       font-size: 28px;
       cursor: pointer;
       color: #8aa3c0;
-      transition: 0.2s;
     }
     .modal-close:hover { color: #1a2a3a; }
-    .modal-body textarea {
-      width: 100%;
-      min-height: 340px;
-      padding: 16px;
-      border: 2px solid #e0e7ef;
-      border-radius: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.7;
-      resize: vertical;
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+
+    .history-patient {
+      border-radius: 16px;
+      border: 1px solid #e8edf3;
+      margin-bottom: 12px;
+      overflow: hidden;
       background: #fafcfe;
-      transition: 0.2s;
     }
-    .modal-body textarea:focus {
-      outline: none;
-      border-color: #2a7de1;
-      box-shadow: 0 0 0 4px rgba(42,125,225,0.10);
-    }
-    .modal-body textarea:disabled {
-      background: #f0f5fa;
-      color: #3d5366;
-      cursor: not-allowed;
-    }
-    .modal-footer {
+    .history-patient-header {
       display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      cursor: pointer;
+      background: #fff;
+    }
+    .history-patient-header:hover { background: #f0f5fa; }
+    .history-patient-header .info { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+    .history-patient-header .info strong { font-size: 16px; }
+    .history-patient-header .info span { font-size: 13px; color: #5c7480; }
+    .history-patient-header .badge-count { background: #2a7de1; color: #fff; padding: 2px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; }
+    .history-consultas { padding: 0 18px 14px; display: none; background: #fff; }
+    .history-consultas.open { display: block; }
+    .history-consulta-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-top: 1px solid #f0f5fa;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .history-consulta-item:hover { background: #f0f5fa; }
+    .history-consulta-item .info { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .stat-card {
+      background: #f3f7f6;
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-card .number { font-size: 28px; font-weight: 700; color: #16505f; }
+    .stat-card .desc { font-size: 13px; color: #5c7480; }
+
+    /* ANTROPOMETRIA */
+    .antropo-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
       margin-top: 16px;
     }
-    .modal-footer .btn i { font-size: 14px; }
-    .modal-footer .btn-block { background: #e45c5c; color: #fff; }
-    .modal-footer .btn-block:hover { background: #cc4a4a; }
-    /* ===== CID AUTOCOMPLETE ===== */
-    .cid-suggestions {
-      background: #fff;
-      border: 2px solid #e0e7ef;
-      border-top: none;
-      border-radius: 0 0 14px 14px;
-      max-height: 200px;
-      overflow-y: auto;
-      position: absolute;
-      width: 100%;
-      z-index: 10;
-      display: none;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    .antropo-card {
+      background: #fbfdfc;
+      border: 1px solid #dce6e4;
+      border-radius: 12px;
+      padding: 12px 14px;
     }
-    .cid-suggestions .suggestion-item {
-      padding: 8px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid #f0f5fa;
-      font-size: 13px;
-      transition: 0.1s;
+    .antropo-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #5c7480;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
-    .cid-suggestions .suggestion-item:hover { background: #e8f0fe; }
-    .cid-suggestions .suggestion-item .code { font-weight: 700; color: #2a7de1; }
-    .cid-suggestions .suggestion-item .desc { color: #3d5366; margin-left: 8px; }
-    .cid-wrapper { position: relative; }
+    .antropo-card .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #16505f;
+      margin: 2px 0;
+    }
+    .antropo-card .zscore {
+      font-size: 12px;
+      color: #5c7480;
+    }
 
-    /* ===== WAY FOR SYSTEM — barra superior e navegação entre páginas (novo) ===== */
-    .wfs-topbar {
-      max-width: 1360px;
-      margin: 0 auto 16px;
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1a2a3a;
+      color: #fff;
+      padding: 14px 26px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.20);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(20px) scale(0.96);
+      transition: 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    .toast i { color: #5fcb9a; margin-right: 8px; }
+
+    .signature-area {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 14px;
-      padding: 0 4px;
+      padding-top: 18px;
+      border-top: 2px dashed rgba(42,125,225,0.15);
+      margin-top: 8px;
     }
-    .wfs-brand { display: flex; align-items: center; gap: 12px; }
-    .wfs-brand .wfs-logo {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; color: #fff;
-      box-shadow: 0 8px 20px rgba(42,125,225,0.30);
-    }
-    .wfs-brand h2 { font-size: 17px; font-weight: 700; color: #0b1e2e; line-height: 1.2; }
-    .wfs-brand span { font-size: 12px; color: #5d7184; font-weight: 500; }
-    .wfs-topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .signature-box { display: flex; align-items: center; gap: 16px; }
+    .signature-line { width: 160px; border-bottom: 2px solid #1a2a3a; margin-top: 4px; }
+    .signature-name { font-weight: 700; font-size: 15px; color: #0b1e2e; }
+    .signature-title { font-size: 12px; color: #5c7480; }
 
-    .user-info {
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(42,125,225,0.06);
-      padding: 6px 8px 6px 6px;
-      border-radius: 40px;
-      border: 1px solid rgba(42,125,225,0.15);
-    }
-    .avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5);
-      color: #fff; font-weight: 700; font-size: 13px;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-    }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-info .user-name { font-weight: 600; font-size: 13px; color: #1a2a3a; }
-    #logoutBtn {
-      width: 28px; height: 28px; border: none; border-radius: 50%;
-      background: rgba(228,92,92,0.12); color: #d94a4a;
-      cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    #logoutBtn:hover { background: rgba(228,92,92,0.22); }
-
+    /* ===== NOTIFICAÇÕES (novo, integração com o chat do sistema) ===== */
     .notification-bell {
       position: relative; width: 40px; height: 40px; border-radius: 50%;
-      background: #fff; border: 2px solid #e0e7ef;
+      background: #fff; border: 1px solid #dce6e4;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; cursor: pointer; transition: 0.2s;
+      font-size: 1.05rem; cursor: pointer; transition: 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04); color: #2a7de1;
     }
     .notification-bell:hover { border-color: #2a7de1; }
-    .notification-bell.has-unread { border-color: #e45c5c; background: #fdeded; }
+    .notification-bell.has-unread { border-color: #e45c5c; background: #fdeded; color: #e45c5c; }
     .notification-badge {
       position: absolute; top: -4px; right: -4px; width: 18px; height: 18px;
       background: #e45c5c; color: #fff; border-radius: 50%; font-size: 0.65rem; font-weight: 700;
@@ -662,1475 +544,1558 @@
       background: #fff; border-radius: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
       border: 1px solid #e8edf3; z-index: 500; overflow: hidden; display: none;
     }
-    .notification-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
-    .notification-dropdown-header {
-      padding: 14px 18px; border-bottom: 1px solid #f0f5fa;
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .notification-dropdown.show { display: block; }
+    .notification-dropdown-header { padding: 14px 18px; border-bottom: 1px solid #f0f5fa; display: flex; justify-content: space-between; align-items: center; }
     .notification-dropdown-header h3 { font-size: 0.95rem; color: #0b1e2e; }
     .notification-dropdown-header .mark-all-read { font-size: 0.75rem; color: #2a7de1; cursor: pointer; font-weight: 600; }
     .notification-list { max-height: 360px; overflow-y: auto; }
-    .notification-item { padding: 12px 18px; border-bottom: 1px solid #f8fafc; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; transition: 0.15s; }
+    .notification-item { padding: 12px 18px; border-bottom: 1px solid #f8fafc; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
     .notification-item:hover { background: #f0f5fa; }
     .notification-item.unread { background: #eef6ff; border-left: 3px solid #2a7de1; }
-    .notif-avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5); color: #fff;
-      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;
-      overflow: hidden; flex-shrink: 0;
-    }
+    .notif-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#2a7de1,#6ba6f5); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; overflow: hidden; flex-shrink: 0; }
     .notif-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .notif-content { flex: 1; min-width: 0; }
     .notif-sender { font-weight: 600; color: #0b1e2e; font-size: 0.85rem; }
-    .notif-text { color: #5d7184; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notif-text { color: #5c7480; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .notif-time { color: #8aa3c0; font-size: 0.7rem; margin-top: 2px; }
     .notification-empty { padding: 30px 16px; text-align: center; color: #8aa3c0; }
-    .notification-empty .empty-icon { font-size: 2.4rem; margin-bottom: 8px; opacity: 0.5; }
-
-    .wfs-nav-menu {
-      max-width: 1360px; margin: 0 auto 20px;
-      display: flex; gap: 4px; flex-wrap: wrap; overflow-x: auto;
-      background: rgba(240,245,250,0.6); border-radius: 50px; padding: 4px;
-      backdrop-filter: blur(4px);
-    }
-    .wfs-nav-item {
-      padding: 9px 20px; border: none; border-radius: 40px; background: transparent;
-      font-weight: 600; font-size: 13px; color: #5d7184; cursor: pointer;
-      display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap;
-    }
-    .wfs-nav-item:hover { background: rgba(42,125,225,0.06); color: #1a2a3a; }
-    .wfs-nav-item.active {
-      background: #ffffff; color: #1a2a3a;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8);
-    }
+    .notification-empty .empty-icon { font-size: 2.2rem; margin-bottom: 8px; opacity: 0.5; }
+    .hidden { display: none !important; }
 
     .modal-message-text { color: #3d5366; font-size: 15px; line-height: 1.7; word-break: break-word; }
-    .modal-message-meta {
-      margin-top: 16px; padding-top: 14px; border-top: 1px solid #f0f5fa;
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
-    }
+    .modal-message-meta { margin-top: 16px; padding-top: 14px; border-top: 1px solid #f0f5fa; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .sender-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #3d5366; }
-    .sender-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, #2a7de1, #6ba6f5); color: #fff;
-      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
-    }
+    .sender-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#2a7de1,#6ba6f5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 992px) {
-      .form-grid { grid-template-columns: repeat(2, 1fr); }
-      .form-grid .col-span-2 { grid-column: span 2; }
-    }
     @media (max-width: 768px) {
-      .app-container { padding: 16px; border-radius: 24px; }
-      .app-header { flex-direction: column; align-items: stretch; gap: 12px; }
-      .header-center { flex-wrap: wrap; justify-content: space-between; }
-      .header-actions { flex-wrap: wrap; justify-content: stretch; }
-      .header-actions .btn { flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; }
       .form-grid { grid-template-columns: 1fr; }
       .form-grid .col-span-2 { grid-column: span 1; }
-      .nav-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 2px; padding: 3px; border-radius: 30px; }
-      .nav-tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; }
-      .nav-tab span { display: none; }
-      .card { padding: 16px; }
-      .signature-area { flex-direction: column; align-items: stretch; }
-      .logo-text h1 { font-size: 18px; }
-      .chart-wrapper canvas { max-height: 250px; }
-      .modal-content { padding: 20px; max-width: 95%; }
-      .header-clock { font-size: 13px; padding: 6px 14px; }
-      .history-patient-header { flex-wrap: wrap; gap: 8px; }
-      .history-patient-header .info { gap: 10px; }
-      .user-info .user-name { display: none; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .topbar-right { justify-content: space-between; }
+      .topbar-right .clock { justify-content: center; }
+      .shortcut-grid { grid-template-columns: 1fr 1fr; }
+      .stat-grid { grid-template-columns: 1fr; }
+      .card-header { flex-direction: column; align-items: stretch; }
+      .card-header-actions { justify-content: flex-start; }
+      .antropo-grid { grid-template-columns: 1fr 1fr; }
       .notification-dropdown { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; }
     }
-    @media print {
-      body { background: #fff; padding: 0; }
-      .app-container { box-shadow: none; border-radius: 0; padding: 20px; }
-      .btn, .nav-tabs, .header-actions, .no-print, .wfs-topbar, .wfs-nav-menu { display: none !important; }
-      .panel { display: block !important; }
-      .card { border: 1px solid #ccc; page-break-inside: avoid; }
-      .signature-area { border-top: 2px solid #333; }
-      .chart-wrapper canvas { max-height: 300px; }
-      .modal-overlay { position: static; background: none; backdrop-filter: none; display: block !important; }
-      .modal-content { box-shadow: none; max-width: 100%; padding: 0; }
-      .modal-close { display: none; }
-      .modal-footer .btn { display: none; }
-      .history-patient-header .badge-count { display: none; }
+    @media (max-width: 480px) {
+      .shortcut-grid { grid-template-columns: 1fr; }
+      .antropo-grid { grid-template-columns: 1fr; }
     }
-    .btn-block { background: #e45c5c; color: #fff; }
-    .btn-block:hover { background: #cc4a4a; transform: translateY(-2px); }
-    .doc-locked { opacity: 0.7; cursor: not-allowed; }
-    .doc-locked i { color: #8aa3c0; }
+    @media print {
+      .sidebar, .btn, .no-print, .topbar-right { display: none !important; }
+      .main-content { max-width: 100%; padding: 20px; }
+      .panel { display: block !important; }
+      .card { border: 1px solid #ccc; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ===== TOAST ===== -->
-  <div id="toast" class="toast">
-    <i class="fas fa-check-circle"></i>
-    <span id="toastMsg">Pronto!</span>
-  </div>
+<div class="app-wrapper">
 
-  <!-- ===== MODAL DOCUMENTO ===== -->
-  <div id="docModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="docModalTitle">Documento</h2>
-        <button class="modal-close" onclick="fecharModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <textarea id="docModalTextarea" spellcheck="true"></textarea>
-      </div>
-      <div class="modal-footer" id="docModalFooter">
-        <button class="btn btn-outline" onclick="fecharModal()"><i class="fas fa-times"></i> Fechar</button>
-        <button class="btn btn-success" id="btnSalvarDoc" onclick="salvarDocumentoModal(false)"><i class="fas fa-save"></i> Salvar</button>
-        <button class="btn btn-danger" id="btnGravarDoc" onclick="salvarDocumentoModal(true)"><i class="fas fa-lock"></i> Gravar</button>
-        <button class="btn btn-primary" onclick="imprimirModal()"><i class="fas fa-print"></i> Imprimir</button>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="17" fill="#E2764A"/>
+        <path d="M5 21C8 21 8 13 11 13C14 13 14 24 17 24C20 24 20 8 23 8C26 8 26 19 29 19" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="sidebar-brand-text">Way For System</div>
+        <div class="sidebar-brand-sub" id="sidebarSub">Pediatria</div>
       </div>
     </div>
-  </div>
-
-  <!-- ===== MODAL NOVA MENSAGEM (notificações do chat) ===== -->
-  <div class="modal-overlay" id="messageModal">
-    <div class="modal-content" style="max-width:480px;">
-      <div class="modal-header">
-        <h2><i class="fas fa-envelope"></i> Nova Mensagem</h2>
-        <button class="modal-close" id="modalMsgClose">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-message-text" id="modalMessageText"></div>
-        <div class="modal-message-meta">
-          <div class="sender-info">
-            <div class="sender-avatar" id="modalSenderAvatar">👤</div>
-            <span id="modalSenderName">...</span>
-          </div>
-          <span style="color:#8aa3c0; font-size:0.8rem;" id="modalMessageTime"></span>
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-view="inicio" onclick="goTo('inicio')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1"/></svg> Início
+      </button>
+      <button class="nav-btn" data-view="consulta" onclick="goTo('consulta')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Consulta
+      </button>
+      <button class="nav-btn" data-view="historico" onclick="goTo('historico')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 100 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg> Histórico
+      </button>
+      <button class="nav-btn" data-view="agenda" onclick="goTo('agenda')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2Z"/></svg> Agenda
+      </button>
+      <button class="nav-btn" data-view="relatorios" onclick="goTo('relatorios')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12v-2a5 5 0 00-5-5H8a5 5 0 00-5 5v2"/><circle cx="12" cy="16" r="5"/><path d="M12 11v5"/><path d="M9 16l3 3 3-3"/></svg> Relatórios
+      </button>
+      <div class="nav-divider"></div>
+      <button class="nav-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-notes-medical"></i> Anotações</button>
+      <button class="nav-btn" onclick="window.location.href='chat.html'"><i class="fas fa-comment-dots"></i> Chat</button>
+      <button class="nav-btn" onclick="window.location.href='cid.html'"><i class="fas fa-magnifying-glass"></i> CID</button>
+      <button class="nav-btn" onclick="window.location.href='profile.html'"><i class="fas fa-user"></i> Perfil</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="doctor-card" onclick="window.location.href='profile.html'" title="Editar meu perfil">
+        <div class="doctor-avatar" id="sbAvatar">👤</div>
+        <div>
+          <div class="doctor-name" id="sbName">Carregando...</div>
+          <div class="doctor-role" id="sbRole"></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" id="modalMsgDismiss"><i class="fas fa-times"></i> Fechar</button>
-        <button class="btn btn-primary" id="modalGoToChat"><i class="fas fa-comment"></i> Ir para Chat</button>
-      </div>
+      <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
-  </div>
+  </aside>
 
-  <!-- ===== WAY FOR SYSTEM — cabeçalho e navegação entre páginas ===== -->
-  <div class="wfs-topbar">
-    <div class="wfs-brand">
-      <div class="wfs-logo">📝</div>
-      <div>
-        <h2>Way For System</h2>
-        <span>Módulo Pediatria</span>
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="pageTitle">Início</h1>
+        <p id="pageSub">Bem-vinda(o)! Acesse as principais funções abaixo.</p>
       </div>
-    </div>
-    <div class="wfs-topbar-actions">
-      <div style="position:relative;">
-        <button class="notification-bell" id="notificationBell" title="Notificações">
-          <span>🔔</span>
-          <span class="notification-badge hidden" id="notificationBadge">0</span>
-        </button>
-        <div class="notification-dropdown" id="notificationDropdown">
-          <div class="notification-dropdown-header">
-            <h3>🔔 Notificações</h3>
-            <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
-          </div>
-          <div class="notification-list" id="notificationList">
-            <div class="notification-empty">
-              <div class="empty-icon">📭</div>
-              <p>Sem notificações</p>
+      <div class="topbar-right">
+        <div style="position:relative;">
+          <button class="notification-bell" id="notificationBell" title="Notificações">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-dropdown-header">
+              <h3>🔔 Notificações</h3>
+              <span class="mark-all-read" id="markAllRead">Marcar todas como lidas</span>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="user-info" id="userInfo">
-        <div class="avatar" id="headerAvatar">👤</div>
-        <span class="user-name" id="headerName">...</span>
-        <button id="logoutBtn" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
-      </div>
-    </div>
-  </div>
-
-  <div class="wfs-nav-menu">
-    <button class="wfs-nav-item" data-page="dashboard"><span>📝</span> Anotações</button>
-    <button class="wfs-nav-item" data-page="profile"><span>👤</span> Perfil</button>
-    <button class="wfs-nav-item" data-page="chat"><span>💬</span> Chat</button>
-    <button class="wfs-nav-item" data-page="cid"><span>🔍</span> CID</button>
-    <button class="wfs-nav-item active" data-page="pediatria"><span>👶</span> Pediatria</button>
-  </div>
-
-  <!-- ===== APP ===== -->
-  <div class="app-container">
-
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="logo-area">
-        <div class="logo-icon"><i class="fas fa-child"></i></div>
-        <div class="logo-text">
-          <h1 id="pedTitle">Pediatria</h1>
-          <span id="pedSubtitle">Carregando dados do médico...</span>
-        </div>
-      </div>
-      <div class="header-center">
-        <div class="header-clock" id="headerClock">
+        <div class="clock" id="headerClock">
           <i class="fas fa-calendar-alt"></i>
-          <span class="label">Data:</span>
-          <span id="dataDisplay">--/--/----</span>
-          <span style="color:#b0c4d9;margin:0 4px;">|</span>
-          <i class="fas fa-clock"></i>
-          <span class="label">Hora:</span>
-          <span id="horaDisplay">--:--</span>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-home" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
-          <button class="btn btn-primary" onclick="novoPaciente()"><i class="fas fa-user-plus"></i> Novo Paciente</button>
-          <button class="btn btn-ghost" onclick="novaConsulta()"><i class="fas fa-plus-circle"></i> Nova Consulta</button>
-          <button class="btn btn-outline" onclick="buscarPaciente()"><i class="fas fa-search"></i> Buscar</button>
-          <button class="btn btn-outline" onclick="verHistorico()"><i class="fas fa-history"></i> Histórico</button>
-          <button class="btn btn-success" onclick="salvarConsulta()"><i class="fas fa-save"></i> Salvar</button>
-          <button class="btn btn-danger" onclick="gravarConsulta()"><i class="fas fa-lock"></i> Gravar</button>
-          <button class="btn btn-outline" onclick="window.print()"><i class="fas fa-print"></i> Imprimir</button>
+          <span id="dataHoraDisplay">--</span>
         </div>
       </div>
-    </header>
-
-    <!-- NAV TABS -->
-    <div class="nav-tabs">
-      <button class="nav-tab active" data-tab="tab-consulta"><i class="fas fa-stethoscope"></i> <span>Consulta</span></button>
-      <button class="nav-tab" data-tab="tab-crescimento"><i class="fas fa-chart-line"></i> <span>Crescimento</span></button>
-      <button class="nav-tab" data-tab="tab-documentos"><i class="fas fa-file-medical-alt"></i> <span>Documentos</span></button>
-      <button class="nav-tab" data-tab="tab-historico"><i class="fas fa-archive"></i> <span>Histórico</span></button>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- PANEL: CONSULTA -->
-    <!-- ============================================================ -->
-    <div id="tab-consulta" class="panel active">
+    <section class="panel active" id="panel-inicio">
+      <div class="shortcut-grid">
+        <div class="shortcut-card" onclick="novoPaciente()">
+          <div class="icon"><i class="fas fa-user-plus"></i></div>
+          <div class="label">Novo Paciente</div>
+          <div class="desc">Cadastrar paciente</div>
+        </div>
+        <div class="shortcut-card" onclick="goTo('consulta')">
+          <div class="icon"><i class="fas fa-stethoscope"></i></div>
+          <div class="label">Nova Consulta</div>
+          <div class="desc">Registrar atendimento</div>
+        </div>
+          <div class="shortcut-card" onclick="buscarPaciente()">
+          <div class="icon"><i class="fas fa-search"></i></div>
+          <div class="label">Buscar Paciente</div>
+          <div class="desc">Localizar paciente</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> Resumo rápido</div></div>
+        <p style="color:#5c7480;font-size:14px;">Use os atalhos acima para iniciar um atendimento, cadastrar um novo paciente ou buscar um paciente existente. Todas as consultas ficam salvas no histórico.</p>
+        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+          <span style="background:#f0f5fa;padding:6px 14px;border-radius:40px;font-size:13px;"><i class="fas fa-users" style="color:#2a7de1;"></i> <span id="totalPacientes">0</span> pacientes</span>
+          <span style="background:#f0f5fa;padding:6px 14px;border-radius:40px;font-size:13px;"><i class="fas fa-calendar-check" style="color:#2a7de1;"></i> <span id="totalAgendamentos">0</span> agendamentos</span>
+        </div>
+      </div>
+    </section>
 
-      <!-- DADOS DO PACIENTE -->
+    <section class="panel" id="panel-consulta">
+      <!-- DADOS DO PACIENTE com botões inline -->
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i class="fas fa-id-card"></i> Dados do Paciente</div>
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <div id="idadeDisplay" class="age-badge"><i class="far fa-clock"></i> <span>Idade: </span><span id="idadeTexto">—</span></div>
+            <div class="card-header-actions">
+              <button class="btn btn-sm btn-outline sub-tab-btn active" data-sub="sub-anamnese" onclick="abrirSub('sub-anamnese')"><i class="fas fa-notes-medical"></i> Anamnese</button>
+              <button class="btn btn-sm btn-outline sub-tab-btn" data-sub="sub-crescimento" onclick="abrirSub('sub-crescimento')"><i class="fas fa-chart-line"></i> Crescimento</button>
+              <button class="btn btn-sm btn-outline sub-tab-btn" data-sub="sub-documentos" onclick="abrirSub('sub-documentos')"><i class="fas fa-file-medical-alt"></i> Documentos</button>
+            </div>
+            <div class="age-badge"><i class="far fa-clock"></i> <span>Idade: </span><span id="idadeTexto">—</span></div>
             <span id="badgeGravado" style="display:none;" class="badge-gravado"><i class="fas fa-lock"></i> GRAVADO</span>
+            <button class="btn btn-sm btn-outline" onclick="novaConsulta()" title="Abrir uma nova consulta para este paciente, mantendo os dados pessoais"><i class="fas fa-user-plus"></i> Nova Consulta</button>
           </div>
         </div>
         <div class="form-grid">
-          <div class="form-group col-span-2">
-            <label>Nome completo</label>
-            <input class="form-control" id="pacNome" placeholder="Ex: João Silva" />
+          <div class="form-group col-span-2"><label>Nome completo</label><input class="form-control" id="pacNome" placeholder="Ex: João Silva" /></div>
+          <div class="form-group col-span-1"><label>CPF</label><input class="form-control" id="pacCpf" placeholder="000.000.000-00" maxlength="14" /></div>
+          <div class="form-group col-span-1"><label>Data de nascimento</label><input class="form-control" id="pacNasc" type="date" /></div>
+          <div class="form-group col-span-2"><label>Nome da mãe</label><input class="form-control" id="pacMae" placeholder="Nome da mãe" /></div>
+          <div class="form-group col-span-1"><label>Sexo</label><select class="form-control" id="pacSexo"><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
+          <div class="form-group col-span-1"><label>Peso (kg)</label><input class="form-control" id="pacPeso" type="number" step="0.01" placeholder="22.5" /></div>
+          <div class="form-group col-span-1"><label>Altura (cm)</label><input class="form-control" id="pacAltura" type="number" step="0.1" placeholder="118.5" /></div>
+          <div class="form-group col-span-1"><label>Perímetro Cefálico (cm)</label><input class="form-control" id="pacPC" type="number" step="0.1" placeholder="48.5" /></div>
+        </div>
+        <!-- ANTROPOMETRIA -->
+        <div class="antropo-grid" id="antropoResumo">
+          <div class="antropo-card">
+            <div class="label">IMC</div>
+            <div class="value" id="imcValor">—</div>
+            <div class="zscore" id="imcClass">—</div>
           </div>
-          <div class="form-group col-span-1">
-            <label>CPF</label>
-            <input class="form-control cpf-mask" id="pacCpf" placeholder="000.000.000-00" maxlength="14" />
+          <div class="antropo-card">
+            <div class="label">Classificação</div>
+            <div class="value" id="omsClass" style="font-size:16px;">—</div>
+            <div class="zscore">Baseado no IMC</div>
           </div>
-          <div class="form-group col-span-1">
-            <label>Data de nascimento</label>
-            <input class="form-control" id="pacNasc" type="date" />
+          <div class="antropo-card">
+            <div class="label">Peso/Idade</div>
+            <div class="value" id="pesoIdadeZ">—</div>
+            <div class="zscore" id="pesoIdadeClass">—</div>
           </div>
-          <div class="form-group col-span-2">
-            <label>Nome da mãe</label>
-            <input class="form-control" id="pacMae" placeholder="Nome da mãe" />
-          </div>
-          <div class="form-group col-span-1">
-            <label>Sexo</label>
-            <select class="form-control" id="pacSexo">
-              <option value="M">Masculino</option>
-              <option value="F">Feminino</option>
-            </select>
-          </div>
-          <div class="form-group col-span-1">
-            <label>Peso (kg)</label>
-            <input class="form-control" id="pacPeso" type="number" step="0.1" placeholder="Ex: 22.5" />
-          </div>
-          <div class="form-group col-span-1">
-            <label>Altura (cm)</label>
-            <input class="form-control" id="pacAltura" type="number" step="0.1" placeholder="Ex: 118.5" />
+          <div class="antropo-card">
+            <div class="label">Altura/Idade</div>
+            <div class="value" id="alturaIdadeZ">—</div>
+            <div class="zscore" id="alturaIdadeClass">—</div>
           </div>
         </div>
       </div>
 
-      <!-- ANAMNESE -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-notes-medical"></i> Anamnese</div>
-          <span class="card-sub">História clínica e queixas</span>
+      <!-- SUB-ABAS (Anamnese, Crescimento, Documentos) -->
+      <div class="sub-panel active" id="sub-anamnese">
+        <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-notes-medical"></i> Anamnese</div></div><textarea class="form-control" id="anamnese" rows="4" placeholder="Queixa principal, HDA, antecedentes..."></textarea></div>
+        <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-heartbeat"></i> Exame Físico</div></div><textarea class="form-control" id="exameFisico" rows="3" placeholder="Sinais vitais, achados..."></textarea></div>
+        <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-clipboard-list"></i> Conduta</div></div><textarea class="form-control" id="conduta" rows="3" placeholder="Orientações, prescrições..."></textarea></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fas fa-code"></i> CID</div></div>
+          <div class="form-row" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:160px;position:relative;">
+              <label style="font-size:13px;font-weight:600;color:#3d5366;">Código / Descrição</label>
+              <input class="form-control" id="cidBusca" placeholder="Digite o CID..." autocomplete="off" />
+              <div id="cidSuggestions" style="display:none;background:#fff;border:2px solid #e0e7ef;border-top:none;border-radius:0 0 14px 14px;max-height:200px;overflow-y:auto;position:absolute;width:100%;z-index:10;box-shadow:0 12px 28px rgba(0,0,0,0.08);"></div>
+            </div>
+            <div style="flex:1;min-width:140px;"><label style="font-size:13px;font-weight:600;color:#3d5366;">Código</label><input class="form-control" id="cidCodigo" readonly /></div>
+            <div style="flex:2;min-width:200px;"><label style="font-size:13px;font-weight:600;color:#3d5366;">Descrição</label><input class="form-control" id="cidDesc" readonly /></div>
+          </div>
         </div>
-        <textarea class="form-control" id="anamnese" rows="4" placeholder="Descreva o motivo da consulta, histórico, queixas, alimentação, desenvolvimento..."></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <button class="btn btn-warning" onclick="gerarReceituario()"><i class="fas fa-prescription-bottle-alt"></i> Gerar Receituário</button>
+          <button class="btn btn-warning" onclick="gerarReceitaEspecial()"><i class="fas fa-prescription"></i> Receita Especial</button>
+          <button class="btn btn-warning" onclick="gerarAtestado()"><i class="fas fa-file-signature"></i> Atestado</button>
+        </div>
+        <div class="card" style="background:linear-gradient(120deg,#F3F7F6,#fff);">
+          <div class="card-header"><div class="card-title"><i class="fas fa-save"></i> Finalizar</div></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-success" onclick="salvarConsulta()"><i class="fas fa-save"></i> Salvar</button>
+            <button class="btn btn-danger" onclick="gravarConsulta()"><i class="fas fa-lock"></i> Gravar</button>
+            <button class="btn btn-outline" onclick="novaConsulta()"><i class="fas fa-user-plus"></i> Nova Consulta</button>
+            <button class="btn btn-outline" onclick="limparFormulario()">Limpar</button>
+            <button class="btn btn-outline" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button>
+          </div>
+          <div id="sessionDocsInfo" style="font-size:12px;color:#5c7480;margin-top:8px;"></div>
+        </div>
       </div>
 
-      <!-- EXAME FÍSICO -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-heartbeat"></i> Exame Físico</div>
-        </div>
-        <textarea class="form-control" id="exameFisico" rows="3" placeholder="Sinais vitais, achados ao exame..."></textarea>
-      </div>
-
-      <!-- CONDUTA -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-clipboard-list"></i> Conduta / Plano Terapêutico</div>
-          <span class="card-sub">Orientações, prescrições, encaminhamentos</span>
-        </div>
-        <textarea class="form-control" id="conduta" rows="3" placeholder="Descreva a conduta adotada, medicamentos, orientações, retorno..."></textarea>
-      </div>
-
-      <!-- CID -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-code"></i> CID</div>
-          <span class="card-sub">Busque pelo código ou descrição</span>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:1; min-width:160px; position:relative;">
-            <label>Código / Descrição</label>
-            <div class="cid-wrapper">
-              <input class="form-control" id="cidBusca" placeholder="Digite o CID ou descrição..." autocomplete="off" />
-              <div id="cidSuggestions" class="cid-suggestions"></div>
+      <div class="sub-panel" id="sub-crescimento">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Curvas de Crescimento (OMS)</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="chartMetric" class="form-control" style="width:auto;padding:6px 12px;font-size:13px;" onchange="desenharGrafico()">
+                <option value="peso">Peso por Idade</option>
+                <option value="altura">Altura por Idade</option>
+                <option value="pc">Perímetro Cefálico</option>
+                <option value="imc">IMC por Idade</option>
+              </select>
+              <span style="font-size:13px;color:#5c7480;" id="curvaSubtitulo">0 a 5 anos</span>
             </div>
           </div>
-          <div class="form-group" style="flex:1; min-width:140px;">
-            <label>Código selecionado</label>
-            <input class="form-control" id="cidCodigo" placeholder="Código" readonly />
+          <div class="patient-chart-id">
+            <i class="fas fa-user"></i> <span id="chartPacienteNome">—</span>
+            <span style="font-weight:400;color:#5c7480;font-size:13px;">|</span>
+            <span id="chartPacienteIdade">—</span>
+            <span style="font-weight:400;color:#5c7480;font-size:13px;">|</span>
+            <span id="chartPacientePeso">—</span>
+            <span style="font-weight:400;color:#5c7480;font-size:13px;">|</span>
+            <span id="chartPacienteAltura">—</span>
+            <span style="font-weight:400;color:#5c7480;font-size:13px;">|</span>
+            <span id="chartPacientePC">—</span>
           </div>
-          <div class="form-group" style="flex:2; min-width:200px;">
-            <label>Descrição</label>
-            <input class="form-control" id="cidDesc" placeholder="Descrição" readonly />
+          <div class="chart-wrapper">
+            <canvas id="growthChart"></canvas>
+            <div class="chart-legend" id="chartLegend"></div>
           </div>
+          <div style="margin-top:8px;"><button class="btn btn-outline btn-sm" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button></div>
         </div>
       </div>
 
-      <!-- BOTÕES RÁPIDOS -->
-      <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-        <button class="btn btn-warning" id="btnGerarReceituario" onclick="gerarReceituario()"><i class="fas fa-prescription-bottle-alt"></i> Gerar Receituário</button>
-        <button class="btn btn-warning" id="btnGerarEspecial" onclick="gerarReceitaEspecial()"><i class="fas fa-prescription"></i> Receita Especial</button>
-        <button class="btn btn-warning" id="btnGerarAtestado" onclick="gerarAtestado()"><i class="fas fa-file-signature"></i> Atestado Médico</button>
-      </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- PANEL: CRESCIMENTO -->
-    <!-- ============================================================ -->
-    <div id="tab-crescimento" class="panel">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-chart-line"></i> Curva de Crescimento</div>
-          <span class="card-sub">Peso por idade · Meninos 5 a 10 anos (percentis)</span>
-        </div>
-        <div class="chart-wrapper">
-          <canvas id="growthChart"></canvas>
-          <div class="chart-legend" id="chartLegend"></div>
-        </div>
-        <div style="margin-top:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
-          <span style="font-weight:600;font-size:14px;color:#1a2a3a;">Paciente:</span>
-          <span id="chartPacienteNome" style="font-weight:600;color:#2a7de1;">—</span>
-          <span id="chartPacientePonto" style="background:#2a7de1;color:#fff;padding:2px 14px;border-radius:40px;font-size:13px;font-weight:700;">⏺</span>
-        </div>
-        <div style="margin-top:10px;font-size:13px;color:#5d7184;background:#f0f5fa;padding:10px 16px;border-radius:12px;">
-          <i class="fas fa-info-circle"></i> Curva referência WHO 2006/2007. O ponto azul indica o paciente (se peso e idade informados).
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- PANEL: DOCUMENTOS -->
-    <!-- ============================================================ -->
-    <div id="tab-documentos" class="panel">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="fas fa-file-medical-alt"></i> Documentos Gerados</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-sm btn-outline" onclick="gerarReceituario()"><i class="fas fa-prescription-bottle-alt"></i> Receita</button>
-            <button class="btn btn-sm btn-outline" onclick="gerarReceitaEspecial()"><i class="fas fa-prescription"></i> Especial</button>
-            <button class="btn btn-sm btn-outline" onclick="gerarAtestado()"><i class="fas fa-file-signature"></i> Atestado</button>
+      <div class="sub-panel" id="sub-documentos">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-file-medical-alt"></i> Documentos Gerados</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-sm btn-outline" onclick="gerarReceituario()">Receita</button>
+              <button class="btn btn-sm btn-outline" onclick="gerarReceitaEspecial()">Especial</button>
+              <button class="btn btn-sm btn-outline" onclick="gerarAtestado()">Atestado</button>
+            </div>
           </div>
-        </div>
-        <div id="documentosLista" style="min-height:80px;">
-          <div class="empty-state">
-            <i class="fas fa-file-alt"></i>
-            <p>Nenhum documento gerado nesta consulta.</p>
-            <p style="font-size:13px;">Use os botões acima para criar receituário, receita especial ou atestado.</p>
-          </div>
+          <div id="documentosLista"><div class="empty-state" style="text-align:center;padding:40px 20px;color:#8aa3c0;"><i class="fas fa-file-alt" style="font-size:48px;opacity:0.4;"></i><p>Nenhum documento gerado.</p></div></div>
+          <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ============================================================ -->
-    <!-- PANEL: HISTÓRICO -->
-    <!-- ============================================================ -->
-    <div id="tab-historico" class="panel">
+    <section class="panel" id="panel-historico">
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i class="fas fa-archive"></i> Histórico de Pacientes</div>
           <button class="btn btn-sm btn-outline" onclick="carregarHistorico()"><i class="fas fa-sync"></i> Atualizar</button>
         </div>
-        <div class="search-bar">
-          <input class="form-control" id="historicoBusca" placeholder="Buscar por nome, CPF ou mãe..." oninput="filtrarHistorico()" />
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <input class="form-control" id="historicoBusca" placeholder="Buscar por nome..." oninput="filtrarHistorico()" />
           <button class="btn btn-outline" onclick="filtrarHistorico()"><i class="fas fa-search"></i></button>
         </div>
-        <div id="historicoLista">
-          <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>Nenhum paciente cadastrado ainda.</p>
-            <p style="font-size:13px;">Salve uma consulta para criar o primeiro paciente.</p>
+        <div id="historicoLista"><div class="empty-state"><i class="fas fa-users" style="font-size:48px;opacity:0.4;"></i><p>Nenhum paciente cadastrado.</p></div></div>
+        <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-agenda">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-calendar-check"></i> Agenda de Consultas</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="abrirModalAgendamento()"><i class="fas fa-plus"></i> Novo</button>
+            <button class="btn btn-outline btn-sm" onclick="renderCalendar()"><i class="fas fa-sync"></i></button>
           </div>
         </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <button class="btn btn-outline btn-sm" onclick="mudarMes(-1)"><i class="fas fa-chevron-left"></i></button>
+          <h3 id="calMonthYear" style="font-size:18px;font-weight:600;margin:0;"></h3>
+          <button class="btn btn-outline btn-sm" onclick="mudarMes(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <h4 style="margin:16px 0 8px;">Agendamentos do dia</h4>
+        <div id="appointmentsList"><p style="color:#5c7480;font-size:14px;">Selecione uma data para ver os agendamentos.</p></div>
+        <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button></div>
       </div>
-    </div>
+    </section>
 
-    <!-- ============================================================ -->
-    <!-- FOOTER / ASSINATURA -->
-    <!-- ============================================================ -->
+    <section class="panel" id="panel-relatorios">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-chart-bar"></i> Relatórios de Atendimento</div>
+          <span class="card-sub">Filtre por período para ver estatísticas</span>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:1;min-width:140px;"><label>Data inicial</label><input class="form-control" id="relDataIni" type="date" /></div>
+          <div class="form-group" style="flex:1;min-width:140px;"><label>Data final</label><input class="form-control" id="relDataFim" type="date" /></div>
+          <button class="btn btn-primary" onclick="gerarRelatorio()"><i class="fas fa-file-alt"></i> Gerar</button>
+          <button class="btn btn-outline" onclick="limparRelatorio()"><i class="fas fa-eraser"></i> Limpar</button>
+        </div>
+        <div id="relResultados">
+          <div class="empty-state" style="padding:30px 20px;">
+            <i class="fas fa-chart-bar" style="font-size:48px;opacity:0.4;"></i>
+            <p>Selecione um período para visualizar as estatísticas.</p>
+          </div>
+        </div>
+        <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="goTo('inicio')"><i class="fas fa-home"></i> Início</button></div>
+      </div>
+    </section>
+
     <div class="signature-area">
       <div class="signature-box">
-        <div>
-          <div class="signature-name" id="sigDoctorName">Carregando...</div>
-          <div class="signature-title" id="sigDoctorTitle"></div>
+        <div><div class="signature-name" id="sigDoctorName">Carregando...</div><div class="signature-title" id="sigDoctorTitle"></div></div>
+        <div><div class="signature-line"></div><div style="font-size:11px;color:#8aa3c0;">Assinatura digital</div></div>
+      </div>
+      <div style="font-size:13px;color:#5c7480;"><i class="fas fa-calendar-check"></i> <span id="dataHoraAtual"></span></div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== MODALS ===== -->
+<div id="docModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h2 id="docModalTitle">Documento</h2><button class="modal-close" onclick="fecharModal()">&times;</button></div>
+    <textarea id="docModalTextarea" style="width:100%;min-height:300px;padding:16px;border:2px solid #e0e7ef;border-radius:14px;font-family:'Courier New',monospace;font-size:14px;line-height:1.7;resize:vertical;"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModal()">Fechar</button>
+      <button class="btn btn-success" onclick="salvarDocumentoModal(false)"><i class="fas fa-save"></i> Salvar</button>
+      <button class="btn btn-danger" onclick="salvarDocumentoModal(true)"><i class="fas fa-lock"></i> Gravar</button>
+      <button class="btn btn-primary" onclick="imprimirModal()"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<div id="agendaModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h2 id="agendaModalTitle">Novo Agendamento</h2><button class="modal-close" onclick="fecharAgendaModal()">&times;</button></div>
+    <div class="form-group">
+      <label>Paciente</label>
+      <select class="form-control" id="agPaciente" onchange="onAgPacienteChange()"></select>
+      <input class="form-control" id="agPacienteOutro" placeholder="Digite o nome do paciente" style="display:none;margin-top:8px;" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+      <div class="form-group"><label>Data</label><input class="form-control" id="agData" type="date" /></div>
+      <div class="form-group"><label>Hora</label><input class="form-control" id="agHora" type="time" /></div>
+    </div>
+    <div class="form-group" style="margin-top:12px;"><label>Observações</label><textarea class="form-control" id="agObs" rows="2" placeholder="Motivo, prioridade..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharAgendaModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="salvarAgendamento()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notificações de chat (mesmo padrão das outras páginas do sistema) -->
+<div id="messageModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h2><i class="fas fa-envelope"></i> Nova Mensagem</h2><button class="modal-close" id="modalMsgClose">&times;</button></div>
+    <div class="modal-message-text" id="modalMessageText"></div>
+    <div class="modal-message-meta">
+      <div class="sender-info">
+        <div class="sender-avatar" id="modalSenderAvatar">👤</div>
+        <span id="modalSenderName">...</span>
+      </div>
+      <span style="color:#8aa3c0;font-size:0.8rem;" id="modalMessageTime"></span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="modalMsgDismiss">Fechar</button>
+      <button class="btn btn-primary" id="modalGoToChat"><i class="fas fa-comment"></i> Ir para Chat</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">Pronto!</span></div>
+
+<script type="module">
+import {
+  getCurrentUser, getUserProfile, signOut, ensureValidSession, checkSingleSession,
+  getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, logAccess,
+  getPediatricHistory, savePediatricConsultation, getLastPediatricConsultation,
+  getPediatricAppointments, createPediatricAppointment, deletePediatricAppointment
+} from './supabase-config.js';
+
+// ================================================================
+// 1. BASE DE CIDs (busca rápida do formulário de consulta)
+// ================================================================
+const cidList = [
+  {code:'A00', desc:'Cólera'}, {code:'A01', desc:'Febre tifóide'}, {code:'A02', desc:'Salmonelose'}, {code:'A03', desc:'Shiguelose'}, {code:'A04', desc:'Infecções intestinais bacterianas'}, {code:'A05', desc:'Intoxicação alimentar bacteriana'}, {code:'A06', desc:'Amebíase'}, {code:'A07', desc:'Protozooses intestinais'}, {code:'A08', desc:'Infecções intestinais virais'}, {code:'A09', desc:'Gastroenterite infecciosa'}, {code:'A15', desc:'Tuberculose respiratória'}, {code:'A16', desc:'Tuberculose das vias respiratórias'}, {code:'A17', desc:'Tuberculose do sistema nervoso'}, {code:'A18', desc:'Tuberculose de outros órgãos'}, {code:'A19', desc:'Tuberculose miliar'}, {code:'A20', desc:'Peste'}, {code:'A21', desc:'Tularemia'}, {code:'A22', desc:'Carbúnculo'}, {code:'A23', desc:'Brucelose'}, {code:'A24', desc:'Mormo'}, {code:'A25', desc:'Febre por mordedura de rato'}, {code:'A26', desc:'Erisipeloide'}, {code:'A27', desc:'Leptospirose'}, {code:'A28', desc:'Doenças bacterianas zoonóticas'}, {code:'A30', desc:'Hanseníase'}, {code:'A31', desc:'Micobacterioses'}, {code:'A32', desc:'Listeriose'}, {code:'A33', desc:'Tétano neonatal'}, {code:'A34', desc:'Tétano obstétrico'}, {code:'A35', desc:'Tétano'}, {code:'A36', desc:'Difteria'}, {code:'A37', desc:'Coqueluche'}, {code:'A38', desc:'Escarlatina'}, {code:'A39', desc:'Meningoccemia'}, {code:'A40', desc:'Septicemia estreptocócica'}, {code:'A41', desc:'Septicemia'}, {code:'A42', desc:'Actinomicose'}, {code:'A43', desc:'Nocardiose'}, {code:'A44', desc:'Bartonelose'}, {code:'A46', desc:'Erisipela'}, {code:'A48', desc:'Doenças bacterianas'}, {code:'A49', desc:'Infecção bacteriana não especificada'}, {code:'A50', desc:'Sífilis congênita'}, {code:'A51', desc:'Sífilis precoce'}, {code:'A52', desc:'Sífilis tardia'}, {code:'A53', desc:'Sífilis'}, {code:'A54', desc:'Gonorreia'}, {code:'A55', desc:'Linfogranuloma venéreo'}, {code:'A56', desc:'IST por clamídia'}, {code:'A57', desc:'Cancro mole'}, {code:'A58', desc:'Granuloma inguinal'}, {code:'A59', desc:'Tricomoníase'}, {code:'A60', desc:'Herpes genital'}, {code:'A63', desc:'IST'}, {code:'A64', desc:'IST não especificada'}, {code:'A65', desc:'Sífilis não venérea'}, {code:'A66', desc:'Bouba'}, {code:'A67', desc:'Pinta'}, {code:'A68', desc:'Febre recorrente'}, {code:'A69', desc:'Espiroquetoses'}, {code:'A70', desc:'Infecção por clamídia'}, {code:'A71', desc:'Tracoma'}, {code:'A74', desc:'Clamidiose'}, {code:'A75', desc:'Tifo'}, {code:'A77', desc:'Febre maculosa'}, {code:'A78', desc:'Febre Q'}, {code:'A79', desc:'Riquetsioses'}, {code:'A80', desc:'Poliomielite'}, {code:'A81', desc:'Infecções por príons'}, {code:'A82', desc:'Raiva'}, {code:'A83', desc:'Encefalite viral'}, {code:'A84', desc:'Encefalite por carrapato'}, {code:'A85', desc:'Encefalite viral'}, {code:'A86', desc:'Encefalite viral não especificada'}, {code:'A87', desc:'Meningite viral'}, {code:'A88', desc:'Infecções virais do SNC'}, {code:'A89', desc:'Infecção viral do SNC'}, {code:'A90', desc:'Dengue'}, {code:'A91', desc:'Febre hemorrágica por dengue'}, {code:'A92', desc:'Febre viral transmitida por mosquito'}, {code:'A93', desc:'Febre viral transmitida por artrópodes'}, {code:'A94', desc:'Febre viral por artrópodes'}, {code:'A95', desc:'Febre amarela'}, {code:'A96', desc:'Febres hemorrágicas virais'}, {code:'A98', desc:'Febres hemorrágicas virais'}, {code:'A99', desc:'Febres hemorrágicas virais'}, {code:'B00', desc:'Herpesvírus'}, {code:'B01', desc:'Varicela'}, {code:'B02', desc:'Herpes zoster'}, {code:'B03', desc:'Varíola'}, {code:'B04', desc:'Varíola dos macacos'}, {code:'B05', desc:'Sarampo'}, {code:'B06', desc:'Rubéola'}, {code:'B07', desc:'Verrugas virais'}, {code:'B08', desc:'Infecções virais'}, {code:'B09', desc:'Infecção viral não especificada'}, {code:'B15', desc:'Hepatite A'}, {code:'B16', desc:'Hepatite B'}, {code:'B17', desc:'Hepatite viral'}, {code:'B18', desc:'Hepatite crônica'}, {code:'B19', desc:'Hepatite viral não especificada'}, {code:'B20', desc:'HIV'}, {code:'B21', desc:'HIV'}, {code:'B22', desc:'HIV'}, {code:'B23', desc:'HIV'}, {code:'B24', desc:'HIV'}, {code:'B25', desc:'Citomegalovírus'}, {code:'B26', desc:'Caxumba'}, {code:'B27', desc:'Mononucleose'}, {code:'B30', desc:'Conjuntivite viral'}, {code:'B33', desc:'Viroses'}, {code:'B34', desc:'Infecção viral'}, {code:'B35', desc:'Dermatofitose'}, {code:'B36', desc:'Micoses superficiais'}, {code:'B37', desc:'Candidíase'}, {code:'B38', desc:'Coccidioidomicose'}, {code:'B39', desc:'Histoplasmose'}, {code:'B40', desc:'Blastomicose'}, {code:'B41', desc:'Paracoccidioidomicose'}, {code:'B42', desc:'Esporotricose'}, {code:'B43', desc:'Cromomicose'}, {code:'B44', desc:'Aspergilose'}, {code:'B45', desc:'Criptococose'}, {code:'B46', desc:'Zigomicose'}, {code:'B47', desc:'Micetoma'}, {code:'B48', desc:'Micoses'}, {code:'B49', desc:'Micose não especificada'}, {code:'B50', desc:'Malária por P. falciparum'}, {code:'B51', desc:'Malária por P. vivax'}, {code:'B52', desc:'Malária por P. malariae'}, {code:'B53', desc:'Malária'}, {code:'B54', desc:'Malária não especificada'}, {code:'B55', desc:'Leishmaniose'}, {code:'B56', desc:'Tripanossomíase'}, {code:'B57', desc:'Doença de Chagas'}, {code:'B58', desc:'Toxoplasmose'}, {code:'B59', desc:'Pneumocistose'}, {code:'B60', desc:'Protozooses'}, {code:'B64', desc:'Protozoose'}, {code:'B65', desc:'Esquistossomose'}, {code:'B66', desc:'Trematódeos'}, {code:'B67', desc:'Equinococose'}, {code:'B68', desc:'Teníase'}, {code:'B69', desc:'Cisticercose'}, {code:'B70', desc:'Difilobotríase'}, {code:'B71', desc:'Cestóides'}, {code:'B72', desc:'Dracontíase'}, {code:'B73', desc:'Oncocercose'}, {code:'B74', desc:'Filariose'}, {code:'B75', desc:'Triquinelose'}, {code:'B76', desc:'Ancilostomíase'}, {code:'B77', desc:'Ascaridíase'}, {code:'B78', desc:'Estrongiloidíase'}, {code:'B79', desc:'Tricuríase'}, {code:'B80', desc:'Oxiuríase'}, {code:'B81', desc:'Helmintíases'}, {code:'B82', desc:'Parasitose intestinal'}, {code:'B83', desc:'Helmintíases'}, {code:'B85', desc:'Pediculose'}, {code:'B86', desc:'Escabiose'}, {code:'B87', desc:'Miíase'}, {code:'B88', desc:'Infestações'}, {code:'B89', desc:'Infestação parasitária'}, {code:'B90', desc:'Seqüelas de tuberculose'}, {code:'B91', desc:'Seqüelas de poliomielite'}, {code:'B92', desc:'Seqüelas de hanseníase'}, {code:'B94', desc:'Seqüelas de doenças infecciosas'}, {code:'B95', desc:'Estreptococos'}, {code:'B96', desc:'Bactérias'}, {code:'B97', desc:'Vírus'}, {code:'B98', desc:'Agentes infecciosos'}, {code:'B99', desc:'Doença infecciosa não especificada'}
+];
+
+// ================================================================
+// 2. ESTADO GLOBAL
+// ================================================================
+const STATE = {
+  paciente: { nome: '', cpf: '', nasc: '', mae: '', sexo: 'M', peso: null, altura: null, pc: null },
+  anamnese: '', exameFisico: '', conduta: '', cid: '', cidDesc: '',
+  documentos: [], consultaId: null, pacienteId: null, consultaGravada: false,
+};
+let currentDocIndex = null;
+let agendaAtual = new Date();
+let appointments = []; // carregado do Supabase (pediatric_appointments)
+let historicoCache = []; // carregado do Supabase (pediatric_patients + consultas)
+let doctorProfile = null;
+let currentUserId = null;
+let lastMessageId = null;
+
+// ================================================================
+// 3. INICIALIZAÇÃO (autenticação + perfil + app)
+// ================================================================
+(async function init() {
+  const isValid = await ensureValidSession();
+  if (!isValid) return;
+
+  const user = await getCurrentUser();
+  if (!user) { window.location.href = 'index.html'; return; }
+  currentUserId = user.id;
+
+  try { await logAccess('pediatria'); } catch (e) {}
+
+  try {
+    doctorProfile = await getUserProfile();
+    const displayName = doctorProfile.name || doctorProfile.email || 'Médico(a)';
+    const roleLine = (doctorProfile.crm ? 'CRM ' + doctorProfile.crm : '') || (doctorProfile.specialty || 'Pediatria');
+    document.getElementById('sbName').textContent = displayName;
+    document.getElementById('sbRole').textContent = roleLine;
+    const avatar = document.getElementById('sbAvatar');
+    if (doctorProfile.avatar_url) avatar.innerHTML = `<img src="${doctorProfile.avatar_url}" alt="Avatar">`;
+    else avatar.textContent = displayName.charAt(0).toUpperCase();
+    document.getElementById('sidebarSub').textContent = 'Pediatria · ' + displayName;
+    document.getElementById('sigDoctorName').textContent = displayName;
+    document.getElementById('sigDoctorTitle').textContent = (doctorProfile.crm ? 'CRM ' + doctorProfile.crm + ' · ' : '') + (doctorProfile.specialty || 'Pediatria');
+  } catch (e) {}
+
+  setupNotifications();
+  setupFormListeners();
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await signOut(); localStorage.removeItem('session_id'); window.location.href = 'index.html';
+  });
+
+  setInterval(async () => { await checkSingleSession(); }, 10000);
+  setInterval(async () => { await checkNewMessages(); }, 8000);
+  await checkNewMessages();
+
+  atualizarRelogio();
+  setInterval(atualizarRelogio, 1000);
+
+  await carregarUltimoPaciente();
+  await carregarAgendamentos();
+  renderCalendar();
+  setTimeout(desenharGrafico, 300);
+  await atualizarResumoInicio();
+})();
+
+function setupFormListeners() {
+  document.getElementById('cidBusca').addEventListener('input', function () {
+    const val = this.value.trim().toUpperCase();
+    const sug = document.getElementById('cidSuggestions');
+    if (val.length < 1) { sug.style.display = 'none'; return; }
+    const filtered = cidList.filter(item => item.code.includes(val) || item.desc.toUpperCase().includes(val)).slice(0, 15);
+    if (filtered.length === 0) { sug.style.display = 'none'; return; }
+    let html = '';
+    filtered.forEach(item => {
+      html += `<div class="suggestion-item" style="padding:8px 14px;cursor:pointer;border-bottom:1px solid #f0f5fa;" data-code="${item.code}" data-desc="${item.desc}">
+        <span style="font-weight:700;color:#2a7de1;">${item.code}</span> <span style="color:#3d5366;">${item.desc}</span>
+      </div>`;
+    });
+    sug.innerHTML = html;
+    sug.style.display = 'block';
+    sug.querySelectorAll('.suggestion-item').forEach(el => {
+      el.addEventListener('click', function () {
+        document.getElementById('cidCodigo').value = this.dataset.code;
+        document.getElementById('cidDesc').value = this.dataset.desc;
+        document.getElementById('cidBusca').value = this.dataset.code + ' - ' + this.dataset.desc;
+        sug.style.display = 'none';
+        sincronizarEstado();
+      });
+    });
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.cid-wrapper') && !e.target.closest('#cidBusca')) {
+      document.getElementById('cidSuggestions').style.display = 'none';
+    }
+  });
+  ['pacNome', 'pacCpf', 'pacNasc', 'pacMae', 'pacSexo', 'pacPeso', 'pacAltura', 'pacPC'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('change', sincronizarEstado); el.addEventListener('input', sincronizarEstado); }
+  });
+  ['anamnese', 'exameFisico', 'conduta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', sincronizarEstado);
+  });
+  document.getElementById('pacNasc').addEventListener('change', calcularIdade);
+  document.getElementById('pacNasc').addEventListener('input', calcularIdade);
+}
+
+// ================================================================
+// NOTIFICAÇÕES (mesmo padrão usado nas demais páginas do sistema)
+// ================================================================
+let updateBellState = () => {};
+
+function setupNotifications() {
+  const bell = document.getElementById('notificationBell');
+  const dropdown = document.getElementById('notificationDropdown');
+  const badge = document.getElementById('notificationBadge');
+
+  bell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('show');
+    if (dropdown.classList.contains('show')) loadNotifications();
+  });
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
+  });
+  document.getElementById('markAllRead').addEventListener('click', async () => {
+    try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch (e) {}
+  });
+
+  async function loadNotifications() {
+    try {
+      const messages = await getUnreadMessages();
+      const list = document.getElementById('notificationList');
+      if (messages.length === 0) { list.innerHTML = '<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>'; return; }
+      list.innerHTML = messages.map(msg => {
+        const sender = msg.sender || {};
+        const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+        const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+        return '<div class="notification-item unread" data-msg-id="' + msg.id + '" data-sender-id="' + msg.sender_id + '"><div class="notif-avatar">' + avatar + '</div><div class="notif-content"><div class="notif-sender">' + escapeHtml(sender.name || sender.email || 'Usuário') + '</div><div class="notif-text">' + escapeHtml(msg.content) + '</div><div class="notif-time">' + time + '</div></div></div>';
+      }).join('');
+      document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', async () => {
+          const msgId = item.dataset.msgId;
+          const msg = messages.find(m => m.id === msgId);
+          if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch (e) {} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
+        });
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  updateBellState = function (count) {
+    badge.textContent = count;
+    if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
+    else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
+  };
+}
+
+async function checkNewMessages() {
+  try {
+    const count = await getUnreadCount();
+    updateBellState(count);
+    if (count > 0) {
+      const messages = await getUnreadMessages();
+      if (messages.length > 0 && messages[0].id !== lastMessageId) {
+        lastMessageId = messages[0].id;
+        showMessageModal(messages[0]);
+      }
+    }
+  } catch (e) {}
+}
+
+const msgModal = document.getElementById('messageModal');
+function showMessageModal(msg) {
+  const sender = msg.sender || {};
+  document.getElementById('modalMessageText').textContent = msg.content;
+  document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
+  document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
+  const avatar = document.getElementById('modalSenderAvatar');
+  if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
+  else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
+  msgModal.dataset.senderId = msg.sender_id;
+  msgModal.classList.add('active');
+}
+document.getElementById('modalMsgClose').addEventListener('click', () => msgModal.classList.remove('active'));
+document.getElementById('modalMsgDismiss').addEventListener('click', () => msgModal.classList.remove('active'));
+document.getElementById('modalGoToChat').addEventListener('click', () => {
+  const senderId = msgModal.dataset.senderId;
+  if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
+  window.location.href = 'chat.html';
+});
+msgModal.addEventListener('click', (e) => { if (e.target === msgModal) msgModal.classList.remove('active'); });
+
+// ================================================================
+// 4. NAVEGAÇÃO
+// ================================================================
+function goTo(view) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + view).classList.add('active');
+  document.querySelectorAll('.nav-btn[data-view]').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('.nav-btn[data-view="' + view + '"]');
+  if (btn) btn.classList.add('active');
+  const titles = { inicio: 'Início', consulta: 'Consulta Médica', historico: 'Histórico', agenda: 'Agenda', relatorios: 'Relatórios' };
+  document.getElementById('pageTitle').textContent = titles[view] || 'Início';
+  const subs = { inicio: 'Bem-vinda(o)! Acesse as principais funções abaixo.', consulta: 'Registro completo com avaliação antropométrica e curvas da OMS.', historico: 'Todos os pacientes atendidos.', agenda: 'Gerencie os agendamentos de consultas.', relatorios: 'Estatísticas de atendimento por período.' };
+  document.getElementById('pageSub').textContent = subs[view] || '';
+  if (view === 'historico') carregarHistorico();
+  if (view === 'agenda') renderCalendar();
+  if (view === 'inicio') atualizarResumoInicio();
+  if (view === 'consulta') { setTimeout(desenharGrafico, 200); }
+}
+
+// ================================================================
+// 5. SUB-ABAS
+// ================================================================
+function abrirSub(id) {
+  document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.sub-tab-btn[data-sub="' + id + '"]').classList.add('active');
+  if (id === 'sub-crescimento') desenharGrafico();
+}
+
+// ================================================================
+// 6. RELÓGIO
+// ================================================================
+function atualizarRelogio() {
+  const agora = new Date();
+  const diaSemana = agora.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const data = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('dataHoraDisplay').textContent = `${diaSemana}, ${data} - ${hora}`;
+  document.getElementById('dataHoraAtual').textContent = `${diaSemana}, ${data} - ${hora}`;
+}
+
+// ================================================================
+// 7. FUNÇÕES AUXILIARES
+// ================================================================
+function sincronizarEstado() {
+  if (STATE.consultaGravada) return;
+  STATE.paciente.nome = document.getElementById('pacNome').value.trim();
+  STATE.paciente.cpf = document.getElementById('pacCpf').value.trim();
+  STATE.paciente.nasc = document.getElementById('pacNasc').value;
+  STATE.paciente.mae = document.getElementById('pacMae').value.trim();
+  STATE.paciente.sexo = document.getElementById('pacSexo').value;
+  STATE.paciente.peso = parseFloat(document.getElementById('pacPeso').value) || null;
+  STATE.paciente.altura = parseFloat(document.getElementById('pacAltura').value) || null;
+  STATE.paciente.pc = parseFloat(document.getElementById('pacPC').value) || null;
+  STATE.anamnese = document.getElementById('anamnese').value;
+  STATE.exameFisico = document.getElementById('exameFisico').value;
+  STATE.conduta = document.getElementById('conduta').value;
+  STATE.cid = document.getElementById('cidCodigo').value.trim();
+  STATE.cidDesc = document.getElementById('cidDesc').value.trim();
+  calcularIdade();
+  atualizarAntropometria();
+  desenharGrafico();
+}
+
+function calcularIdade() {
+  const nasc = document.getElementById('pacNasc').value;
+  const span = document.getElementById('idadeTexto');
+  if (!nasc) { span.textContent = '—'; return; }
+  const hoje = new Date();
+  const dataNasc = new Date(nasc + 'T00:00:00');
+  let anos = hoje.getFullYear() - dataNasc.getFullYear();
+  let meses = hoje.getMonth() - dataNasc.getMonth();
+  let dias = hoje.getDate() - dataNasc.getDate();
+  if (dias < 0) { meses--; dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); }
+  if (meses < 0) { anos--; meses += 12; }
+  if (anos < 0) { span.textContent = 'Data inválida'; return; }
+  let texto = '';
+  if (anos > 0) texto += anos + 'a ';
+  if (meses > 0 || anos === 0) texto += meses + 'm ';
+  if (dias > 0 || (anos === 0 && meses === 0)) texto += dias + 'd';
+  if (anos === 0 && meses === 0 && dias === 0) texto = '< 1d';
+  span.textContent = texto.trim() || '—';
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function calcIdadeDetalhada(nascStr) {
+  if (!nascStr) return null;
+  const nasc = new Date(nascStr + 'T00:00:00');
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - nasc.getFullYear();
+  let meses = hoje.getMonth() - nasc.getMonth();
+  let dias = hoje.getDate() - nasc.getDate();
+  if (dias < 0) { meses--; dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); }
+  if (meses < 0) { anos--; meses += 12; }
+  return { anos, meses, dias, totalMeses: anos*12 + meses };
+}
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ================================================================
+// 8. ANTROPOMETRIA
+// ================================================================
+function atualizarAntropometria() {
+  const p = STATE.paciente.peso, a = STATE.paciente.altura;
+  const imc = (p && a && a>0) ? (p / ((a/100)*(a/100))) : null;
+  document.getElementById('imcValor').textContent = imc ? imc.toFixed(1) : '—';
+
+  let cls = '—';
+  if (imc !== null) {
+    if (imc < 14) cls = 'Baixo peso';
+    else if (imc < 18.5) cls = 'Eutrófico';
+    else if (imc < 25) cls = 'Sobrepeso';
+    else cls = 'Obesidade';
+  }
+  document.getElementById('omsClass').textContent = cls;
+
+  const idadeInfo = calcIdadeDetalhada(STATE.paciente.nasc);
+  const idadeMeses = idadeInfo ? idadeInfo.totalMeses : null;
+  let pesoIdadeClass = '—';
+  if (p !== null && idadeMeses !== null) {
+    const p50 = STATE.paciente.sexo === 'M' ? 3.5 + 0.5 * idadeMeses / 12 : 3.2 + 0.45 * idadeMeses / 12;
+    if (p < p50 * 0.8) pesoIdadeClass = 'Abaixo do peso';
+    else if (p < p50 * 1.2) pesoIdadeClass = 'Eutrófico';
+    else pesoIdadeClass = 'Sobrepeso';
+  }
+  document.getElementById('pesoIdadeZ').textContent = p ? p + ' kg' : '—';
+  document.getElementById('pesoIdadeClass').textContent = pesoIdadeClass;
+
+  let alturaIdadeClass = '—';
+  if (a !== null && idadeMeses !== null) {
+    const a50 = STATE.paciente.sexo === 'M' ? 50 + 6 * idadeMeses / 12 : 49 + 5.5 * idadeMeses / 12;
+    if (a < a50 * 0.9) alturaIdadeClass = 'Baixa estatura';
+    else if (a < a50 * 1.1) alturaIdadeClass = 'Adequada';
+    else alturaIdadeClass = 'Alta';
+  }
+  document.getElementById('alturaIdadeZ').textContent = a ? a + ' cm' : '—';
+  document.getElementById('alturaIdadeClass').textContent = alturaIdadeClass;
+}
+
+// ================================================================
+// 9. RESUMO INÍCIO
+// ================================================================
+async function atualizarResumoInicio() {
+  try { historicoCache = await getPediatricHistory(); } catch (e) {}
+  document.getElementById('totalPacientes').textContent = historicoCache.length;
+  document.getElementById('totalAgendamentos').textContent = appointments.length;
+}
+
+// ================================================================
+// 10. GRAVAR / SALVAR CONSULTA (persistido no Supabase — ver
+// pediatria_schema.sql: pediatric_patients / pediatric_consultations)
+// ================================================================
+function aplicarBloqueio(travado) {
+  document.querySelectorAll('#panel-consulta input, #panel-consulta select, #panel-consulta textarea').forEach(el => {
+    if (el.closest('#sub-crescimento')) { el.disabled = false; return; }
+    el.disabled = travado;
+  });
+  document.querySelectorAll('#panel-consulta .btn-warning').forEach(b => b.disabled = travado);
+  document.getElementById('badgeGravado').style.display = travado ? 'inline-flex' : 'none';
+}
+
+async function gravarConsulta() {
+  if (STATE.consultaGravada) { toast('Já gravada.'); return; }
+  if (!(await salvarConsulta(true))) { toast('Erro ao salvar.'); return; }
+  STATE.consultaGravada = true;
+  aplicarBloqueio(true);
+  STATE.documentos.forEach(d => d.bloqueado = true);
+  renderDocumentos();
+  await salvarConsulta(true);
+  toast('🔒 Consulta gravada!');
+}
+
+async function salvarConsulta(silent = false) {
+  sincronizarEstado();
+  const nome = STATE.paciente.nome.trim();
+  if (!nome) { if (!silent) toast('Informe o nome.'); return false; }
+  if (!STATE.paciente.nasc) { if (!silent) toast('Informe a data de nascimento.'); return false; }
+
+  try {
+    const { pacienteId, consultaId } = await savePediatricConsultation({
+      pacienteId: STATE.pacienteId,
+      consultaId: STATE.consultaId,
+      paciente: { ...STATE.paciente },
+      anamnese: STATE.anamnese,
+      exameFisico: STATE.exameFisico,
+      conduta: STATE.conduta,
+      cid: STATE.cid,
+      cidDesc: STATE.cidDesc,
+      documentos: STATE.documentos.map(d => ({ ...d })),
+      gravada: STATE.consultaGravada
+    });
+    STATE.pacienteId = pacienteId;
+    STATE.consultaId = consultaId;
+    if (!silent) toast('✅ Salvo!');
+    return true;
+  } catch (error) {
+    console.error('Erro ao salvar consulta pediátrica:', error);
+    if (!silent) toast('❌ Erro ao salvar: ' + (error.message || 'tente novamente.'));
+    return false;
+  }
+}
+
+async function carregarUltimoPaciente() {
+  try {
+    const ultimo = await getLastPediatricConsultation();
+    if (ultimo) {
+      document.getElementById('pacNome').value = ultimo.nome || '';
+      document.getElementById('pacCpf').value = ultimo.cpf || '';
+      document.getElementById('pacNasc').value = ultimo.nasc || '';
+      document.getElementById('pacMae').value = ultimo.mae || '';
+      document.getElementById('pacSexo').value = ultimo.sexo || 'M';
+      document.getElementById('pacPeso').value = ultimo.peso || '';
+      document.getElementById('pacAltura').value = ultimo.altura || '';
+      document.getElementById('pacPC').value = ultimo.pc || '';
+      STATE.pacienteId = ultimo.pacienteId || null;
+      sincronizarEstado();
+    }
+  } catch (e) {}
+}
+
+function carregarConsulta(pacienteId, consultaId) {
+  const paciente = historicoCache.find(p => p.id === pacienteId);
+  if (!paciente) { toast('Paciente não encontrado.'); return; }
+  const consulta = paciente.consultas.find(c => c.id === consultaId);
+  if (!consulta) { toast('Consulta não encontrada.'); return; }
+  STATE.pacienteId = pacienteId;
+  STATE.consultaId = consulta.id;
+  STATE.consultaGravada = consulta.gravada || false;
+  document.getElementById('pacNome').value = consulta.paciente.nome || '';
+  document.getElementById('pacCpf').value = consulta.paciente.cpf || '';
+  document.getElementById('pacNasc').value = consulta.paciente.nasc || '';
+  document.getElementById('pacMae').value = consulta.paciente.mae || '';
+  document.getElementById('pacSexo').value = consulta.paciente.sexo || 'M';
+  document.getElementById('pacPeso').value = consulta.paciente.peso || '';
+  document.getElementById('pacAltura').value = consulta.paciente.altura || '';
+  document.getElementById('pacPC').value = consulta.paciente.pc || '';
+  document.getElementById('anamnese').value = consulta.anamnese || '';
+  document.getElementById('exameFisico').value = consulta.exameFisico || '';
+  document.getElementById('conduta').value = consulta.conduta || '';
+  document.getElementById('cidCodigo').value = consulta.cid || '';
+  document.getElementById('cidDesc').value = consulta.cidDesc || '';
+  document.getElementById('cidBusca').value = consulta.cid ? consulta.cid + ' - ' + (consulta.cidDesc || '') : '';
+  STATE.documentos = consulta.documentos || [];
+  STATE.paciente = { ...consulta.paciente };
+  STATE.anamnese = consulta.anamnese || '';
+  STATE.exameFisico = consulta.exameFisico || '';
+  STATE.conduta = consulta.conduta || '';
+  STATE.cid = consulta.cid || '';
+  STATE.cidDesc = consulta.cidDesc || '';
+  aplicarBloqueio(STATE.consultaGravada);
+  renderDocumentos();
+  sincronizarEstado();
+  toast(`📂 Carregada: ${consulta.paciente.nome}`);
+  goTo('consulta');
+}
+
+// ================================================================
+// 11. HISTÓRICO
+// ================================================================
+async function carregarHistorico() {
+  const container = document.getElementById('historicoLista');
+  try {
+    historicoCache = await getPediatricHistory();
+  } catch (error) {
+    console.error('Erro ao carregar histórico pediátrico:', error);
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="font-size:48px;opacity:0.4;"></i><p>Erro ao carregar histórico. Tente novamente.</p></div>';
+    return;
+  }
+  if (historicoCache.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-users" style="font-size:48px;opacity:0.4;"></i><p>Nenhum paciente cadastrado.</p></div>';
+    return;
+  }
+  const pacientes = [...historicoCache].sort((a,b) => a.nome.localeCompare(b.nome));
+  let html = '';
+  pacientes.forEach(p => {
+    const consultas = (p.consultas || []).slice().sort((a,b) => new Date(b.data) - new Date(a.data));
+    const count = consultas.length;
+    const ultima = count > 0 ? new Date(consultas[0].data).toLocaleDateString('pt-BR') : '—';
+    const peso = count > 0 && consultas[0].paciente.peso ? consultas[0].paciente.peso + ' kg' : '';
+    html += `
+      <div class="history-patient">
+        <div class="history-patient-header" onclick="this.nextElementSibling.classList.toggle('open')">
+          <div class="info">
+            <strong>${escapeHtml(p.nome)}</strong>
+            <span>Última: ${ultima}</span>
+            <span>${calcIdadeDetalhada(p.nasc)?calcIdadeDetalhada(p.nasc).anos+'a '+calcIdadeDetalhada(p.nasc).meses+'m':'—'}</span>
+            ${peso ? `<span>${peso}</span>` : ''}
+            ${p.cpf ? `<span>CPF: ${escapeHtml(p.cpf)}</span>` : ''}
+          </div>
+          <span class="badge-count">${count} consulta${count>1?'s':''}</span>
         </div>
-        <div>
-          <div class="signature-line"></div>
-          <div style="font-size:11px;color:#8aa3c0;margin-top:2px;">Assinatura digital</div>
+        <div class="history-consultas">
+          ${consultas.map(c => `
+            <div class="history-consulta-item" onclick="carregarConsulta('${p.id}','${c.id}')">
+              <div class="info">
+                <span class="date">${new Date(c.data).toLocaleDateString('pt-BR')}</span>
+                ${c.cid ? `<span class="cid-badge" style="background:#dce6f0;padding:2px 10px;border-radius:40px;font-size:11px;">CID: ${escapeHtml(c.cid)}</span>` : ''}
+                ${c.paciente.peso ? `<span>${c.paciente.peso} kg</span>` : ''}
+                ${c.documentos ? `<span>📄 ${c.documentos.length} docs</span>` : ''}
+                ${c.gravada ? '<span style="font-size:11px;background:#e45c5c;color:#fff;padding:2px 10px;border-radius:40px;">🔒</span>' : ''}
+              </div>
+              <span style="color:#2a7de1;">↗</span>
+            </div>
+          `).join('')}
         </div>
       </div>
-      <div style="display:flex;gap:12px;align-items:center;font-size:13px;color:#5d7184;">
-        <i class="fas fa-calendar-check"></i>
-        <span id="dataHoraAtual"></span>
+    `;
+  });
+  container.innerHTML = html;
+}
+function filtrarHistorico() {
+  const termo = document.getElementById('historicoBusca').value.toLowerCase();
+  document.querySelectorAll('.history-patient').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(termo) ? '' : 'none';
+  });
+}
+
+// ================================================================
+// 12. DOCUMENTOS — usam nome/CRM do médico logado, não mais fixo.
+// ================================================================
+function medicoAssinatura() {
+  const nome = doctorProfile?.name || '___________________';
+  const crm = doctorProfile?.crm ? ('CRM: ' + doctorProfile.crm) : 'CRM: __________';
+  return { nome, crm };
+}
+
+function gerarReceituario() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
+  const p = STATE.paciente;
+  const med = medicoAssinatura();
+  const modelo = `RECEITUÁRIO MÉDICO\n\nPaciente: ${p.nome||'___________________'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'__________'}\nCPF: ${p.cpf||'__________'}\nMãe: ${p.mae||'__________'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'} ${STATE.cidDesc||''}\n\n_________________________________________________\n_________________________________________________\n_________________________________________________\n\nAssinatura: ___________________\n${med.nome} · ${med.crm}`;
+  abrirModalDoc('Receituário', modelo);
+}
+function gerarReceitaEspecial() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
+  const p = STATE.paciente;
+  const med = medicoAssinatura();
+  const modelo = `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\nR E C E I T U Á R I O  C O N T R O L E  E S P E C I A L\n\n${med.nome} · ${med.crm}\n\nIDENTIFICAÇÃO DO COMPRADOR\nNome: ${p.nome||'---'}\nIDENT: ${p.cpf||'---'}\n\nAss. Farmacêutico ______ / ______ / ______\n\nEndereço da clínica: ___________________________________\nContato: ___________________________________\n\nPaciente: ${p.nome||'______'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'}\n\nMedicamento: ___________\nDose: ___________\n\nAssinatura: ___________________\n${med.nome} · ${med.crm}`;
+  abrirModalDoc('Receita Especial', modelo);
+}
+function gerarAtestado() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
+  const p = STATE.paciente;
+  const med = medicoAssinatura();
+  const modelo = `Atestado Médico\n\nAtesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\nPaciente: ${p.nome||'______'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'______'}\nCPF: ${p.cpf||'______'}\nMãe: ${p.mae||'______'}\n\nCID: ${STATE.cid||'R52'}\n\nAUTORIZO A COLOCAÇÃO DO CID-10 _______\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n${med.nome}\n${med.crm}`;
+  abrirModalDoc('Atestado Médico', modelo);
+}
+function abrirModalDoc(titulo, conteudo) {
+  document.getElementById('docModalTitle').textContent = titulo;
+  document.getElementById('docModalTextarea').value = conteudo;
+  currentDocIndex = null;
+  document.getElementById('docModal').classList.add('active');
+}
+async function salvarDocumentoModal(gravar) {
+  const texto = document.getElementById('docModalTextarea').value;
+  const titulo = document.getElementById('docModalTitle').textContent;
+  if (!texto.trim()) { toast('Vazio.'); return; }
+  if (currentDocIndex !== null && STATE.documentos[currentDocIndex]) {
+    if (STATE.documentos[currentDocIndex].bloqueado) { toast('Já gravado.'); return; }
+    STATE.documentos[currentDocIndex].conteudo = texto;
+    STATE.documentos[currentDocIndex].data = new Date().toISOString();
+    if (gravar) STATE.documentos[currentDocIndex].bloqueado = true;
+  } else {
+    STATE.documentos.push({ tipo: titulo, conteudo: texto, data: new Date().toISOString(), bloqueado: gravar });
+  }
+  renderDocumentos();
+  await salvarConsulta(true);
+  fecharModal();
+  toast(`📄 ${titulo} ${gravar?'gravado':'salvo'}`);
+}
+function renderDocumentos() {
+  const container = document.getElementById('documentosLista');
+  if (STATE.documentos.length === 0) { container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt" style="font-size:48px;opacity:0.4;"></i><p>Nenhum documento gerado.</p></div>'; return; }
+  let html = '';
+  STATE.documentos.forEach((doc, idx) => {
+    const bloqueado = doc.bloqueado || false;
+    html += `
+      <div class="history-patient" style="margin-bottom:8px;border-radius:12px;border:1px solid #e8edf3;overflow:hidden;">
+        <div class="history-patient-header" onclick="${bloqueado ? `visualizarDoc(${idx})` : `editarDoc(${idx})`}">
+          <div class="info"><strong>${escapeHtml(doc.tipo)}</strong><span>${new Date(doc.data).toLocaleDateString('pt-BR')}</span>${bloqueado?'<span style="font-size:11px;background:#dce6f0;padding:2px 10px;border-radius:40px;">🔒 Gravado</span>':''}</div>
+          <span style="color:${bloqueado?'#8aa3c0':'#2a7de1'};">${bloqueado?'Visualizar':'Editar'}</span>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+function editarDoc(idx) { if (STATE.consultaGravada) { toast('Gravada.'); return; }
+  const doc = STATE.documentos[idx]; if (!doc || doc.bloqueado) { toast('Bloqueado.'); return; }
+  currentDocIndex = idx;
+  document.getElementById('docModalTitle').textContent = doc.tipo;
+  document.getElementById('docModalTextarea').value = doc.conteudo;
+  document.getElementById('docModal').classList.add('active');
+}
+function visualizarDoc(idx) {
+  const doc = STATE.documentos[idx]; if (!doc) return;
+  currentDocIndex = idx;
+  document.getElementById('docModalTitle').textContent = doc.tipo + ' (leitura)';
+  document.getElementById('docModalTextarea').value = doc.conteudo;
+  document.getElementById('docModalTextarea').disabled = true;
+  document.getElementById('docModal').classList.add('active');
+}
+function fecharModal() { document.getElementById('docModal').classList.remove('active'); if (document.getElementById('docModalTextarea').disabled) document.getElementById('docModalTextarea').disabled = false; }
+function imprimirModal() {
+  const conteudo = document.getElementById('docModalTextarea').value;
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Documento</title><style>body{font-family:'Courier New',monospace;padding:40px;white-space:pre-wrap;font-size:14px;line-height:1.7;}</style></head><body>${conteudo}</body></html>`);
+  win.document.close(); win.focus(); win.print();
+}
+
+// ================================================================
+// 13. AGENDA — persistida no Supabase (pediatric_appointments)
+// ================================================================
+async function carregarAgendamentos() {
+  try { appointments = await getPediatricAppointments(); } catch (e) { appointments = []; }
+}
+
+function renderCalendar() {
+  const year = agendaAtual.getFullYear();
+  const month = agendaAtual.getMonth();
+  document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+  let html = '';
+  const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  dayNames.forEach(d => html += `<div class="day-name">${d}</div>`);
+  const hoje = new Date();
+  for (let i = firstDay-1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    html += `<div class="day-cell other-month" data-date="${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}" onclick="selecionarDia(this)">${d}</div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasApp = appointments.some(a => a.date === dateStr);
+    const isToday = hoje.toDateString() === new Date(dateStr).toDateString();
+    let cls = 'day-cell';
+    if (hasApp) cls += ' has-appointment';
+    if (isToday) cls += ' selected';
+    html += `<div class="${cls}" data-date="${dateStr}" onclick="selecionarDia(this)">${d}</div>`;
+  }
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    html += `<div class="day-cell other-month" data-date="${year}-${String(month+2).padStart(2,'0')}-${String(d).padStart(2,'0')}" onclick="selecionarDia(this)">${d}</div>`;
+  }
+  document.getElementById('calendarGrid').innerHTML = html;
+  const todayStr = hoje.toISOString().split('T')[0];
+  const cells = document.querySelectorAll('.day-cell');
+  let found = false;
+  cells.forEach(el => {
+    if (el.dataset.date === todayStr && !el.classList.contains('other-month')) { el.classList.add('selected'); found = true; }
+  });
+  if (!found) {
+    const first = document.querySelector('.day-cell:not(.other-month)');
+    if (first) { first.classList.add('selected'); }
+  }
+  carregarAgendamentosDia();
+}
+function mudarMes(delta) {
+  agendaAtual.setMonth(agendaAtual.getMonth() + delta);
+  renderCalendar();
+}
+function selecionarDia(el) {
+  document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  carregarAgendamentosDia();
+}
+function carregarAgendamentosDia() {
+  const selected = document.querySelector('.day-cell.selected');
+  if (!selected) return;
+  const date = selected.dataset.date;
+  const list = document.getElementById('appointmentsList');
+  const filtered = appointments.filter(a => a.date === date);
+  if (filtered.length === 0) { list.innerHTML = '<p style="color:#5c7480;font-size:14px;">Nenhum agendamento para esta data.</p>'; return; }
+  let html = '';
+  filtered.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  filtered.forEach((app) => {
+    html += `
+      <div class="appointment-item">
+        <div class="info">
+          <strong>${escapeHtml(app.patient)}</strong>
+          <span>${app.time || 'Horário não definido'}</span>
+          ${app.obs ? `<span style="color:#5c7480;">${escapeHtml(app.obs)}</span>` : ''}
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="cancelarAgendamento('${app.id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+}
+function popularSelectPacientesAgenda(selecionado) {
+  const sel = document.getElementById('agPaciente');
+  const outro = document.getElementById('agPacienteOutro');
+  const ordenados = historicoCache.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  sel.innerHTML = '<option value="">Selecione um paciente...</option>' +
+    ordenados.map(p => `<option value="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</option>`).join('') +
+    '<option value="__outro__">+ Outro (digitar nome)</option>';
+  outro.style.display = 'none';
+  outro.value = '';
+  if (selecionado) {
+    const existeOpcao = ordenados.some(p => p.nome === selecionado);
+    if (existeOpcao) {
+      sel.value = selecionado;
+    } else {
+      sel.value = '__outro__';
+      outro.style.display = 'block';
+      outro.value = selecionado;
+    }
+  }
+}
+function onAgPacienteChange() {
+  const sel = document.getElementById('agPaciente');
+  const outro = document.getElementById('agPacienteOutro');
+  if (sel.value === '__outro__') { outro.style.display = 'block'; outro.focus(); }
+  else { outro.style.display = 'none'; outro.value = ''; }
+}
+async function abrirModalAgendamento() {
+  const selected = document.querySelector('.day-cell.selected');
+  const date = selected ? selected.dataset.date : new Date().toISOString().split('T')[0];
+  document.getElementById('agData').value = date;
+  if (!historicoCache.length) { try { historicoCache = await getPediatricHistory(); } catch (e) {} }
+  popularSelectPacientesAgenda(document.getElementById('pacNome').value || '');
+  document.getElementById('agendaModal').classList.add('active');
+}
+function fecharAgendaModal() { document.getElementById('agendaModal').classList.remove('active'); }
+async function salvarAgendamento() {
+  const sel = document.getElementById('agPaciente');
+  let patient = sel.value === '__outro__' ? document.getElementById('agPacienteOutro').value.trim() : sel.value.trim();
+  const date = document.getElementById('agData').value;
+  const time = document.getElementById('agHora').value;
+  const obs = document.getElementById('agObs').value.trim();
+  if (!patient || !date) { toast('Preencha paciente e data.'); return; }
+  try {
+    await createPediatricAppointment({ patient, date, time, obs });
+    await carregarAgendamentos();
+    fecharAgendaModal();
+    renderCalendar();
+    await atualizarResumoInicio();
+    toast('✅ Agendamento salvo!');
+  } catch (error) {
+    toast('❌ Erro ao salvar: ' + (error.message || 'tente novamente.'));
+  }
+}
+async function cancelarAgendamento(id) {
+  if (!confirm('Cancelar este agendamento?')) return;
+  try {
+    await deletePediatricAppointment(id);
+    await carregarAgendamentos();
+    renderCalendar();
+    await atualizarResumoInicio();
+    toast('🗑️ Cancelado.');
+  } catch (error) {
+    toast('❌ Erro ao cancelar: ' + (error.message || 'tente novamente.'));
+  }
+}
+
+// ================================================================
+// 14. RELATÓRIOS
+// ================================================================
+async function gerarRelatorio() {
+  const ini = document.getElementById('relDataIni').value;
+  const fim = document.getElementById('relDataFim').value;
+  if (!ini || !fim) { toast('Selecione o período.'); return; }
+  const start = new Date(ini + 'T00:00:00');
+  const end = new Date(fim + 'T23:59:59');
+  let totalConsultas = 0;
+  const pacientesAtendidos = [];
+
+  let pacientes;
+  try {
+    pacientes = await getPediatricHistory();
+  } catch (e) {
+    toast('Erro ao gerar relatório.');
+    return;
+  }
+  pacientes.forEach(p => {
+    if (p.consultas) {
+      const noPeriodo = p.consultas.filter(c => {
+        const d = new Date(c.data);
+        return d >= start && d <= end;
+      });
+      if (noPeriodo.length > 0) {
+        totalConsultas += noPeriodo.length;
+        const ultima = noPeriodo.reduce((a, b) => new Date(a.data) > new Date(b.data) ? a : b);
+        pacientesAtendidos.push({ nome: p.nome, qtd: noPeriodo.length, ultima: ultima.data });
+      }
+    }
+  });
+  pacientesAtendidos.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const totalPacientes = pacientesAtendidos.length;
+
+  const listaHtml = totalPacientes > 0 ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><div class="card-title"><i class="fas fa-user-injured"></i> Pacientes Atendidos no Período</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${pacientesAtendidos.map(p => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f7fafc;border-radius:10px;flex-wrap:wrap;gap:6px;">
+            <span style="font-weight:600;color:#22313f;"><i class="fas fa-user" style="color:#2a7de1;margin-right:8px;"></i>${escapeHtml(p.nome)}</span>
+            <span style="font-size:13px;color:#5c7480;">${p.qtd} consulta${p.qtd > 1 ? 's' : ''} · última em ${new Date(p.ultima).toLocaleDateString('pt-BR')}</span>
+          </div>
+        `).join('')}
       </div>
     </div>
+  ` : '';
 
-  </div>
+  document.getElementById('relResultados').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="number">${totalPacientes}</div><div class="desc">Pacientes atendidos</div></div>
+      <div class="stat-card"><div class="number">${totalConsultas}</div><div class="desc">Consultas realizadas</div></div>
+      <div class="stat-card"><div class="number">${totalPacientes>0 ? (totalConsultas/totalPacientes).toFixed(1) : 0}</div><div class="desc">Média consultas/paciente</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:13px;color:#5c7480;">
+      Período: ${new Date(ini).toLocaleDateString('pt-BR')} a ${new Date(fim).toLocaleDateString('pt-BR')}
+    </div>
+    ${listaHtml}
+  `;
+  toast('✅ Relatório gerado!');
+}
+function limparRelatorio() {
+  document.getElementById('relDataIni').value = '';
+  document.getElementById('relDataFim').value = '';
+  document.getElementById('relResultados').innerHTML = `
+    <div class="empty-state" style="padding:30px 20px;">
+      <i class="fas fa-chart-bar" style="font-size:48px;opacity:0.4;"></i>
+      <p>Selecione um período para visualizar as estatísticas.</p>
+    </div>
+  `;
+}
 
-  <script type="module">
-    import {
-      getCurrentUser, getUserProfile, signOut, ensureValidSession, checkSingleSession,
-      getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, logAccess,
-      getPediatricHistory, savePediatricConsultation, getLastPediatricConsultation
-    } from './supabase-config.js';
+// ================================================================
+// 15. CURVAS DE CRESCIMENTO
+// ================================================================
+function desenharGrafico() {
+  const nome = STATE.paciente.nome || '—';
+  const idadeInfo = calcIdadeDetalhada(STATE.paciente.nasc);
+  const idadeStr = idadeInfo ? `${idadeInfo.anos}a ${idadeInfo.meses}m ${idadeInfo.dias}d` : '—';
+  document.getElementById('chartPacienteNome').textContent = nome;
+  document.getElementById('chartPacienteIdade').textContent = idadeStr;
+  document.getElementById('chartPacientePeso').textContent = STATE.paciente.peso ? STATE.paciente.peso + ' kg' : '—';
+  document.getElementById('chartPacienteAltura').textContent = STATE.paciente.altura ? STATE.paciente.altura + ' cm' : '—';
+  document.getElementById('chartPacientePC').textContent = STATE.paciente.pc ? STATE.paciente.pc + ' cm' : '—';
 
-    // ================================================================
-    // 1. LISTA DE CIDs (busca rápida do formulário de consulta)
-    // ================================================================
-    const cidList = [
-      {code:'A00', desc:'Cólera'}, {code:'A01', desc:'Febre tifóide'}, {code:'A02', desc:'Salmonelose'}, {code:'A03', desc:'Shiguelose'}, {code:'A04', desc:'Infecções intestinais bacterianas'}, {code:'A05', desc:'Intoxicação alimentar bacteriana'}, {code:'A06', desc:'Amebíase'}, {code:'A07', desc:'Protozooses intestinais'}, {code:'A08', desc:'Infecções intestinais virais'}, {code:'A09', desc:'Gastroenterite infecciosa'}, {code:'A15', desc:'Tuberculose respiratória'}, {code:'A16', desc:'Tuberculose das vias respiratórias'}, {code:'A17', desc:'Tuberculose do sistema nervoso'}, {code:'A18', desc:'Tuberculose de outros órgãos'}, {code:'A19', desc:'Tuberculose miliar'}, {code:'A20', desc:'Peste'}, {code:'A21', desc:'Tularemia'}, {code:'A22', desc:'Carbúnculo'}, {code:'A23', desc:'Brucelose'}, {code:'A24', desc:'Mormo'}, {code:'A25', desc:'Febre por mordedura de rato'}, {code:'A26', desc:'Erisipeloide'}, {code:'A27', desc:'Leptospirose'}, {code:'A28', desc:'Doenças bacterianas zoonóticas'}, {code:'A30', desc:'Hanseníase'}, {code:'A31', desc:'Micobacterioses'}, {code:'A32', desc:'Listeriose'}, {code:'A33', desc:'Tétano neonatal'}, {code:'A34', desc:'Tétano obstétrico'}, {code:'A35', desc:'Tétano'}, {code:'A36', desc:'Difteria'}, {code:'A37', desc:'Coqueluche'}, {code:'A38', desc:'Escarlatina'}, {code:'A39', desc:'Meningoccemia'}, {code:'A40', desc:'Septicemia estreptocócica'}, {code:'A41', desc:'Septicemia'}, {code:'A42', desc:'Actinomicose'}, {code:'A43', desc:'Nocardiose'}, {code:'A44', desc:'Bartonelose'}, {code:'A46', desc:'Erisipela'}, {code:'A48', desc:'Doenças bacterianas'}, {code:'A49', desc:'Infecção bacteriana não especificada'}, {code:'A50', desc:'Sífilis congênita'}, {code:'A51', desc:'Sífilis precoce'}, {code:'A52', desc:'Sífilis tardia'}, {code:'A53', desc:'Sífilis'}, {code:'A54', desc:'Gonorreia'}, {code:'A55', desc:'Linfogranuloma venéreo'}, {code:'A56', desc:'IST por clamídia'}, {code:'A57', desc:'Cancro mole'}, {code:'A58', desc:'Granuloma inguinal'}, {code:'A59', desc:'Tricomoníase'}, {code:'A60', desc:'Herpes genital'}, {code:'A63', desc:'IST'}, {code:'A64', desc:'IST não especificada'}, {code:'A65', desc:'Sífilis não venérea'}, {code:'A66', desc:'Bouba'}, {code:'A67', desc:'Pinta'}, {code:'A68', desc:'Febre recorrente'}, {code:'A69', desc:'Espiroquetoses'}, {code:'A70', desc:'Infecção por clamídia'}, {code:'A71', desc:'Tracoma'}, {code:'A74', desc:'Clamidiose'}, {code:'A75', desc:'Tifo'}, {code:'A77', desc:'Febre maculosa'}, {code:'A78', desc:'Febre Q'}, {code:'A79', desc:'Riquetsioses'}, {code:'A80', desc:'Poliomielite'}, {code:'A81', desc:'Infecções por príons'}, {code:'A82', desc:'Raiva'}, {code:'A83', desc:'Encefalite viral'}, {code:'A84', desc:'Encefalite por carrapato'}, {code:'A85', desc:'Encefalite viral'}, {code:'A86', desc:'Encefalite viral não especificada'}, {code:'A87', desc:'Meningite viral'}, {code:'A88', desc:'Infecções virais do SNC'}, {code:'A89', desc:'Infecção viral do SNC'}, {code:'A90', desc:'Dengue'}, {code:'A91', desc:'Febre hemorrágica por dengue'}, {code:'A92', desc:'Febre viral transmitida por mosquito'}, {code:'A93', desc:'Febre viral transmitida por artrópodes'}, {code:'A94', desc:'Febre viral por artrópodes'}, {code:'A95', desc:'Febre amarela'}, {code:'A96', desc:'Febres hemorrágicas virais'}, {code:'A98', desc:'Febres hemorrágicas virais'}, {code:'A99', desc:'Febres hemorrágicas virais'}, {code:'B00', desc:'Herpesvírus'}, {code:'B01', desc:'Varicela'}, {code:'B02', desc:'Herpes zoster'}, {code:'B03', desc:'Varíola'}, {code:'B04', desc:'Varíola dos macacos'}, {code:'B05', desc:'Sarampo'}, {code:'B06', desc:'Rubéola'}, {code:'B07', desc:'Verrugas virais'}, {code:'B08', desc:'Infecções virais'}, {code:'B09', desc:'Infecção viral não especificada'}, {code:'B15', desc:'Hepatite A'}, {code:'B16', desc:'Hepatite B'}, {code:'B17', desc:'Hepatite viral'}, {code:'B18', desc:'Hepatite crônica'}, {code:'B19', desc:'Hepatite viral não especificada'}, {code:'B20', desc:'HIV'}, {code:'B21', desc:'HIV'}, {code:'B22', desc:'HIV'}, {code:'B23', desc:'HIV'}, {code:'B24', desc:'HIV'}, {code:'B25', desc:'Citomegalovírus'}, {code:'B26', desc:'Caxumba'}, {code:'B27', desc:'Mononucleose'}, {code:'B30', desc:'Conjuntivite viral'}, {code:'B33', desc:'Viroses'}, {code:'B34', desc:'Infecção viral'}, {code:'B35', desc:'Dermatofitose'}, {code:'B36', desc:'Micoses superficiais'}, {code:'B37', desc:'Candidíase'}, {code:'B38', desc:'Coccidioidomicose'}, {code:'B39', desc:'Histoplasmose'}, {code:'B40', desc:'Blastomicose'}, {code:'B41', desc:'Paracoccidioidomicose'}, {code:'B42', desc:'Esporotricose'}, {code:'B43', desc:'Cromomicose'}, {code:'B44', desc:'Aspergilose'}, {code:'B45', desc:'Criptococose'}, {code:'B46', desc:'Zigomicose'}, {code:'B47', desc:'Micetoma'}, {code:'B48', desc:'Micoses'}, {code:'B49', desc:'Micose não especificada'}, {code:'B50', desc:'Malária por P. falciparum'}, {code:'B51', desc:'Malária por P. vivax'}, {code:'B52', desc:'Malária por P. malariae'}, {code:'B53', desc:'Malária'}, {code:'B54', desc:'Malária não especificada'}, {code:'B55', desc:'Leishmaniose'}, {code:'B56', desc:'Tripanossomíase'}, {code:'B57', desc:'Doença de Chagas'}, {code:'B58', desc:'Toxoplasmose'}, {code:'B59', desc:'Pneumocistose'}, {code:'B60', desc:'Protozooses'}, {code:'B64', desc:'Protozoose'}, {code:'B65', desc:'Esquistossomose'}, {code:'B66', desc:'Trematódeos'}, {code:'B67', desc:'Equinococose'}, {code:'B68', desc:'Teníase'}, {code:'B69', desc:'Cisticercose'}, {code:'B70', desc:'Difilobotríase'}, {code:'B71', desc:'Cestóides'}, {code:'B72', desc:'Dracontíase'}, {code:'B73', desc:'Oncocercose'}, {code:'B74', desc:'Filariose'}, {code:'B75', desc:'Triquinelose'}, {code:'B76', desc:'Ancilostomíase'}, {code:'B77', desc:'Ascaridíase'}, {code:'B78', desc:'Estrongiloidíase'}, {code:'B79', desc:'Tricuríase'}, {code:'B80', desc:'Oxiuríase'}, {code:'B81', desc:'Helmintíases'}, {code:'B82', desc:'Parasitose intestinal'}, {code:'B83', desc:'Helmintíases'}, {code:'B85', desc:'Pediculose'}, {code:'B86', desc:'Escabiose'}, {code:'B87', desc:'Miíase'}, {code:'B88', desc:'Infestações'}, {code:'B89', desc:'Infestação parasitária'}, {code:'B90', desc:'Seqüelas de tuberculose'}, {code:'B91', desc:'Seqüelas de poliomielite'}, {code:'B92', desc:'Seqüelas de hanseníase'}, {code:'B94', desc:'Seqüelas de doenças infecciosas'}, {code:'B95', desc:'Estreptococos'}, {code:'B96', desc:'Bactérias'}, {code:'B97', desc:'Vírus'}, {code:'B98', desc:'Agentes infecciosos'}, {code:'B99', desc:'Doença infecciosa não especificada'}
-    ];
+  const canvas = document.getElementById('growthChart');
+  const w = Math.min(canvas.parentElement.clientWidth - 32, 760);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = 380 * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = '380px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
 
-    // ================================================================
-    // 2. ESTADO GLOBAL
-    // ================================================================
-    const STATE = {
-      paciente: { nome: '', cpf: '', nasc: '', mae: '', sexo: 'M', peso: null, altura: null },
-      anamnese: '',
-      exameFisico: '',
-      conduta: '',
-      cid: '',
-      cidDesc: '',
-      documentos: [], // { tipo, conteudo, data, bloqueado: boolean }
-      consultaId: null,
-      pacienteId: null,
-      consultaGravada: false, // flag que trava toda a consulta
-    };
+  const W = w, H = 380;
+  const pad = { top: 30, bottom: 36, left: 48, right: 24 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
 
-    let currentDocIndex = null;
-    let currentUserId = null;
-    let doctorProfile = null;
-    let lastMessageId = null;
-    let historicoCache = []; // último resultado de getPediatricHistory()
-    let resizeTimer;
+  ctx.clearRect(0, 0, W, H);
 
-    // ================================================================
-    // 3. INICIALIZAÇÃO (autenticação + perfil + app)
-    // ================================================================
-    (async function init() {
-      const isValid = await ensureValidSession();
-      if (!isValid) return;
+  const sexo = STATE.paciente.sexo || 'M';
+  const idadeMeses = idadeInfo ? idadeInfo.totalMeses : null;
+  const metric = document.getElementById('chartMetric').value;
 
-      const user = await getCurrentUser();
-      if (!user) { window.location.href = 'index.html'; return; }
-      currentUserId = user.id;
+  let ageMin = 0, ageMax = 60;
+  let wMin = 0, wMax = 0;
+  let curves = {};
 
-      try { await logAccess('pediatria'); } catch (e) {}
+  if (idadeMeses !== null && idadeMeses >= 60) {
+    ageMin = 5; ageMax = 10;
+  } else {
+    ageMin = 0; ageMax = 60;
+  }
 
-      try {
-        doctorProfile = await getUserProfile();
-        document.getElementById('headerName').textContent = doctorProfile.name || doctorProfile.email;
-        const avatar = document.getElementById('headerAvatar');
-        if (doctorProfile.avatar_url) avatar.innerHTML = `<img src="${doctorProfile.avatar_url}" alt="Avatar">`;
-        else avatar.textContent = (doctorProfile.name || doctorProfile.email || 'U').charAt(0).toUpperCase();
-
-        const displayName = doctorProfile.name ? ('Dr(a). ' + doctorProfile.name) : 'Pediatria';
-        const crmLine = (doctorProfile.crm ? 'CRM ' + doctorProfile.crm + ' · ' : '') + (doctorProfile.specialty || 'Pediatria');
-        document.getElementById('pedTitle').textContent = displayName;
-        document.getElementById('pedSubtitle').textContent = crmLine;
-        document.getElementById('sigDoctorName').textContent = doctorProfile.name || '___________________';
-        document.getElementById('sigDoctorTitle').textContent = crmLine;
-      } catch (e) {}
-
-      setupNav();
-      setupNotifications();
-      setupPediatriaApp();
-
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await signOut(); localStorage.removeItem('session_id'); window.location.href = 'index.html';
-      });
-
-      setInterval(async () => { await checkSingleSession(); }, 10000);
-      setInterval(async () => { await checkNewMessages(); }, 8000);
-      await checkNewMessages();
-
-      await carregarUltimoPaciente();
-      setTimeout(desenharGrafico, 300);
-    })();
-
-    function setupNav() {
-      document.querySelectorAll('.wfs-nav-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const page = btn.dataset.page;
-          if (page && page !== 'pediatria') window.location.href = page + '.html';
-        });
-      });
-    }
-
-    // ================================================================
-    // NOTIFICAÇÕES (mesmo padrão usado nas demais páginas do sistema)
-    // ================================================================
-    let updateBellState = () => {};
-
-    function setupNotifications() {
-      const bell = document.getElementById('notificationBell');
-      const dropdown = document.getElementById('notificationDropdown');
-      const badge = document.getElementById('notificationBadge');
-
-      bell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) loadNotifications();
-      });
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show');
-      });
-      document.getElementById('markAllRead').addEventListener('click', async () => {
-        try { await markAllMessagesAsRead(); updateBellState(0); loadNotifications(); } catch (e) {}
-      });
-
-      async function loadNotifications() {
-        try {
-          const messages = await getUnreadMessages();
-          const list = document.getElementById('notificationList');
-          if (messages.length === 0) { list.innerHTML = '<div class="notification-empty"><div class="empty-icon">📭</div><p>Sem notificações</p></div>'; return; }
-          list.innerHTML = messages.map(msg => {
-            const sender = msg.sender || {};
-            const time = new Date(msg.created_at).toLocaleString('pt-BR', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
-            const avatar = sender.avatar_url ? `<img src="${sender.avatar_url}" alt="">` : (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-            return '<div class="notification-item unread" data-msg-id="' + msg.id + '" data-sender-id="' + msg.sender_id + '"><div class="notif-avatar">' + avatar + '</div><div class="notif-content"><div class="notif-sender">' + (sender.name || sender.email || 'Usuário') + '</div><div class="notif-text">' + escapeHtml(msg.content) + '</div><div class="notif-time">' + time + '</div></div></div>';
-          }).join('');
-          document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', async () => {
-              const msgId = item.dataset.msgId;
-              const msg = messages.find(m => m.id === msgId);
-              if (msg) { showMessageModal(msg); try { await markMessageAsRead(msgId); } catch (e) {} updateBellState(Math.max(0, parseInt(badge.textContent) - 1)); }
-            });
-          });
-        } catch (e) { console.error(e); }
-      }
-
-      updateBellState = function (count) {
-        badge.textContent = count;
-        if (count > 0) { badge.classList.remove('hidden'); bell.classList.add('has-unread'); }
-        else { badge.classList.add('hidden'); bell.classList.remove('has-unread'); }
+  if (metric === 'peso') {
+    if (ageMax === 60) {
+      wMin = 2; wMax = 24;
+      curves = {
+        M: { P3: [2.5, 13.5], P15: [3.0, 16.0], P50: [3.5, 18.5], P85: [4.0, 21.5], P97: [4.5, 24.0] },
+        F: { P3: [2.3, 13.0], P15: [2.8, 15.5], P50: [3.2, 18.0], P85: [3.7, 21.0], P97: [4.2, 23.5] }
       };
+      document.getElementById('curvaSubtitulo').textContent = '0 a 5 anos · Peso';
+    } else {
+      wMin = 10; wMax = 45;
+      curves = {
+        M: { P3: [14.1, 23.0], P15: [15.9, 26.5], P50: [18.0, 30.2], P85: [20.6, 35.0], P97: [23.2, 41.5] },
+        F: { P3: [13.6, 22.0], P15: [15.5, 26.0], P50: [17.7, 29.7], P85: [20.2, 35.4], P97: [23.1, 42.5] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '5 a 10 anos · Peso';
     }
-
-    async function checkNewMessages() {
-      try {
-        const count = await getUnreadCount();
-        updateBellState(count);
-        if (count > 0) {
-          const messages = await getUnreadMessages();
-          if (messages.length > 0 && messages[0].id !== lastMessageId) {
-            lastMessageId = messages[0].id;
-            showMessageModal(messages[0]);
-          }
-        }
-      } catch (e) {}
+  } else if (metric === 'altura') {
+    if (ageMax === 60) {
+      wMin = 45; wMax = 120;
+      curves = {
+        M: { P3: [48, 105], P15: [50, 110], P50: [52, 115], P85: [54, 119], P97: [56, 122] },
+        F: { P3: [47, 103], P15: [49, 108], P50: [51, 113], P85: [53, 117], P97: [55, 120] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '0 a 5 anos · Altura';
+    } else {
+      wMin = 100; wMax = 160;
+      curves = {
+        M: { P3: [105, 125], P15: [110, 135], P50: [115, 142], P85: [119, 150], P97: [122, 158] },
+        F: { P3: [103, 123], P15: [108, 132], P50: [113, 140], P85: [117, 148], P97: [120, 155] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '5 a 10 anos · Altura';
     }
-
-    const msgModal = document.getElementById('messageModal');
-    function showMessageModal(msg) {
-      const sender = msg.sender || {};
-      document.getElementById('modalMessageText').textContent = msg.content;
-      document.getElementById('modalSenderName').textContent = sender.name || sender.email || 'Usuário';
-      document.getElementById('modalMessageTime').textContent = new Date(msg.created_at).toLocaleString('pt-BR');
-      const avatar = document.getElementById('modalSenderAvatar');
-      if (sender.avatar_url) avatar.innerHTML = `<img src="${sender.avatar_url}" alt="">`;
-      else avatar.textContent = (sender.name || sender.email || 'U').charAt(0).toUpperCase();
-      msgModal.dataset.senderId = msg.sender_id;
-      msgModal.classList.add('active');
+  } else if (metric === 'pc') {
+    wMin = 30; wMax = 56;
+    if (ageMax === 60) {
+      curves = {
+        M: { P3: [32, 49], P15: [33, 50], P50: [34.5, 50.5], P85: [36, 51.5], P97: [37.5, 52.5] },
+        F: { P3: [31.5, 48], P15: [32.5, 49], P50: [34, 49.5], P85: [35.5, 50.5], P97: [37, 51.5] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '0 a 5 anos · Perímetro Cefálico';
+    } else {
+      curves = {
+        M: { P3: [49.5, 52.5], P15: [50.5, 53.5], P50: [51, 54.5], P85: [52, 55.5], P97: [52.5, 56.5] },
+        F: { P3: [48.5, 51.5], P15: [49.5, 52.5], P50: [50, 53.5], P85: [51, 54.5], P97: [51.5, 55.5] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '5 a 10 anos · Perímetro Cefálico';
     }
-    document.getElementById('modalMsgClose').addEventListener('click', () => msgModal.classList.remove('active'));
-    document.getElementById('modalMsgDismiss').addEventListener('click', () => msgModal.classList.remove('active'));
-    document.getElementById('modalGoToChat').addEventListener('click', () => {
-      const senderId = msgModal.dataset.senderId;
-      if (senderId) sessionStorage.setItem('chatTargetUserId', senderId);
-      window.location.href = 'chat.html';
-    });
-    msgModal.addEventListener('click', (e) => { if (e.target === msgModal) msgModal.classList.remove('active'); });
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+  } else if (metric === 'imc') {
+    wMin = 10; wMax = 22;
+    if (ageMax === 60) {
+      curves = {
+        M: { P3: [11.5, 13.5], P15: [12.5, 14.5], P50: [13.5, 15.5], P85: [14.5, 16.5], P97: [15.5, 18.0] },
+        F: { P3: [11.0, 13.0], P15: [12.0, 14.0], P50: [13.0, 15.0], P85: [14.0, 16.0], P97: [15.0, 17.5] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '0 a 5 anos · IMC';
+    } else {
+      wMin = 12; wMax = 24;
+      curves = {
+        M: { P3: [13.0, 15.0], P15: [14.0, 16.0], P50: [15.0, 17.5], P85: [16.5, 19.5], P97: [18.0, 22.0] },
+        F: { P3: [12.5, 14.5], P15: [13.5, 15.5], P50: [14.5, 17.0], P85: [16.0, 19.0], P97: [17.5, 21.5] }
+      };
+      document.getElementById('curvaSubtitulo').textContent = '5 a 10 anos · IMC';
     }
+  }
 
-    // ================================================================
-    // 3b. LIGAÇÃO DOS CONTROLES DA FERRAMENTA DE PEDIATRIA
-    // ================================================================
-    function setupPediatriaApp() {
-      document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', function () {
-          document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-          this.classList.add('active');
-          const target = this.dataset.tab;
-          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-          document.getElementById(target).classList.add('active');
-          if (target === 'tab-crescimento') setTimeout(desenharGrafico, 100);
-          if (target === 'tab-historico') carregarHistorico();
-        });
-      });
+  const x = (age) => pad.left + ((age - ageMin) / (ageMax - ageMin)) * plotW;
+  const y = (val) => pad.top + plotH - ((val - wMin) / (wMax - wMin)) * plotH;
 
-      ['pacNome', 'pacCpf', 'pacNasc', 'pacMae', 'pacSexo', 'pacPeso', 'pacAltura'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.addEventListener('change', sincronizarEstado); el.addEventListener('input', sincronizarEstado); }
-      });
-      ['anamnese', 'exameFisico', 'conduta'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', sincronizarEstado);
-      });
+  ctx.strokeStyle = '#eef3f8';
+  ctx.lineWidth = 1;
+  const steps = ageMax <= 5 ? 5 : 6;
+  for (let a = ageMin; a <= ageMax; a += Math.max(1, (ageMax-ageMin)/steps)) {
+    const xp = x(a);
+    ctx.beginPath(); ctx.moveTo(xp, pad.top); ctx.lineTo(xp, pad.top + plotH); ctx.stroke();
+    ctx.fillStyle = '#3d5366';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(ageMax<=5 ? a+'m' : Math.floor(a)+'a', xp, pad.top + plotH + 4);
+  }
+  for (let v = Math.ceil(wMin/5)*5; v <= wMax; v += 5) {
+    const yp = y(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, yp); ctx.lineTo(pad.left + plotW, yp); ctx.stroke();
+    ctx.fillStyle = '#3d5366';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(v, pad.left - 6, yp);
+  }
 
-      document.getElementById('pacNasc').addEventListener('change', calcularIdade);
-      document.getElementById('pacNasc').addEventListener('input', calcularIdade);
+  ctx.strokeStyle = '#1a2a3a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + plotH); ctx.lineTo(pad.left + plotW, pad.top + plotH); ctx.stroke();
 
-      const cidBusca = document.getElementById('cidBusca');
-      const cidSuggestions = document.getElementById('cidSuggestions');
-      cidBusca.addEventListener('input', function () {
-        const val = this.value.trim().toUpperCase();
-        if (val.length < 2) { cidSuggestions.style.display = 'none'; return; }
-        const filtered = cidList.filter(item =>
-          item.code.includes(val) || item.desc.toUpperCase().includes(val)
-        ).slice(0, 20);
-        if (filtered.length === 0) { cidSuggestions.style.display = 'none'; return; }
-        let html = '';
-        filtered.forEach(item => {
-          html += `<div class="suggestion-item" data-code="${item.code}" data-desc="${item.desc}">
-            <span class="code">${item.code}</span>
-            <span class="desc">${item.desc}</span>
-          </div>`;
-        });
-        cidSuggestions.innerHTML = html;
-        cidSuggestions.style.display = 'block';
-        cidSuggestions.querySelectorAll('.suggestion-item').forEach(el => {
-          el.addEventListener('click', function () {
-            const code = this.dataset.code;
-            const desc = this.dataset.desc;
-            document.getElementById('cidCodigo').value = code;
-            document.getElementById('cidDesc').value = desc;
-            document.getElementById('cidBusca').value = code + ' - ' + desc;
-            cidSuggestions.style.display = 'none';
-            sincronizarEstado();
-          });
-        });
-      });
-      document.addEventListener('click', function (e) {
-        if (!e.target.closest('.cid-wrapper')) cidSuggestions.style.display = 'none';
-      });
-
-      document.getElementById('pacCpf').addEventListener('input', function (e) {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 11) val = val.slice(0, 11);
-        let formatted = '';
-        if (val.length > 0) formatted = val.substring(0, 3);
-        if (val.length > 3) formatted += '.' + val.substring(3, 6);
-        if (val.length > 6) formatted += '.' + val.substring(6, 9);
-        if (val.length > 9) formatted += '-' + val.substring(9, 11);
-        e.target.value = formatted;
-      });
-
-      atualizarRelogio();
-      setInterval(atualizarRelogio, 1000);
-
-      window.addEventListener('resize', function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          if (document.querySelector('.panel.active')?.id === 'tab-crescimento') desenharGrafico();
-        }, 200);
-      });
+  const percColors = { P97: '#C63C4B', P85: '#E19A34', P50: '#2E9463', P15: '#E19A34', P3: '#C63C4B' };
+  const order = ['P97','P85','P50','P15','P3'];
+  const curveData = curves[sexo] || curves.M;
+  order.forEach(p => {
+    const [vMin, vMax] = curveData[p];
+    ctx.beginPath();
+    ctx.strokeStyle = percColors[p];
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash(p === 'P50' ? [] : [4,4]);
+    for (let a = ageMin; a <= ageMax; a += (ageMax-ageMin)/60) {
+      const t = (a - ageMin) / (ageMax - ageMin);
+      const val = vMin + (vMax - vMin) * Math.pow(t, 1.05);
+      const xp = x(a), yp = y(val);
+      if (a === ageMin) ctx.moveTo(xp, yp);
+      else ctx.lineTo(xp, yp);
     }
-
-    // ================================================================
-    // 4. FUNÇÕES AUXILIARES
-    // ================================================================
-    function sincronizarEstado() {
-      if (STATE.consultaGravada) return; // não atualiza se gravada
-      STATE.paciente.nome = document.getElementById('pacNome').value.trim();
-      STATE.paciente.cpf = document.getElementById('pacCpf').value.trim();
-      STATE.paciente.nasc = document.getElementById('pacNasc').value;
-      STATE.paciente.mae = document.getElementById('pacMae').value.trim();
-      STATE.paciente.sexo = document.getElementById('pacSexo').value;
-      STATE.paciente.peso = parseFloat(document.getElementById('pacPeso').value) || null;
-      STATE.paciente.altura = parseFloat(document.getElementById('pacAltura').value) || null;
-      STATE.anamnese = document.getElementById('anamnese').value;
-      STATE.exameFisico = document.getElementById('exameFisico').value;
-      STATE.conduta = document.getElementById('conduta').value;
-      STATE.cid = document.getElementById('cidCodigo').value.trim();
-      STATE.cidDesc = document.getElementById('cidDesc').value.trim();
-      calcularIdade();
-      desenharGrafico();
-    }
-
-    function calcularIdade() {
-      const nasc = document.getElementById('pacNasc').value;
-      const span = document.getElementById('idadeTexto');
-      if (!nasc) { span.textContent = '—'; return; }
-      const hoje = new Date();
-      const dataNasc = new Date(nasc + 'T00:00:00');
-      let idadeAnos = hoje.getFullYear() - dataNasc.getFullYear();
-      let idadeMeses = hoje.getMonth() - dataNasc.getMonth();
-      if (idadeMeses < 0) { idadeAnos--; idadeMeses += 12; }
-      const dias = hoje.getDate() - dataNasc.getDate();
-      if (dias < 0) { idadeMeses--; if (idadeMeses < 0) { idadeAnos--; idadeMeses += 12; } }
-      if (idadeAnos < 0) { span.textContent = 'Data inválida'; return; }
-      let texto = '';
-      if (idadeAnos > 0) texto += idadeAnos + 'a ';
-      if (idadeMeses > 0 || idadeAnos === 0) texto += idadeMeses + 'm';
-      if (idadeAnos === 0 && idadeMeses === 0) texto = '< 1m';
-      span.textContent = texto.trim() || '—';
-    }
-
-    function atualizarRelogio() {
-      const agora = new Date();
-      const dia = String(agora.getDate()).padStart(2, '0');
-      const mes = String(agora.getMonth() + 1).padStart(2, '0');
-      const ano = agora.getFullYear();
-      const horas = String(agora.getHours()).padStart(2, '0');
-      const minutos = String(agora.getMinutes()).padStart(2, '0');
-      document.getElementById('dataDisplay').textContent = dia + '/' + mes + '/' + ano;
-      document.getElementById('horaDisplay').textContent = horas + ':' + minutos;
-      document.getElementById('dataHoraAtual').textContent = agora.toLocaleString('pt-BR');
-    }
-
-    function toast(msg) {
-      const el = document.getElementById('toast');
-      document.getElementById('toastMsg').textContent = msg;
-      el.classList.add('show');
-      clearTimeout(el._timer);
-      el._timer = setTimeout(() => el.classList.remove('show'), 2500);
-    }
-
-    // ================================================================
-    // 5. GRAVAR CONSULTA (trava tudo)
-    // ================================================================
-    async function gravarConsulta() {
-      if (STATE.consultaGravada) {
-        toast('Esta consulta já está gravada.');
-        return;
-      }
-      if (!(await salvarConsulta(true))) {
-        toast('Não foi possível salvar antes de gravar.');
-        return;
-      }
-      STATE.consultaGravada = true;
-      const inputs = document.querySelectorAll('#tab-consulta input, #tab-consulta select, #tab-consulta textarea');
-      inputs.forEach(el => el.disabled = true);
-      document.querySelectorAll('#btnGerarReceituario, #btnGerarEspecial, #btnGerarAtestado').forEach(b => b.disabled = true);
-      document.getElementById('badgeGravado').style.display = 'inline-flex';
-      STATE.documentos.forEach(doc => doc.bloqueado = true);
-      renderDocumentos();
-      await salvarConsulta(true);
-      toast('🔒 Consulta gravada com sucesso! Nenhuma edição posterior permitida.');
-    }
-
-    // ================================================================
-    // 6. HOME, NOVO PACIENTE, NOVA CONSULTA (resetam a trava)
-    // ================================================================
-    async function goHome() {
-      if (STATE.paciente.nome.trim()) await salvarConsulta(true);
-      resetarTela();
-      toast('🏠 Tela inicial limpa. Dados salvos automaticamente.');
-    }
-
-    async function novoPaciente() {
-      if (confirm('Criar um novo paciente? Todos os dados serão apagados.')) {
-        if (STATE.paciente.nome.trim()) await salvarConsulta(true);
-        resetarTela();
-        toast('🧑‍⚕️ Novo paciente criado!');
-        document.querySelector('.nav-tab[data-tab="tab-consulta"]').click();
-      }
-    }
-
-    async function novaConsulta() {
-      if (confirm('Iniciar nova consulta para este paciente? Dados clínicos serão limpos.')) {
-        if (STATE.paciente.nome.trim()) await salvarConsulta(true);
-        document.getElementById('anamnese').value = '';
-        document.getElementById('exameFisico').value = '';
-        document.getElementById('conduta').value = '';
-        document.getElementById('cidCodigo').value = '';
-        document.getElementById('cidDesc').value = '';
-        document.getElementById('cidBusca').value = '';
-        STATE.documentos = [];
-        STATE.consultaId = null;
-        STATE.consultaGravada = false;
-        document.getElementById('documentosLista').innerHTML =
-          `<div class="empty-state"><i class="fas fa-file-alt"></i><p>Nenhum documento gerado.</p></div>`;
-        habilitarCampos(true);
-        sincronizarEstado();
-        toast('📋 Nova consulta iniciada!');
-        document.querySelector('.nav-tab[data-tab="tab-consulta"]').click();
-      }
-    }
-
-    function resetarTela() {
-      document.getElementById('pacNome').value = '';
-      document.getElementById('pacCpf').value = '';
-      document.getElementById('pacNasc').value = '';
-      document.getElementById('pacMae').value = '';
-      document.getElementById('pacSexo').value = 'M';
-      document.getElementById('pacPeso').value = '';
-      document.getElementById('pacAltura').value = '';
-      document.getElementById('anamnese').value = '';
-      document.getElementById('exameFisico').value = '';
-      document.getElementById('conduta').value = '';
-      document.getElementById('cidCodigo').value = '';
-      document.getElementById('cidDesc').value = '';
-      document.getElementById('cidBusca').value = '';
-      STATE.documentos = [];
-      STATE.consultaId = null;
-      STATE.pacienteId = null;
-      STATE.consultaGravada = false;
-      document.getElementById('documentosLista').innerHTML =
-        `<div class="empty-state"><i class="fas fa-file-alt"></i><p>Nenhum documento gerado.</p></div>`;
-      document.getElementById('badgeGravado').style.display = 'none';
-      habilitarCampos(true);
-      sincronizarEstado();
-      document.querySelector('.nav-tab[data-tab="tab-consulta"]').click();
-    }
-
-    function habilitarCampos(habilitar) {
-      const inputs = document.querySelectorAll('#tab-consulta input, #tab-consulta select, #tab-consulta textarea');
-      inputs.forEach(el => el.disabled = !habilitar);
-      document.querySelectorAll('#btnGerarReceituario, #btnGerarEspecial, #btnGerarAtestado').forEach(b => b.disabled = !habilitar);
-      document.getElementById('badgeGravado').style.display = habilitar ? 'none' : 'inline-flex';
-    }
-
-    // ================================================================
-    // 7. SALVAR CONSULTA — agora persiste no Supabase
-    // (tabelas pediatric_patients / pediatric_consultations, ver pediatria_schema.sql)
-    // ================================================================
-    async function salvarConsulta(silent = false) {
-      sincronizarEstado();
-      const nome = STATE.paciente.nome.trim();
-      if (!nome) { if (!silent) toast('⚠️ Informe o nome do paciente.'); return false; }
-      if (!STATE.paciente.nasc) { if (!silent) toast('⚠️ Informe a data de nascimento.'); return false; }
-
-      try {
-        const { pacienteId, consultaId } = await savePediatricConsultation({
-          pacienteId: STATE.pacienteId,
-          consultaId: STATE.consultaId,
-          paciente: { ...STATE.paciente },
-          anamnese: STATE.anamnese,
-          exameFisico: STATE.exameFisico,
-          conduta: STATE.conduta,
-          cid: STATE.cid,
-          cidDesc: STATE.cidDesc,
-          documentos: STATE.documentos.map(d => ({ ...d })),
-          gravada: STATE.consultaGravada
-        });
-        STATE.pacienteId = pacienteId;
-        STATE.consultaId = consultaId;
-        if (!silent) toast('✅ Consulta salva com sucesso!');
-        return true;
-      } catch (error) {
-        console.error('Erro ao salvar consulta pediátrica:', error);
-        if (!silent) toast('❌ Erro ao salvar: ' + (error.message || 'tente novamente.'));
-        return false;
-      }
-    }
-
-    // ================================================================
-    // 8. CARREGAR ÚLTIMO PACIENTE (pré-preenche o formulário)
-    // ================================================================
-    async function carregarUltimoPaciente() {
-      try {
-        const ultimo = await getLastPediatricConsultation();
-        if (ultimo) {
-          document.getElementById('pacNome').value = ultimo.nome || '';
-          document.getElementById('pacCpf').value = ultimo.cpf || '';
-          document.getElementById('pacNasc').value = ultimo.nasc || '';
-          document.getElementById('pacMae').value = ultimo.mae || '';
-          document.getElementById('pacSexo').value = ultimo.sexo || 'M';
-          document.getElementById('pacPeso').value = ultimo.peso || '';
-          document.getElementById('pacAltura').value = ultimo.altura || '';
-          STATE.pacienteId = ultimo.pacienteId || null;
-          sincronizarEstado();
-        }
-      } catch (e) {}
-    }
-
-    // ================================================================
-    // 9. CARREGAR CONSULTA DE UM PACIENTE (a partir do histórico em cache)
-    // ================================================================
-    function carregarConsulta(pacienteId, consultaId) {
-      const paciente = historicoCache.find(p => p.id === pacienteId);
-      if (!paciente) { toast('Paciente não encontrado.'); return; }
-      const consulta = paciente.consultas.find(c => c.id === consultaId);
-      if (!consulta) { toast('Consulta não encontrada.'); return; }
-
-      STATE.pacienteId = pacienteId;
-      STATE.consultaId = consulta.id;
-      STATE.consultaGravada = consulta.gravada || false;
-      document.getElementById('pacNome').value = consulta.paciente.nome || '';
-      document.getElementById('pacCpf').value = consulta.paciente.cpf || '';
-      document.getElementById('pacNasc').value = consulta.paciente.nasc || '';
-      document.getElementById('pacMae').value = consulta.paciente.mae || '';
-      document.getElementById('pacSexo').value = consulta.paciente.sexo || 'M';
-      document.getElementById('pacPeso').value = consulta.paciente.peso || '';
-      document.getElementById('pacAltura').value = consulta.paciente.altura || '';
-      document.getElementById('anamnese').value = consulta.anamnese || '';
-      document.getElementById('exameFisico').value = consulta.exameFisico || '';
-      document.getElementById('conduta').value = consulta.conduta || '';
-      document.getElementById('cidCodigo').value = consulta.cid || '';
-      document.getElementById('cidDesc').value = consulta.cidDesc || '';
-      if (consulta.cid) document.getElementById('cidBusca').value = consulta.cid + ' - ' + (consulta.cidDesc || '');
-      else document.getElementById('cidBusca').value = '';
-      STATE.documentos = consulta.documentos || [];
-      STATE.paciente = { ...consulta.paciente };
-      STATE.anamnese = consulta.anamnese || '';
-      STATE.exameFisico = consulta.exameFisico || '';
-      STATE.conduta = consulta.conduta || '';
-      STATE.cid = consulta.cid || '';
-      STATE.cidDesc = consulta.cidDesc || '';
-
-      habilitarCampos(!STATE.consultaGravada);
-      renderDocumentos();
-      sincronizarEstado();
-      toast(`📂 Consulta carregada: ${consulta.paciente.nome}`);
-      document.querySelector('.nav-tab[data-tab="tab-consulta"]').click();
-    }
-
-    // ================================================================
-    // 10. HISTÓRICO (agrupado por paciente)
-    // ================================================================
-    async function carregarHistorico() {
-      const container = document.getElementById('historicoLista');
-      try {
-        historicoCache = await getPediatricHistory();
-      } catch (error) {
-        console.error('Erro ao carregar histórico pediátrico:', error);
-        container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar histórico. Tente novamente.</p></div>`;
-        return;
-      }
-
-      if (historicoCache.length === 0) {
-        container.innerHTML =
-          `<div class="empty-state"><i class="fas fa-users"></i><p>Nenhum paciente cadastrado ainda.</p></div>`;
-        return;
-      }
-      const pacientes = [...historicoCache].sort((a, b) => a.nome.localeCompare(b.nome));
-
-      let html = '';
-      pacientes.forEach(p => {
-        const consultas = [...p.consultas].sort((a, b) => new Date(b.data) - new Date(a.data));
-        const count = consultas.length;
-        const ultima = consultas.length > 0 ? new Date(consultas[0].data).toLocaleDateString('pt-BR') : '—';
-        const peso = consultas.length > 0 && consultas[0].paciente.peso ? consultas[0].paciente.peso + ' kg' : '';
-        html += `
-          <div class="history-patient">
-            <div class="history-patient-header" onclick="toggleHistoricoPaciente(this)">
-              <div class="info">
-                <strong><i class="fas fa-user"></i> ${p.nome}</strong>
-                <span><i class="far fa-calendar"></i> Última: ${ultima}</span>
-                <span><i class="far fa-clock"></i> ${calcularIdadeFromNasc(p.nasc)}</span>
-                ${peso ? `<span>⚖️ ${peso}</span>` : ''}
-                ${p.cpf ? `<span>CPF: ${p.cpf}</span>` : ''}
-              </div>
-              <span class="badge-count">${count} consulta${count > 1 ? 's' : ''}</span>
-            </div>
-            <div class="history-consultas">
-              ${consultas.map(c => `
-                <div class="history-consulta-item" onclick="carregarConsulta('${p.id}', '${c.id}')">
-                  <div class="info">
-                    <span class="date"><i class="far fa-calendar-alt"></i> ${new Date(c.data).toLocaleDateString('pt-BR')}</span>
-                    ${c.cid ? `<span class="cid-badge">CID: ${c.cid}</span>` : ''}
-                    ${c.paciente.peso ? `<span>⚖️ ${c.paciente.peso} kg</span>` : ''}
-                    ${c.documentos ? `<span>📄 ${c.documentos.length} docs</span>` : ''}
-                    ${c.gravada ? `<span style="font-size:11px;background:#e45c5c;color:#fff;padding:2px 10px;border-radius:40px;">🔒</span>` : ''}
-                  </div>
-                  <span style="font-size:12px;color:#2a7de1;">↗</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    function toggleHistoricoPaciente(el) {
-      const consultasDiv = el.nextElementSibling;
-      consultasDiv.classList.toggle('open');
-    }
-
-    function filtrarHistorico() {
-      const termo = document.getElementById('historicoBusca').value.toLowerCase().trim();
-      const pacientes = document.querySelectorAll('.history-patient');
-      pacientes.forEach(p => {
-        const text = p.textContent.toLowerCase();
-        p.style.display = text.includes(termo) ? '' : 'none';
-      });
-    }
-
-    function calcularIdadeFromNasc(nasc) {
-      if (!nasc) return '—';
-      const hoje = new Date();
-      const dataNasc = new Date(nasc + 'T00:00:00');
-      let anos = hoje.getFullYear() - dataNasc.getFullYear();
-      let meses = hoje.getMonth() - dataNasc.getMonth();
-      if (meses < 0) { anos--; meses += 12; }
-      if (anos < 0) return '—';
-      return anos + 'a ' + meses + 'm';
-    }
-
-    // ================================================================
-    // 11. BUSCAR PACIENTE
-    // ================================================================
-    async function buscarPaciente() {
-      const nome = prompt('Digite o nome do paciente para buscar:');
-      if (!nome) return;
-      let pacientes;
-      try {
-        pacientes = await getPediatricHistory();
-      } catch (e) {
-        toast('Erro ao buscar pacientes.');
-        return;
-      }
-      const encontrados = pacientes.filter(p => p.nome.toLowerCase().includes(nome.toLowerCase()));
-      if (encontrados.length === 0) { toast('Nenhum paciente encontrado.'); return; }
-      document.querySelector('.nav-tab[data-tab="tab-historico"]').click();
-      await carregarHistorico();
-      document.getElementById('historicoBusca').value = nome;
-      filtrarHistorico();
-      toast(`🔍 ${encontrados.length} paciente(s) encontrado(s).`);
-    }
-
-    function verHistorico() {
-      document.querySelector('.nav-tab[data-tab="tab-historico"]').click();
-      carregarHistorico();
-    }
-
-    // ================================================================
-    // 12. DOCUMENTOS (MODAL) — receituário, receita especial e atestado
-    // usam agora o nome/CRM do médico logado em vez de um médico fixo.
-    // ================================================================
-    function medicoAssinatura() {
-      const nome = doctorProfile?.name || '___________________';
-      const crm = doctorProfile?.crm ? ('CRM: ' + doctorProfile.crm) : 'CRM: __________';
-      return { nome, crm };
-    }
-
-    function gerarReceituario() {
-      if (STATE.consultaGravada) { toast('Consulta gravada. Não é possível gerar novos documentos.'); return; }
-      const p = STATE.paciente;
-      const med = medicoAssinatura();
-      const modelo = `RECEITUÁRIO MÉDICO
-
-Paciente: ${p.nome || '___________________'}
-Data de Nascimento: ${p.nasc ? new Date(p.nasc).toLocaleDateString('pt-BR') : '__________'}
-CPF: ${p.cpf || '__________'}
-Nome da Mãe: ${p.mae || '__________'}
-Data: ${new Date().toLocaleDateString('pt-BR')}
-CID: ${STATE.cid || '—'} — ${STATE.cidDesc || ''}
-
-_________________________________________________
-_________________________________________________
-_________________________________________________
-
-_________________________________________________
-_________________________________________________
-_________________________________________________
-
-Assinatura: ___________________
-${med.nome} · ${med.crm}`;
-      abrirModalEditavel('Receituário', modelo, false);
-    }
-
-    function gerarReceitaEspecial() {
-      if (STATE.consultaGravada) { toast('Consulta gravada. Não é possível gerar novos documentos.'); return; }
-      const p = STATE.paciente;
-      const med = medicoAssinatura();
-      const modelo = `1ª VIA FARMÁCIA
-2ª VIA PACIENTE
-
-R E C E I T U Á R I O  C O N T R O L E  E S P E C I A L
-
-${med.nome}
-${med.crm}
-
-IDENTIFICAÇÃO DO COMPRADOR
-Nome: ${p.nome || '---'}
-IDENT: ${p.cpf || '---'}  Órgão Emissor: ---
-End: ___________________________________
-
-Ass. do Farmacêutico ______ / ______ / ______
-Cidade: ---  UF: ---  Telefone: ---
-
-Endereço da clínica: ___________________________________
-Contato: ___________________________________
-
-Paciente: ${p.nome || '___________________'}
-Data de Nascimento: ${p.nasc ? new Date(p.nasc).toLocaleDateString('pt-BR') : '__________'}
-CPF: ${p.cpf || '__________'}
-Nome da Mãe: ${p.mae || '__________'}
-Data: ${new Date().toLocaleDateString('pt-BR')}
-CID: ${STATE.cid || '—'} — ${STATE.cidDesc || ''}
-
-Medicamento: ___________________
-Dose: ___________________
-Via: ___________________
-Quantidade: ___________________
-
-_________________________________________________
-
-Validade da receita: 30 dias
-
-Assinatura: ___________________
-${med.nome} · ${med.crm}
-Carimbo e assinatura obrigatórios.`;
-      abrirModalEditavel('Receita Especial', modelo, false);
-    }
-
-    function gerarAtestado() {
-      if (STATE.consultaGravada) { toast('Consulta gravada. Não é possível gerar novos documentos.'); return; }
-      const p = STATE.paciente;
-      const med = medicoAssinatura();
-      const modelo = `Atestado Médico
-
-Atesto para os devidos fins que o paciente acima citado, necessita de 01 (UM) dia(s) de repouso para tratamento médico.
-
-Paciente: ${p.nome || '___________________'}
-Data de Nascimento: ${p.nasc ? new Date(p.nasc).toLocaleDateString('pt-BR') : '__________'}
-CPF: ${p.cpf || '__________'}
-Nome da Mãe: ${p.mae || '__________'}
-
-CID: ${STATE.cid || 'R52'}
-
-AUTORIZO A COLOCAÇÃO DO CID-10 _______
-
-Data: ${new Date().toLocaleDateString('pt-BR')}
-
-${med.nome}
-${med.crm}`;
-      abrirModalEditavel('Atestado Médico', modelo, false);
-    }
-
-    function abrirModalEditavel(titulo, conteudo, bloqueado) {
-      document.getElementById('docModalTitle').textContent = titulo;
-      const textarea = document.getElementById('docModalTextarea');
-      textarea.value = conteudo;
-      textarea.disabled = bloqueado;
-      currentDocIndex = null;
-      document.getElementById('btnSalvarDoc').style.display = bloqueado ? 'none' : 'inline-flex';
-      document.getElementById('btnGravarDoc').style.display = bloqueado ? 'none' : 'inline-flex';
-      document.getElementById('docModal').classList.add('active');
-    }
-
-    async function salvarDocumentoModal(gravar = false) {
-      if (STATE.consultaGravada) { toast('Consulta gravada. Não é possível alterar documentos.'); return; }
-      const texto = document.getElementById('docModalTextarea').value;
-      const titulo = document.getElementById('docModalTitle').textContent;
-      if (!texto.trim()) { toast('O documento não pode estar vazio.'); return; }
-
-      if (currentDocIndex !== null && STATE.documentos[currentDocIndex]) {
-        if (STATE.documentos[currentDocIndex].bloqueado) {
-          toast('Este documento já foi gravado e não pode ser alterado.');
-          return;
-        }
-        STATE.documentos[currentDocIndex].conteudo = texto;
-        STATE.documentos[currentDocIndex].data = new Date().toISOString();
-        if (gravar) STATE.documentos[currentDocIndex].bloqueado = true;
-      } else {
-        STATE.documentos.push({
-          tipo: titulo,
-          conteudo: texto,
-          data: new Date().toISOString(),
-          bloqueado: gravar,
-        });
-      }
-      renderDocumentos();
-      await salvarConsulta(true);
-      fecharModal();
-      toast(`📄 ${titulo} ${gravar ? 'gravado' : 'salvo'} com sucesso!`);
-    }
-
-    function renderDocumentos() {
-      const container = document.getElementById('documentosLista');
-      if (STATE.documentos.length === 0) {
-        container.innerHTML =
-          `<div class="empty-state"><i class="fas fa-file-alt"></i><p>Nenhum documento gerado.</p></div>`;
-        return;
-      }
-      let html = '';
-      STATE.documentos.forEach((doc, idx) => {
-        const dataStr = new Date(doc.data).toLocaleDateString('pt-BR');
-        const bloqueado = doc.bloqueado || false;
-        const icone = bloqueado ? 'fa-lock' : 'fa-edit';
-        const cor = bloqueado ? '#8aa3c0' : '#2a7de1';
-        const acao = bloqueado ? 'Visualizar' : 'Editar';
-        html += `
-          <div class="history-item" onclick="${bloqueado ? `visualizarDocumento(${idx})` : `editarDocumento(${idx})`}" style="${bloqueado ? 'opacity:0.8;' : ''}">
-            <div class="info">
-              <strong><i class="fas fa-file-pdf"></i> ${doc.tipo}</strong>
-              <span>${dataStr}</span>
-              ${bloqueado ? '<span style="font-size:11px;background:#dce6f0;padding:2px 10px;border-radius:40px;">🔒 Gravado</span>' : ''}
-            </div>
-            <span style="font-size:12px;color:${cor};cursor:pointer;">
-              <i class="fas ${icone}"></i> ${acao}
-            </span>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    function editarDocumento(idx) {
-      if (STATE.consultaGravada) { toast('Consulta gravada. Não é possível editar documentos.'); return; }
-      const doc = STATE.documentos[idx];
-      if (!doc) return;
-      if (doc.bloqueado) {
-        toast('Este documento já foi gravado e não pode ser editado.');
-        return;
-      }
-      currentDocIndex = idx;
-      document.getElementById('docModalTitle').textContent = doc.tipo;
-      const textarea = document.getElementById('docModalTextarea');
-      textarea.value = doc.conteudo;
-      textarea.disabled = false;
-      document.getElementById('btnSalvarDoc').style.display = 'inline-flex';
-      document.getElementById('btnGravarDoc').style.display = 'inline-flex';
-      document.getElementById('docModal').classList.add('active');
-    }
-
-    function visualizarDocumento(idx) {
-      const doc = STATE.documentos[idx];
-      if (!doc) return;
-      currentDocIndex = idx;
-      document.getElementById('docModalTitle').textContent = doc.tipo + ' (somente leitura)';
-      const textarea = document.getElementById('docModalTextarea');
-      textarea.value = doc.conteudo;
-      textarea.disabled = true;
-      document.getElementById('btnSalvarDoc').style.display = 'none';
-      document.getElementById('btnGravarDoc').style.display = 'none';
-      document.getElementById('docModal').classList.add('active');
-    }
-
-    function fecharModal() {
-      document.getElementById('docModal').classList.remove('active');
-      currentDocIndex = null;
-    }
-
-    function imprimirModal() {
-      const conteudo = document.getElementById('docModalTextarea').value;
-      const win = window.open('', '_blank');
-      win.document.write(`<html><head><title>Documento</title>
-        <style>
-          body { font-family: 'Courier New', monospace; padding: 40px; white-space: pre-wrap; font-size: 14px; line-height: 1.7; }
-          @media print { body { margin: 0; padding: 20px; } }
-        </style>
-      </head><body>${conteudo}</body></html>`);
-      win.document.close();
-      win.focus();
-      win.print();
-    }
-
-    // ================================================================
-    // 13. GRÁFICO DE CRESCIMENTO (individual e automático)
-    // ================================================================
-    function desenharGrafico() {
-      const canvas = document.getElementById('growthChart');
-      if (!canvas) return;
-      const w = canvas.parentElement.clientWidth - 32;
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = w * dpr;
-      canvas.height = 380 * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = '380px';
-      const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
-
-      const W = w;
-      const H = 380;
-      const pad = { top: 30, bottom: 36, left: 48, right: 24 };
-      const plotW = W - pad.left - pad.right;
-      const plotH = H - pad.top - pad.bottom;
-
-      ctx.clearRect(0, 0, W, H);
-
-      const meses = [60, 72, 84, 96, 108, 120];
-      const p3 = [14.5, 16.0, 17.5, 19.0, 20.5, 22.0];
-      const p10 = [15.5, 17.0, 18.5, 20.0, 21.5, 23.5];
-      const p25 = [16.5, 18.5, 20.0, 22.0, 24.0, 26.0];
-      const p50 = [18.5, 21.0, 23.5, 26.0, 28.5, 31.5];
-      const p75 = [20.5, 23.5, 26.5, 29.5, 32.5, 36.0];
-      const p90 = [22.0, 25.5, 29.0, 32.5, 36.0, 40.0];
-      const p97 = [23.5, 27.0, 30.5, 34.0, 37.5, 41.0];
-
-      const todasCurvas = [
-        { label: 'P3', data: p3, color: '#b0c4d9', dash: [4, 4] },
-        { label: 'P10', data: p10, color: '#8aa3c0', dash: [3, 4] },
-        { label: 'P25', data: p25, color: '#6a8aaa', dash: [2, 4] },
-        { label: 'P50', data: p50, color: '#2a7de1', dash: [] },
-        { label: 'P75', data: p75, color: '#6a8aaa', dash: [2, 4] },
-        { label: 'P90', data: p90, color: '#8aa3c0', dash: [3, 4] },
-        { label: 'P97', data: p97, color: '#b0c4d9', dash: [4, 4] },
-      ];
-
-      const minIdade = 60, maxIdade = 120;
-      const minPeso = 12, maxPeso = 44;
-      function xIdade(idade) { return pad.left + ((idade - minIdade) / (maxIdade - minIdade)) * plotW; }
-      function yPeso(peso) { return pad.top + plotH - ((peso - minPeso) / (maxPeso - minPeso)) * plotH; }
-
-      ctx.strokeStyle = '#eef3f8';
-      ctx.lineWidth = 1;
-      for (let idade = 60; idade <= 120; idade += 12) {
-        const x = xIdade(idade);
-        ctx.beginPath();
-        ctx.moveTo(x, pad.top);
-        ctx.lineTo(x, pad.top + plotH);
-        ctx.stroke();
-      }
-      for (let peso = 15; peso <= 40; peso += 5) {
-        const y = yPeso(peso);
-        ctx.beginPath();
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(pad.left + plotW, y);
-        ctx.stroke();
-      }
-
-      ctx.strokeStyle = '#1a2a3a';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(pad.left, pad.top);
-      ctx.lineTo(pad.left, pad.top + plotH);
-      ctx.lineTo(pad.left + plotW, pad.top + plotH);
-      ctx.stroke();
-
-      ctx.fillStyle = '#3d5366';
-      ctx.font = '12px "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      for (let idade = 60; idade <= 120; idade += 12) {
-        const x = xIdade(idade);
-        const anos = Math.floor(idade / 12);
-        ctx.fillText(anos + 'a', x, pad.top + plotH + 8);
-      }
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText('Idade (anos)', pad.left + plotW / 2, pad.top + plotH + 30);
-
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      for (let peso = 15; peso <= 40; peso += 5) {
-        const y = yPeso(peso);
-        ctx.fillText(peso + '', pad.left - 10, y);
-      }
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('Peso (kg)', pad.left - 30, pad.top + plotH / 2 + 4);
-
-      todasCurvas.forEach(curva => {
-        ctx.beginPath();
-        ctx.strokeStyle = curva.color;
-        ctx.lineWidth = 2;
-        ctx.setLineDash(curva.dash);
-        for (let i = 0; i < meses.length; i++) {
-          const x = xIdade(meses[i]);
-          const y = yPeso(curva.data[i]);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      });
-      ctx.setLineDash([]);
-
-      const legX = pad.left + plotW - 100;
-      let legY = pad.top + 10;
-      ctx.font = '10px "Segoe UI", sans-serif';
-      todasCurvas.forEach(curva => {
-        ctx.fillStyle = curva.color;
-        ctx.fillRect(legX, legY, 14, 2);
-        ctx.fillStyle = '#1a2a3a';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(curva.label, legX + 20, legY + 2);
-        legY += 16;
-      });
-
-      const idadeMeses = calcularIdadeMeses();
-      const peso = STATE.paciente.peso;
-      if (idadeMeses !== null && peso !== null && idadeMeses >= 60 && idadeMeses <= 120 && peso >= 12 && peso <= 44) {
-        const px = xIdade(idadeMeses);
-        const py = yPeso(peso);
-        const grad = ctx.createRadialGradient(px, py, 0, px, py, 18);
-        grad.addColorStop(0, 'rgba(42,125,225,0.25)');
-        grad.addColorStop(1, 'rgba(42,125,225,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(px, py, 18, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#2a7de1';
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(px, py, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#0b1e2e';
-        ctx.font = 'bold 11px "Segoe UI", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('● ' + peso + ' kg', px, py - 12);
-
-        document.getElementById('chartPacienteNome').textContent = STATE.paciente.nome || 'Paciente';
-        document.getElementById('chartPacientePonto').style.display = 'inline';
-      } else {
-        document.getElementById('chartPacienteNome').textContent = '—';
-        document.getElementById('chartPacientePonto').style.display = 'none';
-      }
-    }
-
-    function calcularIdadeMeses() {
-      const nasc = document.getElementById('pacNasc').value;
-      if (!nasc) return null;
-      const hoje = new Date();
-      const dataNasc = new Date(nasc + 'T00:00:00');
-      const meses = (hoje.getFullYear() - dataNasc.getFullYear()) * 12 + (hoje.getMonth() - dataNasc.getMonth());
-      const dias = hoje.getDate() - dataNasc.getDate();
-      return dias < 0 ? meses - 1 : meses;
-    }
-
-    // ================================================================
-    // 14. Expõe funções chamadas via onclick="" inline (necessário porque
-    // este script agora roda como module — module scope não vira global).
-    // ================================================================
-    Object.assign(window, {
-      goHome, novoPaciente, novaConsulta, buscarPaciente, verHistorico,
-      salvarConsulta, gravarConsulta, gerarReceituario, gerarReceitaEspecial,
-      gerarAtestado, fecharModal, salvarDocumentoModal, imprimirModal,
-      carregarHistorico, filtrarHistorico, toggleHistoricoPaciente,
-      carregarConsulta, editarDocumento, visualizarDocumento
-    });
-
-    console.log('👶 Módulo Pediatria — Way For System carregado com sucesso!');
-  </script>
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const lastVal = vMin + (vMax - vMin) * Math.pow(1, 1.05);
+    ctx.fillStyle = percColors[p];
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p, x(ageMax)+2, y(lastVal));
+  });
+
+  const valorPaciente = metric === 'peso' ? STATE.paciente.peso :
+                         metric === 'altura' ? STATE.paciente.altura :
+                         metric === 'pc' ? STATE.paciente.pc :
+                         (STATE.paciente.peso && STATE.paciente.altura) ? (STATE.paciente.peso / ((STATE.paciente.altura/100)*(STATE.paciente.altura/100))) : null;
+  if (idadeMeses !== null && valorPaciente !== null && idadeMeses >= ageMin && idadeMeses <= ageMax && valorPaciente >= wMin && valorPaciente <= wMax) {
+    const px = x(idadeMeses);
+    const py = y(valorPaciente);
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, 18);
+    grad.addColorStop(0, 'rgba(42,125,225,0.25)');
+    grad.addColorStop(1, 'rgba(42,125,225,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(px, py, 18, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#2a7de1';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0b1e2e';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('● ' + (typeof valorPaciente === 'number' ? valorPaciente.toFixed(1) : valorPaciente), px, py - 12);
+  }
+}
+
+// ================================================================
+// 16. NOVO PACIENTE, NOVA CONSULTA, BUSCAR, LIMPAR
+// ================================================================
+async function novoPaciente() {
+  if (confirm('Criar um novo paciente? Os dados atuais serão apagados.')) {
+    if (STATE.paciente.nome.trim()) await salvarConsulta(true);
+    document.getElementById('pacNome').value = '';
+    document.getElementById('pacCpf').value = '';
+    document.getElementById('pacNasc').value = '';
+    document.getElementById('pacMae').value = '';
+    document.getElementById('pacSexo').value = 'M';
+    document.getElementById('pacPeso').value = '';
+    document.getElementById('pacAltura').value = '';
+    document.getElementById('pacPC').value = '';
+    document.getElementById('anamnese').value = '';
+    document.getElementById('exameFisico').value = '';
+    document.getElementById('conduta').value = '';
+    document.getElementById('cidCodigo').value = '';
+    document.getElementById('cidDesc').value = '';
+    document.getElementById('cidBusca').value = '';
+    STATE.documentos = [];
+    STATE.consultaId = null;
+    STATE.pacienteId = null;
+    STATE.consultaGravada = false;
+    document.getElementById('documentosLista').innerHTML = '<div class="empty-state"><i class="fas fa-file-alt" style="font-size:48px;opacity:0.4;"></i><p>Nenhum documento gerado.</p></div>';
+    aplicarBloqueio(false);
+    sincronizarEstado();
+    goTo('consulta');
+    toast('🧑‍⚕️ Novo paciente criado!');
+  }
+}
+
+async function novaConsulta() {
+  const nome = document.getElementById('pacNome').value.trim();
+  if (!nome) { toast('Carregue ou informe um paciente primeiro.'); return; }
+  if (!confirm('Iniciar uma nova consulta para ' + nome + '? Os dados pessoais serão mantidos e o restante ficará em branco para preenchimento. A consulta anterior permanece salva no histórico.')) return;
+
+  if (STATE.consultaId && !STATE.consultaGravada) {
+    await salvarConsulta(true);
+  }
+
+  const pacienteIdAtual = STATE.pacienteId;
+
+  document.getElementById('pacPeso').value = '';
+  document.getElementById('pacAltura').value = '';
+  document.getElementById('pacPC').value = '';
+  document.getElementById('anamnese').value = '';
+  document.getElementById('exameFisico').value = '';
+  document.getElementById('conduta').value = '';
+  document.getElementById('cidCodigo').value = '';
+  document.getElementById('cidDesc').value = '';
+  document.getElementById('cidBusca').value = '';
+  STATE.documentos = [];
+  STATE.consultaId = null;
+  STATE.consultaGravada = false;
+  STATE.pacienteId = pacienteIdAtual;
+  document.getElementById('documentosLista').innerHTML = '<div class="empty-state"><i class="fas fa-file-alt" style="font-size:48px;opacity:0.4;"></i><p>Nenhum documento gerado.</p></div>';
+  aplicarBloqueio(false);
+  sincronizarEstado();
+  goTo('consulta');
+  toast('🆕 Nova consulta iniciada para ' + nome);
+}
+
+async function buscarPaciente() {
+  const nome = prompt('Digite o nome do paciente para buscar:');
+  if (!nome) return;
+  let pacientes;
+  try {
+    pacientes = await getPediatricHistory();
+  } catch (e) {
+    toast('Erro ao buscar pacientes.');
+    return;
+  }
+  const encontrados = pacientes.filter(p => p.nome.toLowerCase().includes(nome.toLowerCase()));
+  if (encontrados.length === 0) { toast('Nenhum paciente encontrado.'); return; }
+  goTo('historico');
+  await carregarHistorico();
+  document.getElementById('historicoBusca').value = nome;
+  filtrarHistorico();
+  toast(`🔍 ${encontrados.length} paciente(s) encontrado(s).`);
+}
+
+function limparFormulario() {
+  if (STATE.consultaGravada) { toast('Gravada.'); return; }
+  ['pacNome','pacCpf','pacNasc','pacMae','pacPeso','pacAltura','pacPC','anamnese','exameFisico','conduta','cidCodigo','cidDesc','cidBusca'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  STATE.documentos = [];
+  STATE.consultaId = null;
+  STATE.pacienteId = null;
+  document.getElementById('documentosLista').innerHTML = '<div class="empty-state"><i class="fas fa-file-alt" style="font-size:48px;opacity:0.4;"></i><p>Nenhum documento gerado.</p></div>';
+  sincronizarEstado();
+  toast('🧹 Limpo.');
+}
+
+// ================================================================
+// 17. Expõe funções chamadas via onclick="" inline (necessário porque
+// este script roda como module — module scope não vira global).
+// ================================================================
+Object.assign(window, {
+  goTo, abrirSub, novoPaciente, novaConsulta, buscarPaciente, limparFormulario,
+  salvarConsulta, gravarConsulta, gerarReceituario, gerarReceitaEspecial, gerarAtestado,
+  fecharModal, salvarDocumentoModal, imprimirModal, carregarHistorico, filtrarHistorico,
+  carregarConsulta, editarDoc, visualizarDoc, mudarMes, selecionarDia,
+  abrirModalAgendamento, fecharAgendaModal, salvarAgendamento, cancelarAgendamento,
+  onAgPacienteChange, gerarRelatorio, limparRelatorio, renderCalendar, desenharGrafico
+});
+
+console.log('👶 Way For System · Pediatria carregada!');
+</script>
 </body>
 </html>
