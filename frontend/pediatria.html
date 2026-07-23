@@ -7,6 +7,8 @@
   <title>👶 Way For System — Pediatria</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -590,6 +592,64 @@
       .panel { display: block !important; }
       .card { border: 1px solid #ccc; }
     }
+
+    /* ===== CID — busca completa (mesmo motor de busca da página CID) ===== */
+    .cid-tag {
+      padding: 8px 14px; background: #eef6ff; color: #1f68c0; border: 1px solid #c8ddf5;
+      border-radius: 40px; font-size: 12.5px; cursor: pointer; transition: 0.15s; font-weight: 500;
+    }
+    .cid-tag:hover { background: #2a7de1; color: #fff; border-color: #2a7de1; }
+    .cid-result-card {
+      background: #fafcfe; border: 1px solid #e0e7ef; border-radius: 16px; padding: 16px 18px;
+      margin-bottom: 12px; cursor: pointer; transition: 0.2s;
+    }
+    .cid-result-card:hover { border-color: #2a7de1; box-shadow: 0 4px 16px rgba(42,125,225,0.08); }
+    .cid-result-card.expanded { border-color: #2a7de1; box-shadow: 0 4px 16px rgba(42,125,225,0.12); }
+    .cid-result-header { display: flex; align-items: flex-start; gap: 12px; }
+    .cid-code-badge {
+      background: linear-gradient(135deg, #2a7de1, #1d4ed8); color: #fff; padding: 5px 12px;
+      border-radius: 10px; font-weight: 700; font-size: 13px; flex-shrink: 0; min-width: 56px; text-align: center;
+    }
+    .cid-result-info { flex: 1; min-width: 0; }
+    .cid-result-name { font-weight: 700; color: #0b1e2e; font-size: 15px; margin-bottom: 2px; }
+    .cid-result-desc { color: #5d7184; font-size: 12.5px; line-height: 1.5; }
+    .cid-symptom-chip { background: #fff7e6; color: #92400e; padding: 3px 10px; border-radius: 40px; font-size: 11px; font-weight: 500; }
+    .cid-symptoms-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-left: 68px; }
+    .cid-result-details { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid #eef3f8; }
+    .cid-result-details.show { display: block; }
+    .cid-prescription-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px; }
+    .cid-prescription-box h4 { color: #166534; font-size: 13.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .cid-prescricao-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+    .cid-prescricao-item:last-child { margin-bottom: 0; }
+    .cid-med-nome { font-weight: 700; color: #1a2a3a; }
+    .cid-med-dosagem { color: #475569; }
+    .cid-med-posologia { color: #334155; font-size: 12.5px; margin-top: 4px; line-height: 1.5; }
+    .cid-med-meta { font-size: 11px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .cid-med-meta span { background: #f1f5f9; padding: 2px 9px; border-radius: 40px; }
+    .cid-prescription-warning { margin-top: 12px; padding: 10px 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; font-size: 11.5px; color: #92400e; font-style: italic; line-height: 1.5; }
+    .cid-result-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .cid-search-empty { text-align: center; padding: 30px 16px; color: #8aa3c0; }
+
+    .cid-pdf-modal-body { padding: 0; max-height: 60vh; overflow-y: auto; }
+    .cid-pdf-content { background: #fff; padding: 24px; }
+    .cid-pdf-content .pdf-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; }
+    .cid-pdf-content .pdf-header h2 { color: #1a2a3a; font-size: 22px; margin-bottom: 4px; }
+    .cid-pdf-content .pdf-header p { color: #94a3b8; font-size: 13px; }
+    .cid-pdf-content .pdf-diagnostico { background: #eff6ff; padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+    .cid-pdf-content .pdf-diagnostico h3 { color: #2a7de1; font-size: 17px; margin-bottom: 6px; }
+    .cid-pdf-content .pdf-diagnostico p { color: #334155; font-size: 13.5px; line-height: 1.5; }
+    .cid-pdf-content .pdf-sintomas-label { font-size: 11px; color: #64748b; font-weight: 600; margin: 10px 0 6px; }
+    .cid-pdf-content .pdf-sintomas { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cid-pdf-content .pdf-sintomas span { background: #f1f5f9; padding: 3px 12px; border-radius: 9999px; font-size: 11px; color: #64748b; }
+    .cid-pdf-content .pdf-prescricao h4 { color: #1a2a3a; font-size: 15.5px; margin-bottom: 12px; font-weight: 700; }
+    .cid-pdf-content .pdf-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+    .cid-pdf-content .pdf-item .pdf-med-nome { font-weight: 700; color: #1a2a3a; font-size: 14px; }
+    .cid-pdf-content .pdf-item .pdf-med-dosagem { color: #475569; font-size: 13.5px; }
+    .cid-pdf-content .pdf-item .pdf-med-posologia { color: #334155; font-size: 12.5px; margin-top: 4px; line-height: 1.5; }
+    .cid-pdf-content .pdf-item .pdf-med-meta { font-size: 11px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .cid-pdf-content .pdf-item .pdf-med-meta span { background: #f1f5f9; padding: 3px 10px; border-radius: 9999px; }
+    .cid-pdf-content .pdf-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11.5px; color: #92400e; font-style: italic; line-height: 1.5; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 14px; }
+    .cid-pdf-content .pdf-system-footer { margin-top: 14px; text-align: center; font-size: 10.5px; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -762,16 +822,36 @@
         <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-heartbeat"></i> Exame Físico</div></div><textarea class="form-control" id="exameFisico" rows="3" placeholder="Sinais vitais, achados..."></textarea></div>
         <div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-clipboard-list"></i> Conduta</div></div><textarea class="form-control" id="conduta" rows="3" placeholder="Orientações, prescrições..."></textarea></div>
         <div class="card">
-          <div class="card-header"><div class="card-title"><i class="fas fa-code"></i> CID</div></div>
-          <div class="form-row" style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:160px;position:relative;">
-              <label style="font-size:13px;font-weight:600;color:#3d5366;">Código / Descrição</label>
-              <input class="form-control" id="cidBusca" placeholder="Digite o CID..." autocomplete="off" />
-              <div id="cidSuggestions" style="display:none;background:#fff;border:2px solid #e0e7ef;border-top:none;border-radius:0 0 14px 14px;max-height:200px;overflow-y:auto;position:absolute;width:100%;z-index:10;box-shadow:0 12px 28px rgba(0,0,0,0.08);"></div>
-            </div>
-            <div style="flex:1;min-width:140px;"><label style="font-size:13px;font-weight:600;color:#3d5366;">Código</label><input class="form-control" id="cidCodigo" readonly /></div>
-            <div style="flex:2;min-width:200px;"><label style="font-size:13px;font-weight:600;color:#3d5366;">Descrição</label><input class="form-control" id="cidDesc" readonly /></div>
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-code"></i> CID — Diagnóstico</div>
+            <span class="card-sub">Busque por sintoma, nome da doença ou código CID</span>
           </div>
+
+          <div id="cidSelectedBox" style="display:none; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#e8f0fe; border:1px solid #c8ddf5; border-radius:14px; padding:12px 16px; margin-bottom:16px;">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:#1f68c0; text-transform:uppercase; letter-spacing:0.4px;">CID desta consulta</div>
+              <div style="font-weight:700; color:#0b1e2e; margin-top:2px;" id="cidSelectedLabel">—</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" id="cidClearBtn"><i class="fas fa-times"></i> Remover</button>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <input class="form-control" id="cidBusca" placeholder="Ex: dor de cabeça, febre, tosse, diarreia, A00..." autocomplete="off" style="flex:1; min-width:220px;" />
+            <button type="button" class="btn btn-primary" id="cidSearchBtn"><i class="fas fa-search"></i> Buscar</button>
+          </div>
+
+          <div style="font-size:12px; font-weight:600; color:#5c7480; margin-bottom:8px;">Sintomas comuns:</div>
+          <div id="cidSymptomTags" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
+
+          <div id="cidResultsContainer"></div>
+
+          <div id="cidPopularSection" style="margin-top:8px;">
+            <div style="font-size:13px; font-weight:600; color:#3d5366; margin-bottom:10px;"><i class="fas fa-list" style="color:#2a7de1;"></i> CIDs mais consultados</div>
+            <div id="cidPopularTags" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+
+          <input type="hidden" id="cidCodigo" />
+          <input type="hidden" id="cidDesc" />
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
           <button class="btn btn-warning" onclick="gerarReceituario()"><i class="fas fa-prescription-bottle-alt"></i> Gerar Receituário</button>
@@ -942,6 +1022,18 @@
   </div>
 </div>
 
+<!-- Pré-visualização de PDF do CID selecionado (mesmo motor da página CID) -->
+<div id="cidPdfModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:700px;">
+    <div class="modal-header"><h2><i class="fas fa-file-pdf"></i> Pré-visualização do PDF</h2><button class="modal-close" id="cidPdfModalClose">&times;</button></div>
+    <div class="cid-pdf-modal-body" id="cidPdfModalBody"><div id="cidPdfPreviewContainer" class="cid-pdf-content"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cidPdfModalDismiss">Fechar</button>
+      <button class="btn btn-primary" id="cidPdfDownloadBtn"><i class="fas fa-download"></i> Baixar PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- Notificações de chat (mesmo padrão das outras páginas do sistema) -->
 <div id="messageModal" class="modal-overlay">
   <div class="modal-content">
@@ -969,15 +1061,94 @@ import {
   getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, logAccess,
   getPediatricHistory, savePediatricConsultation, getLastPediatricConsultation,
   getPediatricAppointments, createPediatricAppointment, deletePediatricAppointment,
-  hasPediatricAccess
+  hasPediatricAccess, searchCID, getCID
 } from './supabase-config.js';
 
 // ================================================================
-// 1. BASE DE CIDs (busca rápida do formulário de consulta)
+// 1. CID — mesmo motor de busca e base de dados da página CID
+// (searchCID/getCID em supabase-config.js), incluindo a mesma lista de
+// sintomas comuns, CIDs mais consultados e prescrições detalhadas.
 // ================================================================
-const cidList = [
-  {code:'A00', desc:'Cólera'}, {code:'A01', desc:'Febre tifóide'}, {code:'A02', desc:'Salmonelose'}, {code:'A03', desc:'Shiguelose'}, {code:'A04', desc:'Infecções intestinais bacterianas'}, {code:'A05', desc:'Intoxicação alimentar bacteriana'}, {code:'A06', desc:'Amebíase'}, {code:'A07', desc:'Protozooses intestinais'}, {code:'A08', desc:'Infecções intestinais virais'}, {code:'A09', desc:'Gastroenterite infecciosa'}, {code:'A15', desc:'Tuberculose respiratória'}, {code:'A16', desc:'Tuberculose das vias respiratórias'}, {code:'A17', desc:'Tuberculose do sistema nervoso'}, {code:'A18', desc:'Tuberculose de outros órgãos'}, {code:'A19', desc:'Tuberculose miliar'}, {code:'A20', desc:'Peste'}, {code:'A21', desc:'Tularemia'}, {code:'A22', desc:'Carbúnculo'}, {code:'A23', desc:'Brucelose'}, {code:'A24', desc:'Mormo'}, {code:'A25', desc:'Febre por mordedura de rato'}, {code:'A26', desc:'Erisipeloide'}, {code:'A27', desc:'Leptospirose'}, {code:'A28', desc:'Doenças bacterianas zoonóticas'}, {code:'A30', desc:'Hanseníase'}, {code:'A31', desc:'Micobacterioses'}, {code:'A32', desc:'Listeriose'}, {code:'A33', desc:'Tétano neonatal'}, {code:'A34', desc:'Tétano obstétrico'}, {code:'A35', desc:'Tétano'}, {code:'A36', desc:'Difteria'}, {code:'A37', desc:'Coqueluche'}, {code:'A38', desc:'Escarlatina'}, {code:'A39', desc:'Meningoccemia'}, {code:'A40', desc:'Septicemia estreptocócica'}, {code:'A41', desc:'Septicemia'}, {code:'A42', desc:'Actinomicose'}, {code:'A43', desc:'Nocardiose'}, {code:'A44', desc:'Bartonelose'}, {code:'A46', desc:'Erisipela'}, {code:'A48', desc:'Doenças bacterianas'}, {code:'A49', desc:'Infecção bacteriana não especificada'}, {code:'A50', desc:'Sífilis congênita'}, {code:'A51', desc:'Sífilis precoce'}, {code:'A52', desc:'Sífilis tardia'}, {code:'A53', desc:'Sífilis'}, {code:'A54', desc:'Gonorreia'}, {code:'A55', desc:'Linfogranuloma venéreo'}, {code:'A56', desc:'IST por clamídia'}, {code:'A57', desc:'Cancro mole'}, {code:'A58', desc:'Granuloma inguinal'}, {code:'A59', desc:'Tricomoníase'}, {code:'A60', desc:'Herpes genital'}, {code:'A63', desc:'IST'}, {code:'A64', desc:'IST não especificada'}, {code:'A65', desc:'Sífilis não venérea'}, {code:'A66', desc:'Bouba'}, {code:'A67', desc:'Pinta'}, {code:'A68', desc:'Febre recorrente'}, {code:'A69', desc:'Espiroquetoses'}, {code:'A70', desc:'Infecção por clamídia'}, {code:'A71', desc:'Tracoma'}, {code:'A74', desc:'Clamidiose'}, {code:'A75', desc:'Tifo'}, {code:'A77', desc:'Febre maculosa'}, {code:'A78', desc:'Febre Q'}, {code:'A79', desc:'Riquetsioses'}, {code:'A80', desc:'Poliomielite'}, {code:'A81', desc:'Infecções por príons'}, {code:'A82', desc:'Raiva'}, {code:'A83', desc:'Encefalite viral'}, {code:'A84', desc:'Encefalite por carrapato'}, {code:'A85', desc:'Encefalite viral'}, {code:'A86', desc:'Encefalite viral não especificada'}, {code:'A87', desc:'Meningite viral'}, {code:'A88', desc:'Infecções virais do SNC'}, {code:'A89', desc:'Infecção viral do SNC'}, {code:'A90', desc:'Dengue'}, {code:'A91', desc:'Febre hemorrágica por dengue'}, {code:'A92', desc:'Febre viral transmitida por mosquito'}, {code:'A93', desc:'Febre viral transmitida por artrópodes'}, {code:'A94', desc:'Febre viral por artrópodes'}, {code:'A95', desc:'Febre amarela'}, {code:'A96', desc:'Febres hemorrágicas virais'}, {code:'A98', desc:'Febres hemorrágicas virais'}, {code:'A99', desc:'Febres hemorrágicas virais'}, {code:'B00', desc:'Herpesvírus'}, {code:'B01', desc:'Varicela'}, {code:'B02', desc:'Herpes zoster'}, {code:'B03', desc:'Varíola'}, {code:'B04', desc:'Varíola dos macacos'}, {code:'B05', desc:'Sarampo'}, {code:'B06', desc:'Rubéola'}, {code:'B07', desc:'Verrugas virais'}, {code:'B08', desc:'Infecções virais'}, {code:'B09', desc:'Infecção viral não especificada'}, {code:'B15', desc:'Hepatite A'}, {code:'B16', desc:'Hepatite B'}, {code:'B17', desc:'Hepatite viral'}, {code:'B18', desc:'Hepatite crônica'}, {code:'B19', desc:'Hepatite viral não especificada'}, {code:'B20', desc:'HIV'}, {code:'B21', desc:'HIV'}, {code:'B22', desc:'HIV'}, {code:'B23', desc:'HIV'}, {code:'B24', desc:'HIV'}, {code:'B25', desc:'Citomegalovírus'}, {code:'B26', desc:'Caxumba'}, {code:'B27', desc:'Mononucleose'}, {code:'B30', desc:'Conjuntivite viral'}, {code:'B33', desc:'Viroses'}, {code:'B34', desc:'Infecção viral'}, {code:'B35', desc:'Dermatofitose'}, {code:'B36', desc:'Micoses superficiais'}, {code:'B37', desc:'Candidíase'}, {code:'B38', desc:'Coccidioidomicose'}, {code:'B39', desc:'Histoplasmose'}, {code:'B40', desc:'Blastomicose'}, {code:'B41', desc:'Paracoccidioidomicose'}, {code:'B42', desc:'Esporotricose'}, {code:'B43', desc:'Cromomicose'}, {code:'B44', desc:'Aspergilose'}, {code:'B45', desc:'Criptococose'}, {code:'B46', desc:'Zigomicose'}, {code:'B47', desc:'Micetoma'}, {code:'B48', desc:'Micoses'}, {code:'B49', desc:'Micose não especificada'}, {code:'B50', desc:'Malária por P. falciparum'}, {code:'B51', desc:'Malária por P. vivax'}, {code:'B52', desc:'Malária por P. malariae'}, {code:'B53', desc:'Malária'}, {code:'B54', desc:'Malária não especificada'}, {code:'B55', desc:'Leishmaniose'}, {code:'B56', desc:'Tripanossomíase'}, {code:'B57', desc:'Doença de Chagas'}, {code:'B58', desc:'Toxoplasmose'}, {code:'B59', desc:'Pneumocistose'}, {code:'B60', desc:'Protozooses'}, {code:'B64', desc:'Protozoose'}, {code:'B65', desc:'Esquistossomose'}, {code:'B66', desc:'Trematódeos'}, {code:'B67', desc:'Equinococose'}, {code:'B68', desc:'Teníase'}, {code:'B69', desc:'Cisticercose'}, {code:'B70', desc:'Difilobotríase'}, {code:'B71', desc:'Cestóides'}, {code:'B72', desc:'Dracontíase'}, {code:'B73', desc:'Oncocercose'}, {code:'B74', desc:'Filariose'}, {code:'B75', desc:'Triquinelose'}, {code:'B76', desc:'Ancilostomíase'}, {code:'B77', desc:'Ascaridíase'}, {code:'B78', desc:'Estrongiloidíase'}, {code:'B79', desc:'Tricuríase'}, {code:'B80', desc:'Oxiuríase'}, {code:'B81', desc:'Helmintíases'}, {code:'B82', desc:'Parasitose intestinal'}, {code:'B83', desc:'Helmintíases'}, {code:'B85', desc:'Pediculose'}, {code:'B86', desc:'Escabiose'}, {code:'B87', desc:'Miíase'}, {code:'B88', desc:'Infestações'}, {code:'B89', desc:'Infestação parasitária'}, {code:'B90', desc:'Seqüelas de tuberculose'}, {code:'B91', desc:'Seqüelas de poliomielite'}, {code:'B92', desc:'Seqüelas de hanseníase'}, {code:'B94', desc:'Seqüelas de doenças infecciosas'}, {code:'B95', desc:'Estreptococos'}, {code:'B96', desc:'Bactérias'}, {code:'B97', desc:'Vírus'}, {code:'B98', desc:'Agentes infecciosos'}, {code:'B99', desc:'Doença infecciosa não especificada'}
+const cidSymptomTagsList = [
+  { term: 'dor de cabeca', label: '🤕 Dor de cabeça' },
+  { term: 'febre', label: '🌡️ Febre' },
+  { term: 'tosse', label: '🤧 Tosse' },
+  { term: 'diarreia', label: '💩 Diarreia' },
+  { term: 'dor de garganta', label: '🫁 Dor garganta' },
+  { term: 'dor no peito', label: '❤️ Dor no peito' },
+  { term: 'falta de ar', label: '😮‍💨 Falta de ar' },
+  { term: 'dor abdominal', label: '🤢 Dor barriga' },
+  { term: 'prurido', label: '🤲 Coceira' },
+  { term: 'dor articular', label: '🦵 Dor articulações' }
 ];
+
+const cidPopularList = [
+  { code: 'A09', label: 'Gastroenterite' },
+  { code: 'E11', label: 'Diabetes T2' },
+  { code: 'I10', label: 'Hipertensão' },
+  { code: 'J06', label: 'Resfriado' },
+  { code: 'J18', label: 'Pneumonia' },
+  { code: 'F32', label: 'Depressão' },
+  { code: 'K29', label: 'Gastrite' },
+  { code: 'M79', label: 'Dores musculares' },
+  { code: 'G43', label: 'Enxaqueca' },
+  { code: 'R52', label: 'Dor' }
+];
+
+const prescricaoDetalhada = {
+  'A09': [
+    { nome: 'Soro de Reidratação Oral (SRO)', dosagem: '1 FA', posologia: 'Tomar pequenos volumes frequentemente após cada evacuação diarreica.', via: 'VO', duracao: 'até cessação da diarreia' },
+    { nome: 'Loperamida', dosagem: '2 mg', posologia: 'Tomar 2 comprimidos (4 mg) inicialmente, seguido de 1 comprimido (2 mg) após cada evacuação diarreica. Máximo: 8 mg/dia.', via: 'VO', duracao: 'até cessação da diarreia (máx. 2 dias)' },
+    { nome: 'Saccharomyces boulardii', dosagem: '200 mg', posologia: 'Tomar 1 cápsula VO a cada 12 horas.', via: 'VO', duracao: '5 dias' },
+    { nome: 'Sulfato de Zinco', dosagem: '20 mg', posologia: 'Tomar 1 comprimido VO 1 vez ao dia.', via: 'VO', duracao: '10 dias' }
+  ],
+  'I20': [
+    { nome: 'Nitroglicerina', dosagem: '0,5 mg', posologia: 'Tomar 1 comprimido sublingual a cada 5 min (máx 3 doses).', via: 'SL', duracao: 'crise' },
+    { nome: 'AAS', dosagem: '100 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Atorvastatina', dosagem: '40 mg', posologia: 'Tomar 1 comprimido 1x/noite.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Metoprolol', dosagem: '50 mg', posologia: 'Tomar 1 comprimido 2x ao dia.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Clopidogrel', dosagem: '75 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Cinecoronariografia', dosagem: '', posologia: 'Se alto risco ou angina instável.', via: '', duracao: '' }
+  ],
+  'E11': [
+    { nome: 'Metformina', dosagem: '500 mg', posologia: 'Tomar 1 comprimido 2x ao dia, após as refeições.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Glibenclamida', dosagem: '5 mg', posologia: 'Tomar 1 comprimido 1x ao dia, pela manhã.', via: 'VO', duracao: 'contínuo' }
+  ],
+  'I10': [
+    { nome: 'Losartana', dosagem: '50 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Hidroclorotiazida', dosagem: '25 mg', posologia: 'Tomar 1 comprimido 1x ao dia, pela manhã.', via: 'VO', duracao: 'contínuo' }
+  ],
+  'J06': [
+    { nome: 'Paracetamol', dosagem: '500 mg', posologia: 'Tomar 1 comprimido a cada 6 horas, se dor ou febre.', via: 'VO', duracao: 'até 5 dias' },
+    { nome: 'Loratadina', dosagem: '10 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'até 10 dias' }
+  ],
+  'J18': [
+    { nome: 'Azitromicina', dosagem: '500 mg', posologia: 'Tomar 1 comprimido 1x ao dia por 5 dias.', via: 'VO', duracao: '5 dias' },
+    { nome: 'Ambroxol', dosagem: '30 mg', posologia: 'Tomar 1 comprimido 3x ao dia.', via: 'VO', duracao: '7 dias' }
+  ],
+  'F32': [
+    { nome: 'Sertralina', dosagem: '50 mg', posologia: 'Tomar 1 comprimido 1x ao dia.', via: 'VO', duracao: 'contínuo' },
+    { nome: 'Clonazepam', dosagem: '0,5 mg', posologia: 'Tomar 1 comprimido 2x ao dia, se necessário.', via: 'VO', duracao: 'até 4 semanas' }
+  ],
+  'K29': [
+    { nome: 'Omeprazol', dosagem: '20 mg', posologia: 'Tomar 1 cápsula em jejum, 1x ao dia por 14 dias.', via: 'VO', duracao: '14 dias' },
+    { nome: 'Domperidona', dosagem: '10 mg', posologia: 'Tomar 1 comprimido 3x ao dia, antes das refeições.', via: 'VO', duracao: '7 dias' }
+  ],
+  'M79': [
+    { nome: 'Diclofenaco', dosagem: '50 mg', posologia: 'Tomar 1 comprimido 3x ao dia, após as refeições.', via: 'VO', duracao: '5 dias' },
+    { nome: 'Capsaicina tópica', dosagem: '0,025%', posologia: 'Aplicar sobre a área dolorida 3x ao dia.', via: 'TOP', duracao: 'até melhora' }
+  ],
+  'G43': [
+    { nome: 'Sumatriptano', dosagem: '50 mg', posologia: 'Tomar 1 comprimido no início da crise; pode repetir após 2h se necessário (máx 200mg/dia).', via: 'VO', duracao: 'aguda' },
+    { nome: 'Propranolol', dosagem: '40 mg', posologia: 'Tomar 1 comprimido 2x ao dia (profilaxia).', via: 'VO', duracao: 'contínuo' }
+  ],
+  'R52': [
+    { nome: 'Dipirona', dosagem: '500 mg', posologia: 'Tomar 1 comprimido a cada 6 horas, se dor.', via: 'VO', duracao: 'até 3 dias' },
+    { nome: 'Ibuprofeno', dosagem: '400 mg', posologia: 'Tomar 1 comprimido a cada 8 horas, se dor.', via: 'VO', duracao: 'até 5 dias' }
+  ]
+};
+
+function getPrescricaoDetalhada(code) { return prescricaoDetalhada[code] || null; }
 
 // ================================================================
 // 2. ESTADO GLOBAL
@@ -1053,35 +1224,13 @@ let lastMessageId = null;
 })();
 
 function setupFormListeners() {
-  document.getElementById('cidBusca').addEventListener('input', function () {
-    const val = this.value.trim().toUpperCase();
-    const sug = document.getElementById('cidSuggestions');
-    if (val.length < 1) { sug.style.display = 'none'; return; }
-    const filtered = cidList.filter(item => item.code.includes(val) || item.desc.toUpperCase().includes(val)).slice(0, 15);
-    if (filtered.length === 0) { sug.style.display = 'none'; return; }
-    let html = '';
-    filtered.forEach(item => {
-      html += `<div class="suggestion-item" style="padding:8px 14px;cursor:pointer;border-bottom:1px solid #f0f5fa;" data-code="${item.code}" data-desc="${item.desc}">
-        <span style="font-weight:700;color:#2a7de1;">${item.code}</span> <span style="color:#3d5366;">${item.desc}</span>
-      </div>`;
-    });
-    sug.innerHTML = html;
-    sug.style.display = 'block';
-    sug.querySelectorAll('.suggestion-item').forEach(el => {
-      el.addEventListener('click', function () {
-        document.getElementById('cidCodigo').value = this.dataset.code;
-        document.getElementById('cidDesc').value = this.dataset.desc;
-        document.getElementById('cidBusca').value = this.dataset.code + ' - ' + this.dataset.desc;
-        sug.style.display = 'none';
-        sincronizarEstado();
-      });
-    });
+  renderCidTags();
+  document.getElementById('cidSearchBtn').addEventListener('click', doCidSearch);
+  document.getElementById('cidBusca').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); doCidSearch(); }
   });
-  document.addEventListener('click', function (e) {
-    if (!e.target.closest('.cid-wrapper') && !e.target.closest('#cidBusca')) {
-      document.getElementById('cidSuggestions').style.display = 'none';
-    }
-  });
+  document.getElementById('cidClearBtn').addEventListener('click', limparCidSelecionado);
+
   ['pacNome', 'pacCpf', 'pacNasc', 'pacMae', 'pacSexo', 'pacPeso', 'pacAltura', 'pacPC'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('change', sincronizarEstado); el.addEventListener('input', sincronizarEstado); }
@@ -1289,6 +1438,276 @@ function escapeHtml(str) {
 }
 
 // ================================================================
+// 7b. CID — busca, seleção para a consulta, nota e PDF
+// (mesmo motor/base de dados usado na página CID: searchCID/getCID)
+// ================================================================
+function renderCidTags() {
+  document.getElementById('cidSymptomTags').innerHTML = cidSymptomTagsList
+    .map(t => `<span class="cid-tag" data-term="${escapeHtml(t.term)}">${t.label}</span>`).join('');
+  document.querySelectorAll('#cidSymptomTags .cid-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      document.getElementById('cidBusca').value = tag.dataset.term;
+      doCidSearch();
+    });
+  });
+
+  document.getElementById('cidPopularTags').innerHTML = cidPopularList
+    .map(p => `<span class="cid-tag" data-code="${p.code}">${p.code} — ${escapeHtml(p.label)}</span>`).join('');
+  document.querySelectorAll('#cidPopularTags .cid-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      document.getElementById('cidBusca').value = tag.dataset.code;
+      doCidSearch();
+    });
+  });
+}
+
+function doCidSearch() {
+  const query = document.getElementById('cidBusca').value;
+  const container = document.getElementById('cidResultsContainer');
+  if (!query.trim()) {
+    container.innerHTML = '';
+    document.getElementById('cidPopularSection').style.display = 'block';
+    return;
+  }
+  document.getElementById('cidPopularSection').style.display = 'none';
+  renderCidResults(searchCID(query));
+}
+
+function renderCidResults(results) {
+  const container = document.getElementById('cidResultsContainer');
+  if (results.length === 0) {
+    container.innerHTML = `<div class="cid-search-empty"><i class="fas fa-search" style="font-size:36px;opacity:0.4;"></i><p style="margin-top:10px;">Nenhum resultado encontrado. Tente outro termo, sintoma ou código.</p></div>`;
+    return;
+  }
+  container.innerHTML = results.map((r, index) => {
+    const symptomsHtml = (r.symptoms || []).slice(0, 4).map(s => `<span class="cid-symptom-chip">${escapeHtml(s)}</span>`).join('');
+    const prescDetalhada = getPrescricaoDetalhada(r.code);
+    let prescHtml = '';
+    if (prescDetalhada) {
+      prescHtml = prescDetalhada.map((item, idx) => `
+        <div class="cid-prescricao-item">
+          <div><span class="cid-med-nome">${idx+1}. ${escapeHtml(item.nome)}</span>${item.dosagem ? ` <span class="cid-med-dosagem">— ${escapeHtml(item.dosagem)}</span>` : ''}</div>
+          ${item.posologia ? `<div class="cid-med-posologia">${escapeHtml(item.posologia)}</div>` : ''}
+          <div class="cid-med-meta">${item.via ? `<span>Via: ${escapeHtml(item.via)}</span>` : ''}${item.duracao ? `<span>Duração: ${escapeHtml(item.duracao)}</span>` : ''}</div>
+        </div>
+      `).join('');
+    } else {
+      prescHtml = (r.prescriptions || []).map(p => {
+        const clean = p.replace(/^\d+\.\s*/, '');
+        return `<div class="cid-prescricao-item"><span class="cid-med-nome">${escapeHtml(clean)}</span></div>`;
+      }).join('');
+    }
+    const nameEsc = escapeHtml(r.name).replace(/'/g, "\\'");
+    return `
+      <div class="cid-result-card" data-index="${index}">
+        <div class="cid-result-header">
+          <div class="cid-code-badge">${r.code}</div>
+          <div class="cid-result-info">
+            <div class="cid-result-name">${escapeHtml(r.name)}</div>
+            <div class="cid-result-desc">${escapeHtml(r.desc)}</div>
+          </div>
+        </div>
+        <div class="cid-symptoms-row">${symptomsHtml}</div>
+        <div class="cid-result-details" id="cidDetails-${index}">
+          <div class="cid-prescription-box">
+            <h4><i class="fas fa-pills"></i> Prescrição sugerida</h4>
+            ${prescHtml}
+            <div class="cid-prescription-warning"><i class="fas fa-exclamation-triangle"></i> Sugestão automatizada para auxílio clínico. Sempre valide a prescrição e considere contraindicações do paciente.</div>
+          </div>
+          <div class="cid-result-actions">
+            <button type="button" class="btn btn-success btn-sm" onclick="selecionarCidConsulta('${r.code}', '${nameEsc}')"><i class="fas fa-check"></i> Usar nesta consulta</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="criarNotaDoCid('${r.code}', '${nameEsc}')"><i class="fas fa-sticky-note"></i> Criar Nota</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="gerarPdfDoCid('${r.code}', '${nameEsc}')"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.cid-result-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn')) return;
+      const index = card.dataset.index;
+      const details = document.getElementById('cidDetails-' + index);
+      const isOpen = details.classList.contains('show');
+      document.querySelectorAll('.cid-result-details').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('.cid-result-card').forEach(c => c.classList.remove('expanded'));
+      if (!isOpen) { details.classList.add('show'); card.classList.add('expanded'); }
+    });
+  });
+}
+
+function showCidSelecionado(code, desc) {
+  if (!code) { limparCidSelecionado(); return; }
+  document.getElementById('cidCodigo').value = code;
+  document.getElementById('cidDesc').value = desc || '';
+  document.getElementById('cidSelectedLabel').textContent = code + ' — ' + (desc || '');
+  document.getElementById('cidSelectedBox').style.display = 'flex';
+}
+
+function limparCidSelecionado() {
+  document.getElementById('cidCodigo').value = '';
+  document.getElementById('cidDesc').value = '';
+  document.getElementById('cidSelectedBox').style.display = 'none';
+  sincronizarEstado();
+}
+
+function selecionarCidConsulta(code, name) {
+  if (STATE.consultaGravada) { toast('Consulta gravada.'); return; }
+  const full = getCID(code);
+  showCidSelecionado(code, full ? full.name : name);
+  sincronizarEstado();
+  toast('✅ CID ' + code + ' aplicado a esta consulta.');
+}
+
+async function criarNotaDoCid(code, name) {
+  const result = getCID(code);
+  const prescDetalhada = getPrescricaoDetalhada(code);
+  let listaHtml = '';
+  if (prescDetalhada) {
+    listaHtml = prescDetalhada.map(p => `<li>${escapeHtml(p.nome)}${p.dosagem ? ' — ' + escapeHtml(p.dosagem) : ''}${p.posologia ? ' (' + escapeHtml(p.posologia) + ')' : ''}</li>`).join('');
+  } else if (result?.prescriptions) {
+    listaHtml = result.prescriptions.map(p => `<li>${escapeHtml(p)}</li>`).join('');
+  }
+  const content = `<h3>CID: ${code} — ${escapeHtml(name)}</h3><p><strong>Prescrição:</strong></p><ul>${listaHtml}</ul>`;
+  if (STATE.paciente.nome.trim()) await salvarConsulta(true);
+  sessionStorage.setItem('cidNoteContent', content);
+  sessionStorage.setItem('cidNoteTitle', `CID ${code} — ${name}`);
+  window.location.href = 'note.html?fromCid=1';
+}
+
+function gerarPdfDoCid(code, name) {
+  const result = getCID(code);
+  if (!result) return;
+  const prescDetalhada = getPrescricaoDetalhada(code);
+  let prescItems;
+  if (prescDetalhada) {
+    prescItems = prescDetalhada.map(item => ({ ...item }));
+  } else {
+    prescItems = (result.prescriptions || []).map(p => {
+      const clean = p.replace(/^\d+\.\s*/, '');
+      return { nome: clean, dosagem: '', posologia: '', via: '', duracao: '' };
+    });
+  }
+
+  const prescHtml = prescItems.map((item, idx) => `
+    <div class="pdf-item">
+      <div><span class="pdf-med-nome">${idx+1}. ${escapeHtml(item.nome)}</span>${item.dosagem ? ` <span class="pdf-med-dosagem">— ${escapeHtml(item.dosagem)}</span>` : ''}</div>
+      ${item.posologia ? `<div class="pdf-med-posologia">${escapeHtml(item.posologia)}</div>` : ''}
+      <div class="pdf-med-meta">${item.via ? `<span>Via: ${escapeHtml(item.via)}</span>` : ''}${item.duracao ? `<span>Duração: ${escapeHtml(item.duracao)}</span>` : ''}</div>
+    </div>
+  `).join('');
+
+  const preview = document.getElementById('cidPdfPreviewContainer');
+  preview.innerHTML = `
+    <div class="pdf-header"><h2>📄 Receituário Médico</h2><p>Gerado em ${new Date().toLocaleString('pt-BR')}</p></div>
+    <div class="pdf-diagnostico">
+      <h3>CID ${code} — ${escapeHtml(name)}</h3>
+      <p>${escapeHtml(result.desc)}</p>
+      ${(result.symptoms && result.symptoms.length) ? `<div class="pdf-sintomas-label">Sintomas associados:</div><div class="pdf-sintomas">${result.symptoms.map(s => `<span>${escapeHtml(s)}</span>`).join('')}</div>` : ''}
+    </div>
+    <div class="pdf-prescricao"><h4>💊 Prescrição</h4>${prescHtml}</div>
+    <div class="pdf-footer">⚠️ Sugestão automatizada para auxílio clínico. Sempre valide a prescrição antes de aplicar.</div>
+    <div class="pdf-system-footer">Way For System · Pediatria</div>
+  `;
+  document.getElementById('cidPdfModal').classList.add('active');
+
+  document.getElementById('cidPdfDownloadBtn').onclick = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pageW = 210, margin = 20, contentW = pageW - 2 * margin;
+    let y = 20;
+
+    function addWrappedText(text, x, yPos, maxWidth, lineHeight, align) {
+      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, x, yPos, { align: align || 'left' });
+      return yPos + lines.length * lineHeight;
+    }
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(30, 41, 59);
+    doc.text('Receituario Medico', pageW / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(148, 163, 184);
+    doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), pageW / 2, y, { align: 'center' });
+    y += 12;
+
+    doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+    doc.line(margin, y, pageW - margin, y); y += 10;
+
+    const descLines = doc.splitTextToSize(result.desc, contentW - 8);
+    const symptomsText = (result.symptoms || []).join('   ');
+    const symLines = result.symptoms && result.symptoms.length ? doc.splitTextToSize(symptomsText, contentW - 8) : [];
+    const boxH = 22 + descLines.length * 4 + (symLines.length > 0 ? symLines.length * 4 + 10 : 0);
+
+    doc.setFillColor(239, 246, 255); doc.setDrawColor(219, 234, 254);
+    doc.roundedRect(margin, y - 4, contentW, boxH, 3, 3, 'FD');
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(42, 125, 225);
+    doc.text('CID ' + code + ' — ' + name, margin + 4, y + 5);
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(51, 65, 85);
+    y = addWrappedText(result.desc, margin + 4, y + 12, contentW - 8, 4, 'left');
+
+    if (result.symptoms && result.symptoms.length > 0) {
+      y += 4;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
+      doc.text('Sintomas associados:', margin + 4, y);
+      y += 4;
+      doc.setFont('helvetica', 'normal');
+      y = addWrappedText(symptomsText, margin + 4, y, contentW - 8, 4, 'left');
+    }
+    y += 12;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(30, 41, 59);
+    doc.text('Prescricao', margin, y);
+    doc.setDrawColor(42, 125, 225); doc.setLineWidth(0.5);
+    doc.line(margin, y + 2, margin + 25, y + 2);
+    y += 10;
+
+    const tableBody = prescItems.map((item, idx) => {
+      let text = `${idx+1}. ${item.nome}`;
+      if (item.dosagem) text += ` — ${item.dosagem}`;
+      if (item.posologia) text += `\n${item.posologia}`;
+      const meta = [];
+      if (item.via) meta.push('Via: ' + item.via);
+      if (item.duracao) meta.push('Duracao: ' + item.duracao);
+      if (meta.length > 0) text += '\n' + meta.join('    ');
+      return [text];
+    });
+
+    doc.autoTable({
+      startY: y, body: tableBody, theme: 'plain',
+      margin: { left: margin, right: margin },
+      styles: { fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 5, right: 5 }, lineColor: [226, 232, 240], lineWidth: 0.2 },
+      columnStyles: { 0: { cellWidth: contentW, textColor: [51, 65, 85] } },
+      didParseCell: function (data) { if (data.row.index % 2 === 0) data.cell.styles.fillColor = [248, 250, 252]; }
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    const warningText = 'Sugestao automatizada para auxilio clinico. Sempre valide a prescricao antes de aplicar.';
+    const warningLines = doc.splitTextToSize(warningText, contentW - 8);
+    const warningBoxH = warningLines.length * 4.5 + 8;
+    doc.setFillColor(255, 251, 235); doc.setDrawColor(252, 211, 77); doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, contentW, warningBoxH, 2, 2, 'FD');
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(146, 64, 14);
+    doc.text(warningLines, pageW / 2, y + 5, { align: 'center' });
+    y += warningBoxH + 8;
+
+    doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.3);
+    doc.line(margin, y, pageW - margin, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(180, 180, 180);
+    doc.text('Way For System - Pediatria', pageW / 2, y, { align: 'center' });
+
+    doc.save('CID_' + code + '_' + name.replace(/\s/g, '_') + '.pdf');
+  };
+}
+
+document.getElementById('cidPdfModalClose').addEventListener('click', () => document.getElementById('cidPdfModal').classList.remove('active'));
+document.getElementById('cidPdfModalDismiss').addEventListener('click', () => document.getElementById('cidPdfModal').classList.remove('active'));
+document.getElementById('cidPdfModal').addEventListener('click', (e) => { if (e.target.id === 'cidPdfModal') e.target.classList.remove('active'); });
+
+// ================================================================
 // 8. ANTROPOMETRIA
 // ================================================================
 function atualizarAntropometria() {
@@ -1428,9 +1847,10 @@ function carregarConsulta(pacienteId, consultaId) {
   document.getElementById('anamnese').value = consulta.anamnese || '';
   document.getElementById('exameFisico').value = consulta.exameFisico || '';
   document.getElementById('conduta').value = consulta.conduta || '';
-  document.getElementById('cidCodigo').value = consulta.cid || '';
-  document.getElementById('cidDesc').value = consulta.cidDesc || '';
-  document.getElementById('cidBusca').value = consulta.cid ? consulta.cid + ' - ' + (consulta.cidDesc || '') : '';
+  document.getElementById('cidBusca').value = '';
+  document.getElementById('cidResultsContainer').innerHTML = '';
+  document.getElementById('cidPopularSection').style.display = 'block';
+  showCidSelecionado(consulta.cid || '', consulta.cidDesc || '');
   STATE.documentos = consulta.documentos || [];
   STATE.paciente = { ...consulta.paciente };
   STATE.anamnese = consulta.anamnese || '';
@@ -2021,9 +2441,10 @@ async function novoPaciente() {
     document.getElementById('anamnese').value = '';
     document.getElementById('exameFisico').value = '';
     document.getElementById('conduta').value = '';
-    document.getElementById('cidCodigo').value = '';
-    document.getElementById('cidDesc').value = '';
     document.getElementById('cidBusca').value = '';
+    document.getElementById('cidResultsContainer').innerHTML = '';
+    document.getElementById('cidPopularSection').style.display = 'block';
+    limparCidSelecionado();
     STATE.documentos = [];
     STATE.consultaId = null;
     STATE.pacienteId = null;
@@ -2053,9 +2474,10 @@ async function novaConsulta() {
   document.getElementById('anamnese').value = '';
   document.getElementById('exameFisico').value = '';
   document.getElementById('conduta').value = '';
-  document.getElementById('cidCodigo').value = '';
-  document.getElementById('cidDesc').value = '';
   document.getElementById('cidBusca').value = '';
+  document.getElementById('cidResultsContainer').innerHTML = '';
+  document.getElementById('cidPopularSection').style.display = 'block';
+  limparCidSelecionado();
   STATE.documentos = [];
   STATE.consultaId = null;
   STATE.consultaGravada = false;
@@ -2091,6 +2513,9 @@ function limparFormulario() {
   ['pacNome','pacCpf','pacNasc','pacMae','pacPeso','pacAltura','pacPC','anamnese','exameFisico','conduta','cidCodigo','cidDesc','cidBusca'].forEach(id => {
     document.getElementById(id).value = '';
   });
+  document.getElementById('cidResultsContainer').innerHTML = '';
+  document.getElementById('cidPopularSection').style.display = 'block';
+  document.getElementById('cidSelectedBox').style.display = 'none';
   STATE.documentos = [];
   STATE.consultaId = null;
   STATE.pacienteId = null;
@@ -2109,7 +2534,8 @@ Object.assign(window, {
   fecharModal, salvarDocumentoModal, imprimirModal, carregarHistorico, filtrarHistorico,
   carregarConsulta, editarDoc, visualizarDoc, mudarMes, selecionarDia,
   abrirModalAgendamento, fecharAgendaModal, salvarAgendamento, cancelarAgendamento,
-  onAgPacienteChange, gerarRelatorio, limparRelatorio, renderCalendar, desenharGrafico
+  onAgPacienteChange, gerarRelatorio, limparRelatorio, renderCalendar, desenharGrafico,
+  selecionarCidConsulta, criarNotaDoCid, gerarPdfDoCid
 });
 
 console.log('👶 Way For System · Pediatria carregada!');
