@@ -594,7 +594,14 @@
 </head>
 <body>
 
-<div class="app-wrapper">
+<div id="accessDenied" style="display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; gap:16px; text-align:center; padding:24px;">
+  <div style="font-size:56px;">🔒</div>
+  <h1 style="font-size:22px; color:#0b1e2e;">Acesso não liberado</h1>
+  <p style="color:#5c7480; font-size:14px; max-width:420px;">Você ainda não tem permissão para usar o módulo de Pediatria. Peça ao administrador do sistema para liberar seu acesso no painel administrativo.</p>
+  <button class="btn btn-primary" onclick="window.location.href='dashboard.html'"><i class="fas fa-home"></i> Voltar para Anotações</button>
+</div>
+
+<div class="app-wrapper" id="pediatriaApp" style="display:none;">
 
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -961,7 +968,8 @@ import {
   getCurrentUser, getUserProfile, signOut, ensureValidSession, checkSingleSession,
   getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead, logAccess,
   getPediatricHistory, savePediatricConsultation, getLastPediatricConsultation,
-  getPediatricAppointments, createPediatricAppointment, deletePediatricAppointment
+  getPediatricAppointments, createPediatricAppointment, deletePediatricAppointment,
+  hasPediatricAccess
 } from './supabase-config.js';
 
 // ================================================================
@@ -997,6 +1005,15 @@ let lastMessageId = null;
   const user = await getCurrentUser();
   if (!user) { window.location.href = 'index.html'; return; }
   currentUserId = user.id;
+
+  let allowed = false;
+  try { allowed = await hasPediatricAccess(); } catch (e) { allowed = false; }
+  if (!allowed) {
+    document.getElementById('accessDenied').style.display = 'flex';
+    document.getElementById('pediatriaApp').style.display = 'none';
+    return;
+  }
+  document.getElementById('pediatriaApp').style.display = 'flex';
 
   try { await logAccess('pediatria'); } catch (e) {}
 
