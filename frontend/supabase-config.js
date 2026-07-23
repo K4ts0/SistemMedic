@@ -986,12 +986,8 @@ export async function getAdminSummary() {
   if (!user) throw new Error('Usuario nao autenticado');
 
   try {
-    // Busca contagens basicas
-    const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-    const { count: totalNotes } = await supabase.from('notes').select('*', { count: 'exact', head: true });
-    const { count: totalMessages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-
-    // Pega ID do admin para filtrar
+    // Pega ID do admin para filtrar (feito primeiro para poder excluir o
+    // admin de TODAS as contagens abaixo, de forma consistente)
     const { data: adminProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -999,6 +995,17 @@ export async function getAdminSummary() {
       .single();
 
     const adminId = adminProfile?.id;
+
+    // Busca contagens basicas (excluindo o admin de todas elas)
+    const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+
+    let notesQuery = supabase.from('notes').select('*', { count: 'exact', head: true });
+    if (adminId) notesQuery = notesQuery.neq('user_id', adminId);
+    const { count: totalNotes } = await notesQuery;
+
+    let messagesQuery = supabase.from('messages').select('*', { count: 'exact', head: true });
+    if (adminId) messagesQuery = messagesQuery.neq('sender_id', adminId).neq('receiver_id', adminId);
+    const { count: totalMessages } = await messagesQuery;
 
     // Tenta buscar de access_logs para dados mais precisos
     let onlineNow = 0;
@@ -1769,6 +1776,71 @@ export async function getAccessStatsByHour() {
 }
 
 /**
+ * Retorna estatisticas de acesso por hora, mas apenas do dia de HOJE
+ * (00:00 ate agora, no fuso BRT), diferente de getAccessStatsByHour()
+ * que usa uma janela rolante das ultimas 24 horas. Usado no painel
+ * "Picos de Acesso por Hora (Hoje)" do admin, para o rotulo bater com
+ * os dados exibidos.
+ */
+export async function getAccessStatsByHourToday() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .single();
+
+    const adminId = adminProfile?.id;
+
+    let query = supabase
+      .from('access_logs')
+      .select('accessed_at, user_id')
+      .gte('accessed_at', todayISO);
+
+    if (adminId) {
+      query = query.neq('user_id', adminId);
+    }
+
+    const { data, error } = await query.order('accessed_at', { ascending: true });
+
+    if (error) {
+      if (error.message.includes('does not exist') || error.code === '42P01') {
+        return Array.from({length: 24}, (_, i) => ({ hour_of_day: i, access_count: 0 }));
+      }
+      throw error;
+    }
+
+    const hourUsers = {};
+    (data || []).forEach(log => {
+      const logDate = new Date(log.accessed_at);
+      const localHour = (logDate.getUTCHours() - 3 + 24) % 24;
+      if (!hourUsers[localHour]) hourUsers[localHour] = new Set();
+      hourUsers[localHour].add(log.user_id);
+    });
+
+    const hourlyStats = {};
+    for (let i = 0; i < 24; i++) {
+      hourlyStats[i] = hourUsers[i] ? hourUsers[i].size : 0;
+    }
+
+    return Object.entries(hourlyStats).map(([hour, count]) => ({
+      hour_of_day: parseInt(hour),
+      access_count: count
+    }));
+  } catch (err) {
+    console.warn('Erro em getAccessStatsByHourToday:', err.message);
+    return Array.from({length: 24}, (_, i) => ({ hour_of_day: i, access_count: 0 }));
+  }
+}
+
+/**
  * Retorna estatisticas do dia atual
  */
 export async function getTodayStats() {
@@ -2532,4 +2604,45 @@ export async function deletePediatricAppointment(id) {
     .eq('id', id)
     .eq('doctor_id', user.id);
   if (error) throw error;
+}
+
+// ============================================================
+// ===== PEDIATRIA — CONTROLE DE ACESSO (liberado pelo admin) =====
+// ============================================================
+// Por padrao nenhum medico tem acesso ao modulo Pediatria
+// (profiles.pediatric_access = false). Apenas o admin, pelo painel
+// administrativo, pode liberar/revogar o acesso por usuario.
+// O admin sempre tem acesso, independente da coluna.
+
+/**
+ * Verifica se o usuario logado pode usar o modulo Pediatria.
+ * Usado para mostrar/ocultar o item "Pediatria" no menu e para
+ * bloquear o acesso direto pela URL em pediatria.html.
+ */
+export async function hasPediatricAccess() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  if (user.email === ADMIN_EMAIL) return true;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('pediatric_access')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return !!data.pediatric_access;
+}
+
+/**
+ * Libera ou revoga o acesso de um medico ao modulo Pediatria.
+ * Chamado apenas pelo painel administrativo (admin.html).
+ */
+export async function setPediatricAccess(userId, enabled) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ pediatric_access: !!enabled })
+    .eq('id', userId);
+  if (error) throw error;
+  return true;
 }
