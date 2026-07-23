@@ -58,7 +58,7 @@
       <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
       <button class="nav-item" data-page="chat"><span>💬</span> Chat</button>
       <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
-      <button class="nav-item" data-page="pediatria"><span>👶</span> Pediatria</button>
+      <button class="nav-item hidden" data-page="pediatria" id="pediatriaNavItem"><span>👶</span> Pediatria</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -131,7 +131,7 @@
       getCurrentUser, signOut, getNotes, deleteNote, toggleFavorite,
       ensureValidSession, checkSingleSession, getUserProfile,
       getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
-      logAccess
+      logAccess, hasPediatricAccess
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -148,6 +148,11 @@
 
       // Registra acesso
       try { await logAccess('dashboard'); } catch(e) {}
+
+      // Mostra o item "Pediatria" no menu apenas se o admin liberou o acesso
+      try {
+        if (await hasPediatricAccess()) document.getElementById('pediatriaNavItem').classList.remove('hidden');
+      } catch (e) {}
 
       // Carrega dados do perfil
       try {
