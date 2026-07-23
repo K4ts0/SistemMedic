@@ -173,7 +173,7 @@
       <button class="nav-item" data-page="profile"><span>👤</span> Perfil</button>
       <button class="nav-item active" data-page="chat"><span>💬</span> Chat</button>
       <button class="nav-item" data-page="cid"><span>🔍</span> CID</button>
-      <button class="nav-item" data-page="pediatria"><span>👶</span> Pediatria</button>
+      <button class="nav-item hidden" data-page="pediatria" id="pediatriaNavItem"><span>👶</span> Pediatria</button>
     </div>
 
     <div id="mensagem" class="mensagem"></div>
@@ -290,7 +290,7 @@
       getUserProfile, getChatUsers, sendMessage, getMessages,
       getUnreadMessages, getUnreadCount, markMessageAsRead, markAllMessagesAsRead,
       findUserById, searchUserByPartialId, searchUserByCRM, getConversations, getDoctorsCount,
-      logAccess
+      logAccess, hasPediatricAccess
     } from './supabase-config.js';
 
     let currentUserId = null;
@@ -308,6 +308,10 @@
 
       // Registra acesso
       try { await logAccess('chat'); } catch(e) {}
+
+      try {
+        if (await hasPediatricAccess()) document.getElementById('pediatriaNavItem').classList.remove('hidden');
+      } catch (e) {}
 
       // Navegação
       document.querySelectorAll('.nav-item').forEach(btn => {
