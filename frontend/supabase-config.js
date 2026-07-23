@@ -2321,7 +2321,7 @@ export async function getPediatricHistory() {
         data: c.created_at,
         paciente: {
           nome: p.nome, cpf: p.cpf || '', nasc: p.nasc || '', mae: p.mae || '',
-          sexo: p.sexo || 'M', peso: c.peso, altura: c.altura
+          sexo: p.sexo || 'M', peso: c.peso, altura: c.altura, pc: c.pc
         },
         anamnese: c.anamnese || '',
         exameFisico: c.exame_fisico || '',
@@ -2366,7 +2366,8 @@ export async function getLastPediatricConsultation() {
     mae: patient.mae || '',
     sexo: patient.sexo || 'M',
     peso: c.peso,
-    altura: c.altura
+    altura: c.altura,
+    pc: c.pc
   };
 }
 
@@ -2433,6 +2434,7 @@ export async function savePediatricConsultation(payload) {
     doctor_id: user.id,
     peso: p.peso ?? null,
     altura: p.altura ?? null,
+    pc: p.pc ?? null,
     anamnese: payload.anamnese || '',
     exame_fisico: payload.exameFisico || '',
     conduta: payload.conduta || '',
@@ -2462,4 +2464,72 @@ export async function savePediatricConsultation(payload) {
   }
 
   return { pacienteId, consultaId };
+}
+
+// ============================================================
+// ===== PEDIATRIA — AGENDA DE CONSULTAS (Supabase) =====
+// ============================================================
+// Substitui o antigo 'pediatra_appointments' do localStorage pela tabela
+// 'pediatric_appointments', isolada por medico via RLS.
+
+/**
+ * Retorna todos os agendamentos do medico logado.
+ */
+export async function getPediatricAppointments() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('pediatric_appointments')
+    .select('*')
+    .eq('doctor_id', user.id)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
+  if (error) throw error;
+
+  return (data || []).map(a => ({
+    id: a.id,
+    patient: a.patient_name,
+    date: a.date,
+    time: a.time ? a.time.slice(0, 5) : '',
+    obs: a.obs || ''
+  }));
+}
+
+/**
+ * Cria um novo agendamento. Retorna o registro criado.
+ */
+export async function createPediatricAppointment({ patient, date, time, obs }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { data, error } = await supabase
+    .from('pediatric_appointments')
+    .insert([{
+      doctor_id: user.id,
+      patient_name: patient,
+      date: date,
+      time: time || null,
+      obs: obs || null
+    }])
+    .select()
+    .single();
+  if (error) throw error;
+
+  return { id: data.id, patient: data.patient_name, date: data.date, time: data.time ? data.time.slice(0, 5) : '', obs: data.obs || '' };
+}
+
+/**
+ * Remove um agendamento do medico logado.
+ */
+export async function deletePediatricAppointment(id) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario nao autenticado');
+
+  const { error } = await supabase
+    .from('pediatric_appointments')
+    .delete()
+    .eq('id', id)
+    .eq('doctor_id', user.id);
+  if (error) throw error;
 }
