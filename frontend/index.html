@@ -169,21 +169,11 @@
         // Limpa mensagens anteriores
         hideMessage();
 
+        // Etapa 1: autenticação. Só um erro AQUI significa senha errada.
         try {
           await signIn(emailValue, password);
-
-          // Login bem-sucedido: reseta contador
-          localStorage.removeItem('login_attempts');
-          failedAttempts = 0;
-
-          await registerSession();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && user.email === 'admin@wayforsystem.med') {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'dashboard.html';
-          }
         } catch (error) {
+          console.error('Falha na autenticação:', error);
           failedAttempts++;
           localStorage.setItem('login_attempts', failedAttempts.toString());
 
@@ -196,6 +186,37 @@
           // Limpa o campo de senha
           document.getElementById('password').value = '';
           document.getElementById('password').focus();
+          return;
+        }
+
+        // Login bem-sucedido: reseta contador
+        localStorage.removeItem('login_attempts');
+        failedAttempts = 0;
+        updateAttemptsUI();
+
+        // Etapa 2: pós-login. Falha aqui NÃO é senha incorreta — a credencial já
+        // foi aceita. Reportamos o erro real e seguimos para o sistema mesmo assim.
+        try {
+          await registerSession();
+        } catch (error) {
+          console.error('Falha ao registrar a sessão:', error);
+          showMessage(
+            'Login efetuado, mas houve uma falha ao registrar a sessão: ' +
+            (error?.message || 'erro desconhecido'),
+            'erro'
+          );
+        }
+
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.email === 'admin@wayforsystem.med') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        } catch (error) {
+          console.error('Falha ao redirecionar após o login:', error);
+          window.location.href = 'dashboard.html';
         }
       });
 
