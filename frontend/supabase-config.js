@@ -133,133 +133,46 @@ export async function getCurrentUser() {
 
 
 // ===== PERFIL DO USUARIO =====
-
-// O user_metadata do Supabase e embutido dentro do access_token (JWT). Esse token
-// viaja no header Authorization de TODA requisicao seguinte, e o proxy do Supabase
-// rejeita headers grandes (resultado: 520 / ERR_FAILED, que o navegador reporta
-// como erro de CORS). Por isso nada volumoso -- em especial imagem em base64
-// (data:) -- pode ser gravado em user_metadata. Foto de perfil vai para o Storage
-// e o texto do perfil vive na tabela `profiles`.
-const MAX_METADATA_FIELD_LENGTH = 500;
-
-const PROFILE_TEXT_FIELDS = ['name', 'specialty', 'crm', 'phone', 'bio'];
-
-function isDataUri(value) {
-  return typeof value === 'string' && value.startsWith('data:');
-}
-
-/**
- * Impede que qualquer valor gigante (ou data: URI) seja gravado em user_metadata.
- */
-function assertMetadataSafe(metadata) {
-  for (const [key, value] of Object.entries(metadata)) {
-    if (typeof value !== 'string') continue;
-    if (isDataUri(value)) {
-      throw new Error(`Nao e possivel salvar imagem embutida em "${key}". Use o upload de foto.`);
-    }
-    if (value.length > MAX_METADATA_FIELD_LENGTH) {
-      throw new Error(`O campo "${key}" e longo demais (maximo ${MAX_METADATA_FIELD_LENGTH} caracteres).`);
-    }
-  }
-}
-
-/**
- * Le o perfil da tabela `profiles` (fonte da verdade, editavel por SQL/admin) e
- * usa o user_metadata apenas como fallback para contas antigas.
- */
 export async function getUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
-
-  const { data: row } = await supabase
-    .from('profiles')
-    .select('id, name, email, avatar_url, specialty, crm, phone, bio')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  const meta = user.user_metadata || {};
-  const pick = (field) => (row?.[field] ?? '') || meta[field] || '';
-
   return {
     id: user.id,
-    email: row?.email || user.email,
-    name: pick('name'),
-    avatar_url: row?.avatar_url || meta.avatar_url || null,
-    specialty: pick('specialty'),
-    crm: pick('crm'),
-    phone: pick('phone'),
-    bio: pick('bio')
+    email: user.email,
+    name: user.user_metadata?.name || '',
+    avatar_url: user.user_metadata?.avatar_url || null,
+    specialty: user.user_metadata?.specialty || '',
+    crm: user.user_metadata?.crm || '',
+    phone: user.user_metadata?.phone || '',
+    bio: user.user_metadata?.bio || ''
   };
 }
 
-/**
- * Grava o perfil na tabela `profiles`. Os campos de texto tambem sao espelhados em
- * user_metadata (pequenos e seguros); `avatar_url` nunca vai para o user_metadata.
- */
 export async function updateUserProfile(profile) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuario nao autenticado');
-
-  const row = { id: user.id, email: user.email, updated_at: new Date().toISOString() };
-  const metadata = {};
-
-  for (const field of PROFILE_TEXT_FIELDS) {
-    if (profile[field] === undefined) continue;
-    row[field] = profile[field];
-    metadata[field] = profile[field];
-  }
-
-  if (profile.avatar_url !== undefined) {
-    if (isDataUri(profile.avatar_url)) {
-      throw new Error('Foto invalida: envie a imagem pelo upload em vez de embutir os dados.');
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      name: profile.name,
+      avatar_url: profile.avatar_url,
+      specialty: profile.specialty,
+      crm: profile.crm,
+      phone: profile.phone,
+      bio: profile.bio
     }
-    row.avatar_url = profile.avatar_url;
-  }
-
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .upsert(row, { onConflict: 'id' });
-  if (profileError) throw profileError;
-
-  if (Object.keys(metadata).length > 0) {
-    assertMetadataSafe(metadata);
-    const { error } = await supabase.auth.updateUser({ data: metadata });
-    if (error) throw error;
-  }
-
-  return row;
-}
-
-/**
- * Reduz a imagem para no maximo `maxSize` px e devolve um Blob JPEG comprimido.
- */
-async function resizeImage(file, maxSize = 512, quality = 0.85) {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function uploadAvatar(file) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario nao autenticado');
 
-  let upload = file;
-  try {
-    const resized = await resizeImage(file);
-    if (resized) upload = resized;
-  } catch (e) {
-    console.warn('Nao foi possivel redimensionar a imagem, enviando original:', e);
-  }
-
-  const fileName = `${user.id}-${Date.now()}.jpg`;
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(fileName, upload, { upsert: true, contentType: 'image/jpeg' });
+    .upload(fileName, file, { upsert: true });
 
   if (uploadError) throw uploadError;
 
