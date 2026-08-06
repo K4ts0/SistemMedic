@@ -990,9 +990,13 @@
 
 <!-- ===== MODALS ===== -->
 <div id="docModal" class="modal-overlay">
-  <div class="modal-content">
+  <div class="modal-content" id="docModalContent">
     <div class="modal-header"><h2 id="docModalTitle">Documento</h2><button class="modal-close" onclick="fecharModal()">&times;</button></div>
-    <textarea id="docModalTextarea" style="width:100%;min-height:300px;padding:16px;border:2px solid #e0e7ef;border-radius:14px;font-family:'Courier New',monospace;font-size:14px;line-height:1.7;resize:vertical;"></textarea>
+    <div id="docPageWrapper">
+      <div id="docHeading" style="display:none;"></div>
+      <div id="docPatientInfo" style="display:none;"></div>
+      <textarea id="docModalTextarea" style="width:100%;min-height:300px;padding:16px;border:2px solid #e0e7ef;border-radius:14px;font-family:'Courier New',monospace;font-size:14px;line-height:1.7;resize:vertical;"></textarea>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="fecharModal()">Fechar</button>
       <button class="btn btn-success" onclick="salvarDocumentoModal(false)"><i class="fas fa-save"></i> Salvar</button>
@@ -1937,26 +1941,134 @@ function medicoAssinatura() {
 
 function gerarReceituario() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
   const p = STATE.paciente;
+  const kedma = isKedmaLoggedIn();
   const med = medicoAssinatura();
-  const modelo = `RECEITUÁRIO MÉDICO\n\nPaciente: ${p.nome||'___________________'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'__________'}\nCPF: ${p.cpf||'__________'}\nMãe: ${p.mae||'__________'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'} ${STATE.cidDesc||''}\n\n_________________________________________________\n_________________________________________________\n_________________________________________________\n\nAssinatura: ___________________\n${med.nome} · ${med.crm}`;
+  let modelo;
+  if (kedma) {
+    // Nome/nascimento/mãe/CPF e a data já aparecem na barra de dados e no
+    // título (ver applyDocLetterhead); aqui fica só o espaço livre para
+    // digitar — sem campo de assinatura, já que não faz parte do modelo.
+    modelo = '';
+  } else {
+    const corpo = `Paciente: ${p.nome||'___________________'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'__________'}\nCPF: ${p.cpf||'__________'}\nMãe: ${p.mae||'__________'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'} ${STATE.cidDesc||''}\n\n_________________________________________________\n_________________________________________________\n_________________________________________________\n\nAssinatura: ___________________`;
+    modelo = `RECEITUÁRIO MÉDICO\n\n${corpo}\n${med.nome} · ${med.crm}`;
+  }
   abrirModalDoc('Receituário', modelo);
 }
 function gerarReceitaEspecial() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
   const p = STATE.paciente;
+  const kedma = isKedmaLoggedIn();
   const med = medicoAssinatura();
-  const modelo = `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\nR E C E I T U Á R I O  C O N T R O L E  E S P E C I A L\n\n${med.nome} · ${med.crm}\n\nIDENTIFICAÇÃO DO COMPRADOR\nNome: ${p.nome||'---'}\nIDENT: ${p.cpf||'---'}\n\nAss. Farmacêutico ______ / ______ / ______\n\nEndereço da clínica: ___________________________________\nContato: ___________________________________\n\nPaciente: ${p.nome||'______'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'}\n\nMedicamento: ___________\nDose: ___________\n\nAssinatura: ___________________\n${med.nome} · ${med.crm}`;
+  const corpo = `IDENTIFICAÇÃO DO COMPRADOR\nNome: ${p.nome||'---'}\nIDENT: ${p.cpf||'---'}\n\nAss. Farmacêutico ______ / ______ / ______\n\nEndereço da clínica: ___________________________________\nContato: ___________________________________\n\nPaciente: ${p.nome||'______'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'}\n\nMedicamento: ___________\nDose: ___________\n\nAssinatura: ___________________`;
+  const modelo = kedma
+    ? `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\n${corpo}`
+    : `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\nR E C E I T U Á R I O  C O N T R O L E  E S P E C I A L\n\n${med.nome} · ${med.crm}\n\n${corpo}\n${med.nome} · ${med.crm}`;
   abrirModalDoc('Receita Especial', modelo);
 }
 function gerarAtestado() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
   const p = STATE.paciente;
+  const kedma = isKedmaLoggedIn();
   const med = medicoAssinatura();
-  const modelo = `Atestado Médico\n\nAtesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\nPaciente: ${p.nome||'______'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'______'}\nCPF: ${p.cpf||'______'}\nMãe: ${p.mae||'______'}\n\nCID: ${STATE.cid||'R52'}\n\nAUTORIZO A COLOCAÇÃO DO CID-10 _______\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n${med.nome}\n${med.crm}`;
+  const corpo = `Atesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\nPaciente: ${p.nome||'______'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'______'}\nCPF: ${p.cpf||'______'}\nMãe: ${p.mae||'______'}\n\nCID: ${STATE.cid||'R52'}\n\nAUTORIZO A COLOCAÇÃO DO CID-10 _______\nData: ${new Date().toLocaleDateString('pt-BR')}`;
+  const modelo = kedma
+    ? `${corpo}\n\nAssinatura: ___________________`
+    : `Atestado Médico\n\n${corpo}\n\n${med.nome}\n${med.crm}`;
   abrirModalDoc('Atestado Médico', modelo);
 }
+// ================================================================
+// 12b. TIMBRADO — imagem de fundo fixa nos documentos, exclusiva da
+// Dra. Kedma (outros médicos continuam com o documento em branco, já
+// que o nome/CRM dela está desenhado dentro da própria imagem).
+// ================================================================
+const KEDMA_EMAIL = 'kedy_soares@hotmail.com';
+const LETTERHEAD_IMAGE = 'assets/timbrado-dra-kedma.jpeg';
+const LETTERHEAD_RATIO = '1127 / 1600'; // mesma proporção do papel A4
+
+function isKedmaLoggedIn() {
+  return (doctorProfile?.email || '').toLowerCase() === KEDMA_EMAIL;
+}
+
+const DOC_HEADINGS = {
+  'Receituário': 'Receituário Médico',
+  'Receita Especial': 'Receita de Controle Especial',
+  'Atestado Médico': 'Atestado Médico'
+};
+function getDocHeading(tipo) { return DOC_HEADINGS[tipo] || tipo; }
+
+function docInfoItemHtml(label, value) {
+  return `<div style="flex:1;min-width:80px;">
+    <div style="font-size:10px;font-weight:700;color:#8aa3c0;text-transform:uppercase;letter-spacing:0.4px;">${label}</div>
+    <div style="font-size:13.5px;font-weight:600;color:#1a2a3a;margin-top:2px;">${value}</div>
+  </div>`;
+}
+
+function applyDocLetterhead() {
+  const content = document.getElementById('docModalContent');
+  const wrapper = document.getElementById('docPageWrapper');
+  const textarea = document.getElementById('docModalTextarea');
+  const heading = document.getElementById('docHeading');
+  const patientInfo = document.getElementById('docPatientInfo');
+
+  if (isKedmaLoggedIn()) {
+    content.style.maxWidth = '640px';
+    Object.assign(wrapper.style, {
+      backgroundImage: `url('${LETTERHEAD_IMAGE}')`,
+      backgroundSize: '100% 100%',
+      backgroundRepeat: 'no-repeat',
+      aspectRatio: LETTERHEAD_RATIO,
+      borderRadius: '12px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.10)',
+      padding: '34% 9% 18%',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column'
+    });
+    Object.assign(textarea.style, {
+      background: 'transparent', border: 'none', width: '100%', flex: '1',
+      minHeight: '0', resize: 'none', boxShadow: 'none', padding: '0'
+    });
+    const tipo = document.getElementById('docModalTitle').textContent.replace(' (leitura)', '');
+    const hojeFormatado = new Date().toLocaleDateString('pt-BR');
+    heading.innerHTML = `<span>${getDocHeading(tipo)}</span><span style="font-size:14px;font-weight:600;color:#5c7480;letter-spacing:normal;">Data: ${hojeFormatado}</span>`;
+    Object.assign(heading.style, {
+      display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', textAlign: 'left',
+      fontWeight: '800', fontSize: '20px',
+      color: '#0b1e2e', letterSpacing: '0.5px', marginBottom: '14px', paddingBottom: '10px',
+      borderBottom: '2px solid #2a7de1', flexShrink: '0'
+    });
+
+    const p = STATE.paciente;
+    const nasc = p.nasc ? new Date(p.nasc).toLocaleDateString('pt-BR') : '__________';
+    patientInfo.innerHTML =
+      docInfoItemHtml('Paciente', escapeHtml(p.nome || '___________________')) +
+      docInfoItemHtml('Nascimento', nasc) +
+      docInfoItemHtml('Mãe', escapeHtml(p.mae || '__________')) +
+      docInfoItemHtml('CPF', escapeHtml(p.cpf || '__________'));
+    Object.assign(patientInfo.style, {
+      display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '16px',
+      paddingBottom: '12px', borderBottom: '1px solid #e0e7ef', flexShrink: '0'
+    });
+  } else {
+    content.style.maxWidth = '';
+    Object.assign(wrapper.style, {
+      backgroundImage: '', backgroundSize: '', backgroundRepeat: '', aspectRatio: '',
+      borderRadius: '', boxShadow: '', padding: '', boxSizing: '', display: '', flexDirection: ''
+    });
+    Object.assign(textarea.style, {
+      background: '', border: '2px solid #e0e7ef', width: '100%', height: 'auto', flex: '',
+      minHeight: '300px', resize: 'vertical', boxShadow: '', padding: '16px'
+    });
+    heading.style.display = 'none';
+    patientInfo.style.display = 'none';
+    patientInfo.innerHTML = '';
+  }
+}
+
 function abrirModalDoc(titulo, conteudo) {
   document.getElementById('docModalTitle').textContent = titulo;
   document.getElementById('docModalTextarea').value = conteudo;
   currentDocIndex = null;
+  applyDocLetterhead();
   document.getElementById('docModal').classList.add('active');
 }
 async function salvarDocumentoModal(gravar) {
@@ -1998,6 +2110,7 @@ function editarDoc(idx) { if (STATE.consultaGravada) { toast('Gravada.'); return
   currentDocIndex = idx;
   document.getElementById('docModalTitle').textContent = doc.tipo;
   document.getElementById('docModalTextarea').value = doc.conteudo;
+  applyDocLetterhead();
   document.getElementById('docModal').classList.add('active');
 }
 function visualizarDoc(idx) {
@@ -2006,13 +2119,52 @@ function visualizarDoc(idx) {
   document.getElementById('docModalTitle').textContent = doc.tipo + ' (leitura)';
   document.getElementById('docModalTextarea').value = doc.conteudo;
   document.getElementById('docModalTextarea').disabled = true;
+  applyDocLetterhead();
   document.getElementById('docModal').classList.add('active');
 }
 function fecharModal() { document.getElementById('docModal').classList.remove('active'); if (document.getElementById('docModalTextarea').disabled) document.getElementById('docModalTextarea').disabled = false; }
 function imprimirModal() {
   const conteudo = document.getElementById('docModalTextarea').value;
   const win = window.open('', '_blank');
-  win.document.write(`<html><head><title>Documento</title><style>body{font-family:'Courier New',monospace;padding:40px;white-space:pre-wrap;font-size:14px;line-height:1.7;}</style></head><body>${conteudo}</body></html>`);
+  if (isKedmaLoggedIn()) {
+    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    const tipo = document.getElementById('docModalTitle').textContent.replace(' (leitura)', '');
+    const hojeFormatado = new Date().toLocaleDateString('pt-BR');
+    const headingHtml = `<div class="doc-heading"><span>${getDocHeading(tipo)}</span><span class="doc-heading-date">Data: ${hojeFormatado}</span></div>`;
+    const p = STATE.paciente;
+    const nasc = p.nasc ? new Date(p.nasc).toLocaleDateString('pt-BR') : '__________';
+    const infoHtml = `<div class="doc-info">
+        <div><div class="doc-info-label">Paciente</div><div class="doc-info-value">${escapeHtml(p.nome || '___________________')}</div></div>
+        <div><div class="doc-info-label">Nascimento</div><div class="doc-info-value">${nasc}</div></div>
+        <div><div class="doc-info-label">Mãe</div><div class="doc-info-value">${escapeHtml(p.mae || '__________')}</div></div>
+        <div><div class="doc-info-label">CPF</div><div class="doc-info-value">${escapeHtml(p.cpf || '__________')}</div></div>
+      </div>`;
+    win.document.write(`<html><head><title>Documento</title><style>
+      @page { size: A4; margin: 0; }
+      body { margin: 0; }
+      .doc-print {
+        width: 210mm; aspect-ratio: ${LETTERHEAD_RATIO}; box-sizing: border-box; display: flex; flex-direction: column;
+        background-image: url('${base}${LETTERHEAD_IMAGE}'); background-size: 100% 100%; background-repeat: no-repeat;
+        padding: 34% 9% 18%; font-family: 'Courier New', monospace; white-space: pre-wrap; font-size: 14px; line-height: 1.7;
+      }
+      .doc-heading {
+        display: flex; justify-content: space-between; align-items: baseline;
+        font-weight: 800; font-size: 20px; color: #0b1e2e; letter-spacing: 0.5px;
+        margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #2a7de1; flex-shrink: 0;
+        font-family: Arial, sans-serif;
+      }
+      .doc-heading-date { font-size: 14px; font-weight: 600; color: #5c7480; letter-spacing: normal; }
+      .doc-info {
+        display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; padding-bottom: 12px;
+        border-bottom: 1px solid #e0e7ef; flex-shrink: 0; font-family: Arial, sans-serif;
+      }
+      .doc-info > div { flex: 1; min-width: 80px; }
+      .doc-info-label { font-size: 10px; font-weight: 700; color: #8aa3c0; text-transform: uppercase; letter-spacing: 0.4px; }
+      .doc-info-value { font-size: 13.5px; font-weight: 600; color: #1a2a3a; margin-top: 2px; }
+    </style></head><body><div class="doc-print">${headingHtml}${infoHtml}${conteudo}</div></body></html>`);
+  } else {
+    win.document.write(`<html><head><title>Documento</title><style>body{font-family:'Courier New',monospace;padding:40px;white-space:pre-wrap;font-size:14px;line-height:1.7;}</style></head><body>${conteudo}</body></html>`);
+  }
   win.document.close(); win.focus(); win.print();
 }
 
