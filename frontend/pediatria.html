@@ -1978,10 +1978,16 @@ function gerarAtestado() { if (STATE.consultaGravada) { toast('Gravada.'); retur
   const p = STATE.paciente;
   const kedma = isKedmaLoggedIn();
   const med = medicoAssinatura();
-  const corpo = `Atesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\nPaciente: ${p.nome||'______'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'______'}\nCPF: ${p.cpf||'______'}\nMãe: ${p.mae||'______'}\n\nCID: ${STATE.cid||'R52'}\n\nAUTORIZO A COLOCAÇÃO DO CID-10 _______\nData: ${new Date().toLocaleDateString('pt-BR')}`;
-  const modelo = kedma
-    ? `${corpo}\n\nAssinatura: ___________________`
-    : `Atestado Médico\n\n${corpo}\n\n${med.nome}\n${med.crm}`;
+  let modelo;
+  if (kedma) {
+    // Sem CID, sem linhas de preenchimento e sem assinatura (a assinatura
+    // e os dados do paciente já são cobertos pela barra de dados/timbrado);
+    // fica só a declaração, com espaço livre para observações adicionais.
+    modelo = `Atesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\n\n`;
+  } else {
+    const corpo = `Atesto que o paciente ${p.nome||'______'}, necessita de repouso.\n\nPaciente: ${p.nome||'______'}\nNasc: ${p.nasc?new Date(p.nasc).toLocaleDateString('pt-BR'):'______'}\nCPF: ${p.cpf||'______'}\nMãe: ${p.mae||'______'}\n\nCID: ${STATE.cid||'R52'}\n\nAUTORIZO A COLOCAÇÃO DO CID-10 _______\nData: ${new Date().toLocaleDateString('pt-BR')}`;
+    modelo = `Atestado Médico\n\n${corpo}\n\n${med.nome}\n${med.crm}`;
+  }
   abrirModalDoc('Atestado Médico', modelo);
 }
 // ================================================================
