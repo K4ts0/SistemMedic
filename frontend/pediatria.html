@@ -1959,10 +1959,19 @@ function gerarReceitaEspecial() { if (STATE.consultaGravada) { toast('Gravada.')
   const p = STATE.paciente;
   const kedma = isKedmaLoggedIn();
   const med = medicoAssinatura();
-  const corpo = `IDENTIFICAÇÃO DO COMPRADOR\nNome: ${p.nome||'---'}\nIDENT: ${p.cpf||'---'}\n\nAss. Farmacêutico ______ / ______ / ______\n\nEndereço da clínica: ___________________________________\nContato: ___________________________________\n\nPaciente: ${p.nome||'______'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'}\n\nMedicamento: ___________\nDose: ___________\n\nAssinatura: ___________________`;
-  const modelo = kedma
-    ? `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\n${corpo}`
-    : `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\nR E C E I T U Á R I O  C O N T R O L E  E S P E C I A L\n\n${med.nome} · ${med.crm}\n\n${corpo}\n${med.nome} · ${med.crm}`;
+  let modelo;
+  if (kedma) {
+    // Modelo fornecido pela Dra. Kedma: 1ª/2ª via, espaço em branco para a
+    // prescrição, e a identificação do comprador (preenchida pela farmácia
+    // no momento da compra — por isso os campos ficam em branco, não
+    // preenchidos com os dados da consulta). O campo "Nome" é propositalmente
+    // mais longo que os demais para não truncar/abreviar nomes compridos.
+    const nomeLinha = 'Nome: ' + '-'.repeat(90);
+    modelo = `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\n\n\n\n\n\n\n\nIDENTIFICAÇÃO DO COMPRADOR\n${nomeLinha}\nIDENT:----------------------Órgão Emissor------\nEnd:-----------------------------------------------------\n__________\nData __/__ /___\nCidade:-------------------------- UF------------\nTelefone: ---------------------------------`;
+  } else {
+    const corpo = `IDENTIFICAÇÃO DO COMPRADOR\nNome: ${p.nome||'---'}\nIDENT: ${p.cpf||'---'}\n\nAss. Farmacêutico ______ / ______ / ______\n\nEndereço da clínica: ___________________________________\nContato: ___________________________________\n\nPaciente: ${p.nome||'______'}\nData: ${new Date().toLocaleDateString('pt-BR')}\nCID: ${STATE.cid||'—'}\n\nMedicamento: ___________\nDose: ___________\n\nAssinatura: ___________________`;
+    modelo = `1ª VIA FARMÁCIA\n2ª VIA PACIENTE\n\nR E C E I T U Á R I O  C O N T R O L E  E S P E C I A L\n\n${med.nome} · ${med.crm}\n\n${corpo}\n${med.nome} · ${med.crm}`;
+  }
   abrirModalDoc('Receita Especial', modelo);
 }
 function gerarAtestado() { if (STATE.consultaGravada) { toast('Gravada.'); return; }
